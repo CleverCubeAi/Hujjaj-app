@@ -1,0 +1,214 @@
+import React, { useEffect, useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import {
+  Paper,
+  Title,
+  Stack,
+  Group,
+  Text,
+  Badge,
+  Card,
+  SimpleGrid,
+  LoadingOverlay,
+  Avatar,
+  ThemeIcon,
+  Tooltip,
+  Box
+} from '@mantine/core';
+import { useTranslation } from 'react-i18next';
+import { api } from '../../lib/api';
+import { ArrowLeft, BedDouble, User, Building2 } from 'lucide-react';
+
+interface BedMapData {
+  inventory: {
+    id: string;
+    accommodation: { name: string; name_ar?: string; city?: string };
+    room_type: { type: string; total_beds: number };
+    beds_purchased: number;
+    beds_sold: number;
+    check_in_date: string;
+    check_out_date: string;
+  };
+  beds_per_room: number;
+  beds: Array<{
+    index: number;
+    room_index: number;
+    bed_in_room: number;
+    pilgrim: { id: string; full_name: string; full_name_ar?: string; gender: string; photo_url?: string } | null;
+    booking_id: string | null;
+    booking_number: string | null;
+    used: boolean;
+  }>;
+}
+
+export function BedMapPage() {
+  const { inventoryId } = useParams<{ inventoryId: string }>();
+  const navigate = useNavigate();
+  const { t } = useTranslation();
+  const [data, setData] = useState<BedMapData | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (inventoryId) {
+      api.getBedMap(inventoryId)
+        .then(setData)
+        .catch(() => setData(null))
+        .finally(() => setLoading(false));
+    }
+  }, [inventoryId]);
+
+  if (loading) {
+    return <LoadingOverlay visible />;
+  }
+
+  if (!data) {
+    return (
+      <Paper p="xl">
+        <Text c="dimmed">{t('inventory_not_found') || 'Inventory not found'}</Text>
+        <Group mt="md">
+          <Badge onClick={() => navigate('/inventory/hotel-rooms')} style={{ cursor: 'pointer' }}>
+            {t('back_to_inventory') || 'Back to Hotel Inventory'}
+          </Badge>
+        </Group>
+      </Paper>
+    );
+  }
+
+  const { inventory, beds_per_room, beds } = data;
+  const acc = inventory.accommodation;
+  const roomType = inventory.room_type;
+  const totalRooms = Math.ceil(inventory.beds_purchased / beds_per_room);
+
+  const roomsGrid: typeof beds[][] = [];
+  for (let r = 0; r < totalRooms; r++) {
+    roomsGrid.push(beds.filter((b) => b.room_index === r));
+  }
+
+  return (
+    <Stack gap="lg">
+      <Group justify="space-between">
+        <Group>
+          <ThemeIcon variant="subtle" size="lg" style={{ cursor: 'pointer' }} onClick={() => navigate('/inventory/hotel-rooms')}>
+            <ArrowLeft size={20} />
+          </ThemeIcon>
+          <div>
+            <Title order={3}>
+              {t('bed_map') || 'خريطة الأسرة'}
+            </Title>
+            <Text size="sm" c="dimmed">
+              {acc?.name_ar || acc?.name} — {roomType?.type} • {inventory.beds_purchased} {t('beds') || 'أسرة'}
+            </Text>
+          </div>
+        </Group>
+        <Group>
+          <Badge color="blue">{inventory.beds_sold} {t('occupied') || 'مشغولة'}</Badge>
+          <Badge color="green">{inventory.beds_purchased - inventory.beds_sold} {t('available') || 'متاحة'}</Badge>
+          <Text size="xs" c="dimmed">
+            {new Date(inventory.check_in_date).toLocaleDateString()} → {new Date(inventory.check_out_date).toLocaleDateString()}
+          </Text>
+        </Group>
+      </Group>
+
+      <Card withBorder p="md">
+        <Group>
+          <Building2 size={24} color="#8B7355" />
+          <div>
+            <Text fw={600}>{acc?.name_ar || acc?.name}</Text>
+            <Text size="xs" c="dimmed">{acc?.city} • {t(roomType?.type) || roomType?.type} ({beds_per_room} {t('beds_per_room') || 'أسرة/غرفة'})</Text>
+          </div>
+        </Group>
+      </Card>
+
+      <SimpleGrid cols={{ base: 1, sm: 2, md: 3, lg: 4, xl: 5 }} spacing="md">
+        {roomsGrid.map((roomBeds, roomIdx) => (
+          <Card key={roomIdx} withBorder p="md" radius="md" style={{ backgroundColor: '#FEFBF6' }}>
+            <Group justify="space-between" mb="sm">
+              <Badge size="lg" variant="light" color="brown">
+                {t('room') || 'غرفة'} {roomIdx + 1}
+              </Badge>
+              <Text size="xs" c="dimmed">
+                {roomBeds.filter((b) => b.used).length}/{roomBeds.length}
+              </Text>
+            </Group>
+            <Group gap={8} wrap="wrap">
+              {roomBeds.map((bed) => (
+                <BedSlot
+                  key={bed.index}
+                  bed={bed}
+                  onNavigateToBooking={() => bed.booking_id && navigate(`/bookings/${bed.booking_id}`)}
+                  t={t}
+                />
+              ))}
+            </Group>
+          </Card>
+        ))}
+      </SimpleGrid>
+    </Stack>
+  );
+}
+
+function BedSlot({
+  bed,
+  onNavigateToBooking,
+  t
+}: {
+  bed: BedMapData['beds'][0];
+  onNavigateToBooking: () => void;
+  t: (key: string) => string;
+}) {
+  const pilgrim = bed.pilgrim;
+  const name = pilgrim ? (pilgrim.full_name_ar || pilgrim.full_name || '-') : (t('available') || 'متاح');
+  const isClickable = bed.used && bed.booking_id;
+  const genderColor = pilgrim?.gender === 'male' ? 'blue' : 'pink';
+
+  return (
+    <Tooltip label={bed.used ? `${name} • ${bed.booking_number || ''}` : (t('empty_bed') || 'سرير فارغ')} withArrow>
+      <Box
+        component={isClickable ? 'button' : 'div'}
+        onClick={isClickable ? onNavigateToBooking : undefined}
+        style={{
+          width: 56,
+          height: 56,
+          borderRadius: 8,
+          border: bed.used ? `2px solid var(--mantine-color-${genderColor}-6)` : '2px dashed #ccc',
+          backgroundColor: bed.used ? `var(--mantine-color-${genderColor}-0)` : '#f5f5f5',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          cursor: isClickable ? 'pointer' : 'default',
+          transition: 'transform 0.15s, box-shadow 0.15s',
+          padding: 0
+        }}
+        onMouseEnter={(e: React.MouseEvent<HTMLButtonElement | HTMLDivElement>) => {
+          if (isClickable) {
+            e.currentTarget.style.transform = 'scale(1.05)';
+            e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
+          }
+        }}
+        onMouseLeave={(e: React.MouseEvent<HTMLButtonElement | HTMLDivElement>) => {
+          e.currentTarget.style.transform = 'scale(1)';
+          e.currentTarget.style.boxShadow = 'none';
+        }}
+      >
+        {bed.used && pilgrim ? (
+          pilgrim.photo_url ? (
+            <Avatar
+              src={pilgrim.photo_url}
+              size={40}
+              radius="md"
+              color={genderColor}
+            >
+              {name[0]}
+            </Avatar>
+          ) : (
+            <ThemeIcon size={40} radius="md" color={genderColor} variant="light">
+              <User size={24} />
+            </ThemeIcon>
+          )
+        ) : (
+          <BedDouble size={24} color="#999" />
+        )}
+      </Box>
+    </Tooltip>
+  );
+}
