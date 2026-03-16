@@ -78,9 +78,9 @@ export function BookingInvoicePage() {
             id: data.id,
             booking_number: data.booking_number,
             status: data.status,
-            total_amount: data.total_amount || data.calculated_total || 0,
-            paid_amount: data.paid_amount || data.calculated_paid || 0,
-            remaining_balance: data.remaining_balance || data.calculated_remaining || 0,
+            total_amount: data.calculated_total ?? data.total_amount ?? 0,
+            paid_amount: data.calculated_paid ?? data.paid_amount ?? 0,
+            remaining_balance: data.calculated_remaining ?? data.remaining_balance ?? 0,
             created_at: data.created_at,
             clients: data.clients,
             seasons: data.seasons

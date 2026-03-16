@@ -2124,18 +2124,17 @@ export function BookingWizard() {
                           const pricePerBedTotal = Number(inv?.sell_price_per_bed ?? inv?.sell_price ?? 0);
                           if (pricePerBedTotal <= 0) return null;
                           const nights = getNightsFromInventory(inv);
-                          const pricePerNight = nights > 0 ? pricePerBedTotal / nights : 0;
                           const hotelName = inv.accommodations?.name_ar || inv.accommodations?.name || (t('hotel') || 'فندق');
                           const roomTypeLabel = inv.room_types?.type || '';
                           return (
                             <Table.Tr key={`pilgrim-${idx}-bed-${invIdx}`}>
                               <Table.Td pl="xl">
                                 <Text size="sm">{t('accommodation') || 'السكن'}</Text>
-                                <Text size="xs" c="dimmed">{hotelName}{roomTypeLabel ? ` – ${roomTypeLabel}` : ''}</Text>
+                                <Text size="xs" c="dimmed">{hotelName}{roomTypeLabel ? ` – ${roomTypeLabel}` : ''}{nights > 0 ? ` (${nights} ${t('nights') || 'ليالي'})` : ''}</Text>
                               </Table.Td>
-                              <Table.Td>{nights}</Table.Td>
-                              <Table.Td>{pricePerNight.toLocaleString('en')} د.م / {t('price_per_night') || 'ليلة'}</Table.Td>
-                              <Table.Td>{(pricePerNight * nights).toLocaleString('en')} د.م</Table.Td>
+                              <Table.Td>1 {t('bed') || 'سرير'}</Table.Td>
+                              <Table.Td>{pricePerBedTotal.toLocaleString('en')} د.م</Table.Td>
+                              <Table.Td>{pricePerBedTotal.toLocaleString('en')} د.م</Table.Td>
                             </Table.Tr>
                           );
                         })}

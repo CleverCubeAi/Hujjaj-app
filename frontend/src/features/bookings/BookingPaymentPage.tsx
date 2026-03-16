@@ -74,21 +74,22 @@ export function BookingPaymentPage() {
 
   const fetchPayments = async () => {
     try {
-      const [bookingData, paymentsResponse] = await Promise.all([
-        api.getBookingById(id!),
-        api.getBookingPayments(id!)
-      ]);
-      
-      // Handle payments response - could be an array or object with payments property
-      const paymentsData = Array.isArray(paymentsResponse) 
-        ? paymentsResponse 
+      // Use getBookingInvoice which provides correctly calculated totals
+      const invoiceData = await api.getBookingInvoice(id!);
+
+      const paymentsResponse = await api.getBookingPayments(id!);
+      const paymentsData = Array.isArray(paymentsResponse)
+        ? paymentsResponse
         : (paymentsResponse?.payments || paymentsResponse || []);
-      
-      console.log('Booking data:', bookingData);
-      console.log('Payments data:', paymentsData);
-      
+
       setData({
-        booking: bookingData,
+        booking: {
+          ...invoiceData,
+          // Prefer live-calculated totals over stored DB values
+          total_amount: invoiceData.calculated_total ?? invoiceData.total_amount ?? 0,
+          paid_amount: invoiceData.calculated_paid ?? invoiceData.paid_amount ?? 0,
+          remaining_balance: invoiceData.calculated_remaining ?? invoiceData.remaining_balance ?? 0,
+        },
         payments: paymentsData
       });
     } catch (error) {

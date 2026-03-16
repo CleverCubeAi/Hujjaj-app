@@ -13,11 +13,13 @@ import {
   Avatar,
   ThemeIcon,
   Tooltip,
-  Box
+  Box,
+  TextInput,
+  ActionIcon
 } from '@mantine/core';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../lib/api';
-import { ArrowLeft, BedDouble, User, Building2 } from 'lucide-react';
+import { ArrowLeft, BedDouble, User, Building2, Pencil, Check, X } from 'lucide-react';
 
 interface BedMapData {
   inventory: {
@@ -28,6 +30,7 @@ interface BedMapData {
     beds_sold: number;
     check_in_date: string;
     check_out_date: string;
+    room_labels: string[];
   };
   beds_per_room: number;
   beds: Array<{
@@ -47,6 +50,9 @@ export function BedMapPage() {
   const { t } = useTranslation();
   const [data, setData] = useState<BedMapData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [editingRoom, setEditingRoom] = useState<number | null>(null);
+  const [editingLabel, setEditingLabel] = useState('');
+  const [savingLabel, setSavingLabel] = useState(false);
 
   useEffect(() => {
     if (inventoryId) {
@@ -56,6 +62,37 @@ export function BedMapPage() {
         .finally(() => setLoading(false));
     }
   }, [inventoryId]);
+
+  const startEditing = (roomIdx: number, currentLabel: string) => {
+    setEditingRoom(roomIdx);
+    setEditingLabel(currentLabel);
+  };
+
+  const cancelEditing = () => {
+    setEditingRoom(null);
+    setEditingLabel('');
+  };
+
+  const saveLabel = async (roomIdx: number) => {
+    if (!data || !inventoryId) return;
+    setSavingLabel(true);
+    try {
+      const newLabels = [...(data.inventory.room_labels || [])];
+      // Extend array if needed
+      while (newLabels.length <= roomIdx) newLabels.push('');
+      newLabels[roomIdx] = editingLabel.trim();
+      await api.updateHotelInventory(inventoryId, { room_labels: newLabels });
+      setData(prev => prev ? {
+        ...prev,
+        inventory: { ...prev.inventory, room_labels: newLabels }
+      } : prev);
+      setEditingRoom(null);
+    } catch {
+      // silently ignore
+    } finally {
+      setSavingLabel(false);
+    }
+  };
 
   if (loading) {
     return <LoadingOverlay visible />;
@@ -120,28 +157,61 @@ export function BedMapPage() {
       </Card>
 
       <SimpleGrid cols={{ base: 1, sm: 2, md: 3, lg: 4, xl: 5 }} spacing="md">
-        {roomsGrid.map((roomBeds, roomIdx) => (
-          <Card key={roomIdx} withBorder p="md" radius="md" style={{ backgroundColor: '#FEFBF6' }}>
-            <Group justify="space-between" mb="sm">
-              <Badge size="lg" variant="light" color="brown">
-                {t('room') || 'غرفة'} {roomIdx + 1}
-              </Badge>
-              <Text size="xs" c="dimmed">
-                {roomBeds.filter((b) => b.used).length}/{roomBeds.length}
-              </Text>
-            </Group>
-            <Group gap={8} wrap="wrap">
-              {roomBeds.map((bed) => (
-                <BedSlot
-                  key={bed.index}
-                  bed={bed}
-                  onNavigateToBooking={() => bed.booking_id && navigate(`/bookings/${bed.booking_id}`)}
-                  t={t}
-                />
-              ))}
-            </Group>
-          </Card>
-        ))}
+        {roomsGrid.map((roomBeds, roomIdx) => {
+          const savedLabel = inventory.room_labels?.[roomIdx];
+          const displayLabel = savedLabel || `${t('room') || 'غرفة'} ${roomIdx + 1}`;
+          const isEditing = editingRoom === roomIdx;
+          return (
+            <Card key={roomIdx} withBorder p="md" radius="md" style={{ backgroundColor: '#FEFBF6' }}>
+              <Group justify="space-between" mb="sm" wrap="nowrap">
+                {isEditing ? (
+                  <Group gap={4} wrap="nowrap" style={{ flex: 1 }}>
+                    <TextInput
+                      size="xs"
+                      value={editingLabel}
+                      onChange={(e) => setEditingLabel(e.currentTarget.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') saveLabel(roomIdx);
+                        if (e.key === 'Escape') cancelEditing();
+                      }}
+                      placeholder={`${t('room') || 'غرفة'} ${roomIdx + 1}`}
+                      style={{ flex: 1 }}
+                      autoFocus
+                    />
+                    <ActionIcon size="sm" color="green" loading={savingLabel} onClick={() => saveLabel(roomIdx)}>
+                      <Check size={14} />
+                    </ActionIcon>
+                    <ActionIcon size="sm" color="gray" onClick={cancelEditing}>
+                      <X size={14} />
+                    </ActionIcon>
+                  </Group>
+                ) : (
+                  <Group gap={4} wrap="nowrap">
+                    <Badge size="lg" variant="light" color="brown">
+                      {displayLabel}
+                    </Badge>
+                    <ActionIcon size="xs" variant="subtle" color="gray" onClick={() => startEditing(roomIdx, savedLabel || '')}>
+                      <Pencil size={12} />
+                    </ActionIcon>
+                  </Group>
+                )}
+                <Text size="xs" c="dimmed" style={{ whiteSpace: 'nowrap' }}>
+                  {roomBeds.filter((b) => b.used).length}/{roomBeds.length}
+                </Text>
+              </Group>
+              <Group gap={8} wrap="wrap">
+                {roomBeds.map((bed) => (
+                  <BedSlot
+                    key={bed.index}
+                    bed={bed}
+                    onNavigateToBooking={() => bed.booking_id && navigate(`/bookings/${bed.booking_id}`)}
+                    t={t}
+                  />
+                ))}
+              </Group>
+            </Card>
+          );
+        })}
       </SimpleGrid>
     </Stack>
   );

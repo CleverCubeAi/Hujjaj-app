@@ -383,7 +383,7 @@ export function ReportsPage() {
               <Card withBorder p="md" radius="md">
                 <Group justify="space-between">
                   <div>
-                    <Text size="xs" c="dimmed" tt="uppercase">{t('total_revenue') || 'إجمالي الإيرادات'}</Text>
+                    <Text size="xs" c="dimmed" tt="uppercase">{t('total_agreed') || 'المتفق عليه'}</Text>
                     <Text fw={700} size="xl" c="green">
                       {formatCurrency(reportData.financial.total_revenue)}
                     </Text>
