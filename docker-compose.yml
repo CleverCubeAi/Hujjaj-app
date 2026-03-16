@@ -40,7 +40,7 @@ services:
       args:
         - VITE_SUPABASE_URL=${SUPABASE_URL}
         - VITE_SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
-        - VITE_API_URL=${VITE_API_URL:-http://localhost:3001/api}
+        - VITE_API_URL=${VITE_API_URL:-/api}
     container_name: ashamel-frontend
     restart: unless-stopped
     ports:
