@@ -140,7 +140,6 @@ export function RoomMap({
 
   // Calculate stats based on PILGRIMS (source of truth), not roomType.total_rooms
   const roomsNeeded = Math.ceil(pilgrimsCount / capacity);
-  const totalBeds = roomsNeeded * capacity; // Beds needed for all pilgrims
   const occupiedBeds = safeAssignments.length;
   const occupancyPercent = pilgrimsCount > 0 ? Math.round((occupiedBeds / pilgrimsCount) * 100) : 0;
 

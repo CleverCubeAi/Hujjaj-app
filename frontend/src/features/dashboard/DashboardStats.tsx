@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { SimpleGrid, Paper, Text, Group, RingProgress, Card, Title, Stack, Box, ThemeIcon, Progress, Badge, Alert } from '@mantine/core';
 import { useTranslation } from 'react-i18next';
-import { Users, BedDouble, Plane, CreditCard, TrendingUp, TrendingDown, Building2, CalendarDays, Info } from 'lucide-react';
+import { Users, CreditCard, TrendingUp, TrendingDown, CalendarDays, Info } from 'lucide-react';
 import { api } from '../../lib/api';
 import { useAuth } from '../../providers/AuthProvider';
 
@@ -83,7 +83,6 @@ export function DashboardStats() {
     userRole: '',
     isFiltered: false
   });
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -93,7 +92,7 @@ export function DashboardStats() {
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
       } finally {
-        setLoading(false);
+        // loading handled via data
       }
     };
 
@@ -101,9 +100,7 @@ export function DashboardStats() {
   }, []);
 
   const paymentPercentage = data.financial.paymentPercentage;
-  const isAdmin = role === 'agency_admin' || role === 'super_admin';
-  const isManager = role === 'manager';
-  
+
   const getRoleLabel = () => {
     if (role === 'agent') return t('agent') || 'وكيل';
     if (role === 'manager') return t('manager') || 'مدير';

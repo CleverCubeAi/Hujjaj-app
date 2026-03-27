@@ -1,0 +1,93 @@
+﻿
+> frontend@0.0.0 build
+> tsc -b && vite build
+
+src/features/bookings/BookingDetailsPage.tsx(5,3): error TS6133: 'Paper' is declared but its value is never read.
+src/features/bookings/BookingDetailsPage.tsx(14,3): error TS6133: 'Divider' is declared but its value is never read.
+src/features/bookings/BookingPaymentPage.tsx(316,63): error TS2322: Type 'string | Date' is not assignable to type 'Date'.
+  Type 'string' is not assignable to type 'Date'.
+src/features/bookings/BookingsPage.tsx(42,3): error TS6133: 'RefreshCw' is declared but its value is never read.
+src/features/bookings/RoomMap.tsx(143,9): error TS6133: 'totalBeds' is declared but its value is never read.
+src/features/dashboard/DashboardStats.tsx(4,17): error TS6133: 'BedDouble' is declared but its value is never read.
+src/features/dashboard/DashboardStats.tsx(4,28): error TS6133: 'Plane' is declared but its value is never read.
+src/features/dashboard/DashboardStats.tsx(4,73): error TS6133: 'Building2' is declared but its value is never read.
+src/features/dashboard/DashboardStats.tsx(86,10): error TS6133: 'loading' is declared but its value is never read.
+src/features/dashboard/DashboardStats.tsx(104,9): error TS6133: 'isAdmin' is declared but its value is never read.
+src/features/dashboard/DashboardStats.tsx(105,9): error TS6133: 'isManager' is declared but its value is never read.
+src/features/expenses/ExpenseForm.tsx(9,3): error TS6133: 'Divider' is declared but its value is never read.
+src/features/expenses/ExpenseForm.tsx(10,3): error TS6133: 'Text' is declared but its value is never read.
+src/features/expenses/ExpenseForm.tsx(11,3): error TS6133: 'Badge' is declared but its value is never read.
+src/features/expenses/ExpenseForm.tsx(44,32): error TS2339: Property 'linked_resource_type' does not exist on type '{ category: string; category_id: string | null; description: string; amount: number; paid_date: Date | null; season_id: string; }'.
+src/features/expenses/ExpenseForm.tsx(45,16): error TS2339: Property 'linked_resource_type' does not exist on type '{ category: string; category_id: string | null; description: string; amount: number; paid_date: Date | null; season_id: string; }'.
+src/features/expenses/ExpenseForm.tsx(46,9): error TS2304: Cannot find name 'loadAccommodations'.
+src/features/expenses/ExpenseForm.tsx(47,23): error TS2339: Property 'linked_resource_type' does not exist on type '{ category: string; category_id: string | null; description: string; amount: number; paid_date: Date | null; season_id: string; }'.
+src/features/expenses/ExpenseForm.tsx(48,9): error TS2304: Cannot find name 'loadFlights'.
+src/features/expenses/ExpenseForm.tsx(51,28): error TS2339: Property 'linked_resource_type' does not exist on type '{ category: string; category_id: string | null; description: string; amount: number; paid_date: Date | null; season_id: string; }'.
+src/features/expenses/ExpenseForm.tsx(56,9): error TS2353: Object literal may only specify known properties, and 'expense_type' does not exist in type 'SetStateAction<{ category: string; category_id: string | null; description: string; amount: number; paid_date: Date | null; season_id: string; }>'.
+src/features/expenses/ExpenseForm.tsx(212,48): error TS2322: Type 'string | null' is not assignable to type 'Date | null'.
+  Type 'string' is not assignable to type 'Date'.
+src/features/expenses/ExpensesList.tsx(3,39): error TS6133: 'Select' is declared but its value is never read.
+src/features/expenses/ExpensesList.tsx(4,3): error TS6133: 'Badge' is declared but its value is never read.
+src/features/expenses/ExpensesList.tsx(4,28): error TS6133: 'Progress' is declared but its value is never read.
+src/features/expenses/PrepaymentBalances.tsx(22,1): error TS6133: 'ExpenseForm' is declared but its value is never read.
+src/features/expenses/PrepaymentBalances.tsx(54,30): error TS2339: Property 'getPrepaymentBalances' does not exist on type '{ login: (email: string, password: string) => Promise<any>; register: (data: any) => Promise<any>; getSeasons: () => Promise<any>; getSeasonById: (id: string) => Promise<...>; ... 153 more ...; deleteMessageTemplate: (id: string) => Promise<...>; }'.
+src/features/expenses/PrepaymentBalances.tsx(73,30): error TS2339: Property 'getExpenseAllocations' does not exist on type '{ login: (email: string, password: string) => Promise<any>; register: (data: any) => Promise<any>; getSeasons: () => Promise<any>; getSeasonById: (id: string) => Promise<...>; ... 153 more ...; deleteMessageTemplate: (id: string) => Promise<...>; }'.
+src/features/flights/FlightsList.tsx(8,21): error TS6133: 'TimeInput' is declared but its value is never read.
+src/features/flights/FlightsList.tsx(310,20): error TS2686: 'React' refers to a UMD global, but the current file is a module. Consider adding an import instead.
+src/features/flights/FlightsList.tsx(456,19): error TS2686: 'React' refers to a UMD global, but the current file is a module. Consider adding an import instead.
+src/features/flights/FlightsList.tsx(530,54): error TS2322: Type 'string | null' is not assignable to type 'Date | null'.
+  Type 'string' is not assignable to type 'Date'.
+src/features/flights/FlightsList.tsx(540,54): error TS2322: Type 'string | null' is not assignable to type 'Date | null'.
+  Type 'string' is not assignable to type 'Date'.
+src/features/inventory/FlightInventoryForm.tsx(201,9): error TS6133: 'costRequiredForClass' is declared but its value is never read.
+src/features/inventory/FlightInventoryForm.tsx(201,52): error TS2531: Object is possibly 'null'.
+src/features/inventory/FlightInventoryForm.tsx(201,52): error TS2365: Operator '>' cannot be applied to types 'string | number' and 'number'.
+src/features/inventory/FlightInventoryPage.tsx(54,25): error TS6133: 'setFlightFilter' is declared but its value is never read.
+src/features/inventory/HotelInventoryForm.tsx(318,36): error TS2322: Type '{ children: string; size: "sm"; fw: number; required: true; }' is not assignable to type 'IntrinsicAttributes & TextProps & ComponentProp<"p"> & Omit<Omit<DetailedHTMLProps<HTMLAttributes<HTMLParagraphElement>, HTMLParagraphElement>, "ref">, "component" | keyof TextProps> & { ...; }'.
+  Property 'required' does not exist on type 'IntrinsicAttributes & TextProps & ComponentProp<"p"> & Omit<Omit<DetailedHTMLProps<HTMLAttributes<HTMLParagraphElement>, HTMLParagraphElement>, "ref">, "component" | keyof TextProps> & { ...; }'.
+src/features/inventory/HotelInventoryPage.tsx(67,31): error TS6133: 'setAccommodationFilter' is declared but its value is never read.
+src/features/inventory/HotelInventoryPage.tsx(70,26): error TS6133: 'setRoomTypeFilter' is declared but its value is never read.
+src/features/pilgrims/PilgrimsPage.tsx(5,57): error TS6133: 'Box' is declared but its value is never read.
+src/features/reports/HandoversList.tsx(176,15): error TS2322: Type 'Dispatch<SetStateAction<Date | null>>' is not assignable to type '(value: string | null) => void'.
+  Types of parameters 'value' and 'value' are incompatible.
+    Type 'string | null' is not assignable to type 'SetStateAction<Date | null>'.
+      Type 'string' is not assignable to type 'SetStateAction<Date | null>'.
+src/features/reports/HandoversList.tsx(183,15): error TS2322: Type 'Dispatch<SetStateAction<Date | null>>' is not assignable to type '(value: string | null) => void'.
+  Types of parameters 'value' and 'value' are incompatible.
+    Type 'string | null' is not assignable to type 'SetStateAction<Date | null>'.
+      Type 'string' is not assignable to type 'SetStateAction<Date | null>'.
+src/features/reports/HandoverStatusModal.tsx(340,51): error TS6133: 'index' is declared but its value is never read.
+src/features/reports/ReportsPage.tsx(5,12): error TS6133: 'Box' is declared but its value is never read.
+src/features/reports/ReportsPage.tsx(5,28): error TS6133: 'Progress' is declared but its value is never read.
+src/features/reports/ReportsPage.tsx(12,3): error TS6133: 'FileText' is declared but its value is never read.
+src/features/reports/ReportsPage.tsx(15,9): error TS6133: 'HandCoins' is declared but its value is never read.
+src/features/reports/ReportsPage.tsx(182,19): error TS6133: 'setIsAdmin' is declared but its value is never read.
+src/features/reports/ReportsPage.tsx(341,13): error TS2322: Type 'Dispatch<SetStateAction<Date | null>>' is not assignable to type '(value: string | null) => void'.
+  Types of parameters 'value' and 'value' are incompatible.
+    Type 'string | null' is not assignable to type 'SetStateAction<Date | null>'.
+      Type 'string' is not assignable to type 'SetStateAction<Date | null>'.
+src/features/reports/ReportsPage.tsx(350,13): error TS2322: Type 'Dispatch<SetStateAction<Date | null>>' is not assignable to type '(value: string | null) => void'.
+  Types of parameters 'value' and 'value' are incompatible.
+    Type 'string | null' is not assignable to type 'SetStateAction<Date | null>'.
+      Type 'string' is not assignable to type 'SetStateAction<Date | null>'.
+src/features/reports/ReportsPage.tsx(1062,22): error TS18048: 'financialStatus.balance.net_balance' is possibly 'undefined'.
+src/features/reports/ReportsPage.tsx(1062,65): error TS18047: 'financialStatus' is possibly 'null'.
+src/features/settings/AgencySettings.tsx(35,10): error TS6133: 'agency' is declared but its value is never read.
+src/features/settings/DiscountSettings.tsx(21,3): error TS6133: 'Tooltip' is declared but its value is never read.
+src/features/settings/DiscountSettings.tsx(216,41): error TS2345: Argument of type '{ name: string; name_ar: string; discount_type: "percent" | "fixed"; discount_value: number; max_discount_amount: number | null; min_booking_amount: number | null; is_default: boolean; is_active: boolean; sort_order: number; }' is not assignable to parameter of type '{ name: string; name_ar?: string | undefined; discount_type: "fixed" | "percent"; discount_value: number; max_discount_amount?: number | undefined; min_booking_amount?: number | undefined; is_default?: boolean | undefined; is_active?: boolean | undefined; sort_order?: number | undefined; }'.
+  Types of property 'max_discount_amount' are incompatible.
+    Type 'number | null' is not assignable to type 'number | undefined'.
+      Type 'null' is not assignable to type 'number | undefined'.
+src/features/settings/PreferencesSettings.tsx(18,9): error TS6133: 'user' is declared but its value is never read.
+src/features/settings/ProfileSettings.tsx(26,9): error TS6133: 'user' is declared but its value is never read.
+src/features/settings/TeamManagement.tsx(22,3): error TS6133: 'Divider' is declared but its value is never read.
+src/features/settings/TeamManagement.tsx(229,71): error TS2345: Argument of type 'DiscountPermission[]' is not assignable to parameter of type '{ discount_setting_id: string; usage_limit?: number | undefined; reset_period?: "daily" | "weekly" | "monthly" | "never" | undefined; is_active?: boolean | undefined; }[]'.
+  Type 'DiscountPermission' is not assignable to type '{ discount_setting_id: string; usage_limit?: number | undefined; reset_period?: "daily" | "weekly" | "monthly" | "never" | undefined; is_active?: boolean | undefined; }'.
+    Types of property 'usage_limit' are incompatible.
+      Type 'number | null' is not assignable to type 'number | undefined'.
+        Type 'null' is not assignable to type 'number | undefined'.
+src/features/settings/TeamManagement.tsx(249,67): error TS2345: Argument of type 'DiscountPermission[]' is not assignable to parameter of type '{ discount_setting_id: string; usage_limit?: number | undefined; reset_period?: "daily" | "weekly" | "monthly" | "never" | undefined; is_active?: boolean | undefined; }[]'.
+  Type 'DiscountPermission' is not assignable to type '{ discount_setting_id: string; usage_limit?: number | undefined; reset_period?: "daily" | "weekly" | "monthly" | "never" | undefined; is_active?: boolean | undefined; }'.
+    Types of property 'usage_limit' are incompatible.
+      Type 'number | null' is not assignable to type 'number | undefined'.
+        Type 'null' is not assignable to type 'number | undefined'.

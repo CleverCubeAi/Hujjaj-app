@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Paper,
   Title,
@@ -19,7 +19,6 @@ import { useTranslation } from 'react-i18next';
 import { api } from '../../lib/api';
 import { notifications } from '@mantine/notifications';
 import { Eye } from 'lucide-react';
-import { ExpenseForm } from './ExpenseForm';
 
 interface PrepaymentExpense {
   id: string;

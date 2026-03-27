@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { NavLink, Stack, Divider, Text, Box, Collapse } from '@mantine/core';
 import { Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -17,7 +17,6 @@ import {
   PackagePlus,
   ChevronDown,
   ChevronRight,
-  Warehouse,
   BedDouble
 } from 'lucide-react';
 

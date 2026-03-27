@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Modal,
   Stack,
@@ -8,7 +8,6 @@ import {
   Textarea,
   Button,
   Group,
-  Text,
   Alert
 } from '@mantine/core';
 import { DateInput } from '@mantine/dates';
@@ -51,7 +50,7 @@ export function HandoverFormModal({
   const [amount, setAmount] = useState<number | ''>(
     defaultType === 'sales_to_admin' ? salesAmount : expenseAmount
   );
-  const [handoverDate, setHandoverDate] = useState<Date | null>(new Date());
+  const [handoverDate, setHandoverDate] = useState<string | null>(new Date().toISOString().split('T')[0]);
   const [paymentMethod, setPaymentMethod] = useState<string | null>(null);
   const [paymentReference, setPaymentReference] = useState('');
   const [recipientId, setRecipientId] = useState<string | null>(null);
@@ -82,7 +81,7 @@ export function HandoverFormModal({
     if (opened) {
       setHandoverType(defaultType);
       setAmount(defaultType === 'sales_to_admin' ? salesAmount : expenseAmount);
-      setHandoverDate(new Date());
+      setHandoverDate(new Date().toISOString().split('T')[0]);
       setPaymentMethod(null);
       setPaymentReference('');
       setRecipientId(null);
@@ -145,7 +144,7 @@ export function HandoverFormModal({
       await api.createHandover({
         handover_type: handoverType as 'sales_to_admin' | 'expense_reimbursement',
         amount: Number(amount),
-        handover_date: handoverDate?.toISOString().split('T')[0],
+        handover_date: handoverDate || undefined,
         payment_method: paymentMethod as 'wire' | 'check' | 'cash',
         payment_reference: paymentReference || undefined,
         recipient_user_id: recipientId,

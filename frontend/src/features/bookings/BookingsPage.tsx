@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { 
   Title, 
   Paper, 
@@ -38,8 +38,7 @@ import {
   Trash2,
   Archive,
   AlertTriangle,
-  Clock,
-  RefreshCw
+  Clock
 } from 'lucide-react';
 
 interface Booking {

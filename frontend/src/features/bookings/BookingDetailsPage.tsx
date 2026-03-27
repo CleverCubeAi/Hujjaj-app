@@ -1,8 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Title,
-  Paper,
   Stack,
   Group,
   Text,
@@ -11,7 +10,6 @@ import {
   Table,
   Card,
   SimpleGrid,
-  Divider,
   LoadingOverlay,
   Alert,
   Progress

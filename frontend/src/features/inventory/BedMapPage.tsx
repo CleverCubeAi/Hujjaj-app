@@ -116,7 +116,7 @@ export function BedMapPage() {
   const roomType = inventory.room_type;
   const totalRooms = Math.ceil(inventory.beds_purchased / beds_per_room);
 
-  const roomsGrid: typeof beds[][] = [];
+  const roomsGrid: BedMapData['beds'][] = [];
   for (let r = 0; r < totalRooms; r++) {
     roomsGrid.push(beds.filter((b) => b.room_index === r));
   }

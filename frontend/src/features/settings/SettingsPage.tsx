@@ -1,4 +1,3 @@
-import React from 'react';
 import { Tabs, Container, Title } from '@mantine/core';
 import { useAuth } from '../../providers/AuthProvider';
 import { AgencySettings } from './AgencySettings';

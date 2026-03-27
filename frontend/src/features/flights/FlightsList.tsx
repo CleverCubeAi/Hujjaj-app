@@ -5,7 +5,7 @@ import {
   Select, ActionIcon, Menu, Badge, LoadingOverlay, Text, Alert,
   Switch, Card, Divider, NumberInput, Collapse, Box, Tooltip, Image
 } from '@mantine/core';
-import { DateInput, TimeInput } from '@mantine/dates';
+import { DateInput } from '@mantine/dates';
 import { notifications } from '@mantine/notifications';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../lib/api';
@@ -64,8 +64,8 @@ const initialForm = {
   carrier: '',
   departure_city: '',
   arrival_city: 'JED',
-  departure_date: null as Date | null,
-  return_date: null as Date | null,
+  departure_date: null as string | null,
+  return_date: null as string | null,
   season_id: '',
   is_direct: true,
   total_duration_minutes: 0,
@@ -142,8 +142,8 @@ export function FlightsList() {
       carrier: flight.carrier || '',
       departure_city: flight.departure_city || '',
       arrival_city: flight.arrival_city || '',
-      departure_date: flight.departure_date ? new Date(flight.departure_date) : null,
-      return_date: flight.return_date ? new Date(flight.return_date) : null,
+      departure_date: flight.departure_date ? flight.departure_date : null,
+      return_date: flight.return_date ? flight.return_date : null,
       season_id: flight.season_id || '',
       is_direct: flight.is_direct ?? true,
       total_duration_minutes: flight.total_duration_minutes || 0,

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Stack,
   Select,
@@ -315,7 +315,7 @@ export function HotelInventoryForm({ inventory, prefill, onSave, onCancel }: Hot
 
       {form.season_id && totalDays > 0 && (
         <Stack gap="xs">
-          <Text size="sm" fw={500} required>
+          <Text size="sm" fw={500}>
             {`${t('check_in_date') || 'تاريخ الوصول'} – ${t('check_out_date') || 'تاريخ المغادرة'}`}
           </Text>
           <RangeSlider

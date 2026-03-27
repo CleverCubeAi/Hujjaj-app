@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { 
-  Table, Title, Button, Group, Modal, Select, Stack, Paper, SimpleGrid, Card, Text, 
-  Badge, ActionIcon, Tabs, Progress, LoadingOverlay, Container
+  Table, Title, Button, Group, Modal, Stack, Paper, SimpleGrid, Card, Text, 
+  ActionIcon, Tabs, LoadingOverlay, Container
 } from '@mantine/core';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../lib/api';

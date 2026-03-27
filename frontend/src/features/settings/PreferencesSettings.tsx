@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Paper,
   Stack,
@@ -15,7 +15,7 @@ import { useAuth } from '../../providers/AuthProvider';
 
 export function PreferencesSettings() {
   const { t, i18n } = useTranslation();
-  const { user } = useAuth();
+  const { user: _user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [preferences, setPreferences] = useState({

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Paper,
   Table,
@@ -47,8 +47,8 @@ export function HandoversList({ seasonId, onViewDetails, refreshTrigger }: Hando
   // Filters
   const [filterType, setFilterType] = useState<string | null>(null);
   const [filterStatus, setFilterStatus] = useState<string | null>(null);
-  const [filterDateFrom, setFilterDateFrom] = useState<Date | null>(null);
-  const [filterDateTo, setFilterDateTo] = useState<Date | null>(null);
+  const [filterDateFrom, setFilterDateFrom] = useState<string | null>(null);
+  const [filterDateTo, setFilterDateTo] = useState<string | null>(null);
   const [showFilters, setShowFilters] = useState(false);
 
   const fetchHandovers = async () => {
@@ -58,8 +58,8 @@ export function HandoversList({ seasonId, onViewDetails, refreshTrigger }: Hando
       if (seasonId) params.season_id = seasonId;
       if (filterType) params.handover_type = filterType;
       if (filterStatus) params.status = filterStatus;
-      if (filterDateFrom) params.date_from = filterDateFrom.toISOString().split('T')[0];
-      if (filterDateTo) params.date_to = filterDateTo.toISOString().split('T')[0];
+      if (filterDateFrom) params.date_from = filterDateFrom;
+      if (filterDateTo) params.date_to = filterDateTo;
 
       const data = await api.getHandovers(params);
       setHandovers(data || []);

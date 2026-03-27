@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Paper,
   Table,
@@ -18,8 +18,7 @@ import {
   Accordion,
   Checkbox,
   NumberInput,
-  SimpleGrid,
-  Divider
+  SimpleGrid
 } from '@mantine/core';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../lib/api';
@@ -59,7 +58,7 @@ interface DiscountSetting {
 interface DiscountPermission {
   discount_setting_id: string;
   usage_limit: number | null;
-  reset_period: string;
+  reset_period: 'daily' | 'weekly' | 'monthly' | 'never';
   is_active: boolean;
 }
 
@@ -226,7 +225,7 @@ export function TeamManagement() {
         
         // Save discount permissions
         if (userDiscountPermissions.length > 0 || discountSettings.some(d => !d.is_default)) {
-          await api.bulkUpdateUserDiscountPermissions(editingUser.id, userDiscountPermissions);
+          await api.bulkUpdateUserDiscountPermissions(editingUser.id, userDiscountPermissions.map(p => ({ ...p, usage_limit: p.usage_limit ?? undefined })));
         }
         
         notifications.show({
@@ -246,7 +245,7 @@ export function TeamManagement() {
         
         // Save discount permissions for new user
         if (userDiscountPermissions.length > 0 && newUser?.id) {
-          await api.bulkUpdateUserDiscountPermissions(newUser.id, userDiscountPermissions);
+          await api.bulkUpdateUserDiscountPermissions(newUser.id, userDiscountPermissions.map(p => ({ ...p, usage_limit: p.usage_limit ?? undefined })));
         }
         
         notifications.show({

@@ -2,7 +2,7 @@ import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './providers/AuthProvider';
 import { DashboardLayout } from './components/layout/DashboardLayout';
-import { LoadingOverlay, Center, Text } from '@mantine/core';
+import { LoadingOverlay, Center } from '@mantine/core';
 import { Login } from './features/auth/Login';
 import { AccommodationGrid } from './features/accommodations/AccommodationGrid';
 import { PilgrimsPage } from './features/pilgrims/PilgrimsPage';

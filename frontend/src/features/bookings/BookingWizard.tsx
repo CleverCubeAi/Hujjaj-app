@@ -25,9 +25,8 @@ import {
   ScrollArea,
   Switch,
   Tooltip,
-  Progress
 } from '@mantine/core';
-import { DateInput } from '@mantine/dates';
+// DateInput intentionally not imported - using string dates
 import { notifications } from '@mantine/notifications';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -139,17 +138,17 @@ export function BookingWizard() {
   const [seasons, setSeasons] = useState<any[]>([]);
   const [flights, setFlights] = useState<any[]>([]);
   const [accommodations, setAccommodations] = useState<any[]>([]);
-  const [roomTypes, setRoomTypes] = useState<any[]>([]);
+  const [roomTypes, _setRoomTypes] = useState<any[]>([]);
   const [availableFlightInventory, setAvailableFlightInventory] = useState<any[]>([]);
-  const [availableRoomInventory, setAvailableRoomInventory] = useState<any[]>([]);
+  const [availableRoomInventory, _setAvailableRoomInventory] = useState<any[]>([]);
   const [selectedSeason, setSelectedSeason] = useState<string | null>(null);
   const [selectedFlight, setSelectedFlight] = useState<string | null>(null);
   const [selectedAccommodationId, setSelectedAccommodationId] = useState<string | null>(null); // Hotel from selected combo (same-for-all or per-pilgrim)
   const [selectedRoomType, setSelectedRoomType] = useState<string | null>(null);
-  const [selectedRoomInventory, setSelectedRoomInventory] = useState<string | null>(null); // legacy single - used when same for all with single batch
+  const [selectedRoomInventory, _setSelectedRoomInventory] = useState<string | null>(null); // legacy single
   const [selectedRoomInventories, setSelectedRoomInventories] = useState<any[]>([]); // multiple batches for same-for-all
   const [selectedFlightInventory, setSelectedFlightInventory] = useState<string | null>(null);
-  const [accommodationInventory, setAccommodationInventory] = useState<any[]>([]); // Inventory for selected accommodation
+  const [accommodationInventory, _setAccommodationInventory] = useState<any[]>([]); // Inventory for selected accommodation
   const [allSeasonInventory, setAllSeasonInventory] = useState<any[]>([]); // All inventory for season (multi-hotel)
   const [sameSelectionForAll, setSameSelectionForAll] = useState(true);
   const [pilgrimFlightSelections, setPilgrimFlightSelections] = useState<Record<number, string>>({});
@@ -176,10 +175,10 @@ export function BookingWizard() {
 
   // Booking locks state
   const [sessionId] = useState(() => `booking-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`);
-  const [activeLocks, setActiveLocks] = useState<BookingLock[]>([]);
+  const [_activeLocks, setActiveLocks] = useState<BookingLock[]>([]);
   const [otherAgentLocks, setOtherAgentLocks] = useState<BookingLock[]>([]);
   const [lockExpiresAt, setLockExpiresAt] = useState<Date | null>(null);
-  const lockRefreshInterval = useRef<NodeJS.Timeout | null>(null);
+  const lockRefreshInterval = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Load initial data
   useEffect(() => {
@@ -572,7 +571,8 @@ export function BookingWizard() {
       case 2:
         if (selectedSeason && selectedFlight) {
           const season = seasons.find(s => s.id === selectedSeason);
-          const flight = flights.find(f => f.id === selectedFlight);
+          const _flight = flights.find(f => f.id === selectedFlight);
+          void _flight;
           return season?.name || '';
         }
         return '';
@@ -700,13 +700,8 @@ export function BookingWizard() {
   const seasonStart = selectedSeasonData?.start_date ? new Date(selectedSeasonData.start_date) : null;
   const seasonEnd = selectedSeasonData?.end_date ? new Date(selectedSeasonData.end_date) : null;
   const seasonDays = seasonStart && seasonEnd ? Math.max(0, Math.ceil((seasonEnd.getTime() - seasonStart.getTime()) / (24 * 60 * 60 * 1000))) : 0;
-
-  const inventoryCoversSeason = (inv: any) => {
-    if (!seasonStart || !seasonEnd || !inv?.check_in_date || !inv?.check_out_date) return false;
-    const ci = new Date(inv.check_in_date);
-    const co = new Date(inv.check_out_date);
-    return ci <= seasonStart && co >= seasonEnd;
-  };
+  void seasonDays;
+  // (removed unused per-inventory _inventoryCoversSeason function)
 
   // Merge date ranges and check if they cover the full season
   const inventoriesCoverSeason = (inventories: any[]): boolean => {
@@ -764,16 +759,6 @@ export function BookingWizard() {
     return Math.max(0, Math.ceil((new Date(inv.check_out_date).getTime() - new Date(inv.check_in_date).getTime()) / (24 * 60 * 60 * 1000)));
   };
 
-  const getTotalNightsForInventories = (invs: any[]): number =>
-    invs.reduce((sum, inv) => sum + getNightsFromInventory(inv), 0);
-
-  // Room type "type" for filtering batches across hotels (double, triple, etc.)
-  const getBatchRoomTypeType = (): string | null => {
-    const combo = hotelRoomCombos.find(c => c.roomTypeId === selectedRoomType);
-    if (combo?.roomType?.type) return combo.roomType.type;
-    const first = getSameForAllInventories()[0];
-    return first?.room_types?.type || null;
-  };
 
   // Unique hotel+room_type combos derived from all season inventory (no top dropdown)
   const getHotelRoomCombos = (): Array<{ accommodationId: string; accommodation: any; roomTypeId: string; roomType: any; bedsAvailable: number; pricePerBed: number }> => {
@@ -807,16 +792,6 @@ export function BookingWizard() {
 
   const hotelRoomCombos = getHotelRoomCombos();
 
-  // Inventory batches for a room type (from allSeasonInventory - supports multi-hotel season coverage)
-  const getMergedBatchesForRoomType = (roomTypeId: string | null, roomTypeType: string | null): any[] => {
-    if (!roomTypeId && !roomTypeType) return [];
-    const ids = new Set<string>();
-    return allSeasonInventory.filter((inv: any) => {
-      const match = inv.room_type_id === roomTypeId || inv.room_types?.type === roomTypeType;
-      if (match && inv.id && !ids.has(inv.id)) { ids.add(inv.id); return true; }
-      return false;
-    });
-  };
 
   // 3-column layout helpers: Hotel → Type → Inventory
   const getUniqueHotels = (): Array<{ id: string; name: string; name_ar?: string; city?: string }> => {

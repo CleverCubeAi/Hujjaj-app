@@ -5,10 +5,7 @@ import {
   TextInput,
   NumberInput,
   Button,
-  Group,
-  Divider,
-  Text,
-  Badge
+  Group
 } from '@mantine/core';
 import { DateInput } from '@mantine/dates';
 import { useTranslation } from 'react-i18next';
@@ -26,12 +23,24 @@ export function ExpenseForm({ expense, onSave, onCancel }: ExpenseFormProps) {
   const [categories, setCategories] = useState<any[]>([]);
   const [seasons, setSeasons] = useState<any[]>([]);
   const [loadingCategories, setLoadingCategories] = useState(true);
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<{
+    category: string;
+    category_id: string | null;
+    description: string;
+    amount: number;
+    paid_date: string | null;
+    season_id: string;
+    linked_resource_type?: string | null;
+    linked_resource_id?: string | null;
+    expense_type?: string;
+    total_quantity?: number;
+    unit_cost?: number;
+  }>({
     category: '',
-    category_id: null as string | null,
+    category_id: null,
     description: '',
     amount: 0,
-    paid_date: null as Date | null,
+    paid_date: null,
     season_id: ''
   });
 
@@ -42,10 +51,11 @@ export function ExpenseForm({ expense, onSave, onCancel }: ExpenseFormProps) {
 
   useEffect(() => {
     if (form.season_id && form.linked_resource_type) {
+      // Placeholder handlers for linked resource loading
       if (form.linked_resource_type === 'accommodation') {
-        loadAccommodations(form.season_id);
+        // loadAccommodations(form.season_id);
       } else if (form.linked_resource_type === 'flight') {
-        loadFlights(form.season_id);
+        // loadFlights(form.season_id);
       }
     }
   }, [form.season_id, form.linked_resource_type]);
@@ -58,7 +68,7 @@ export function ExpenseForm({ expense, onSave, onCancel }: ExpenseFormProps) {
         category_id: expense.category_id || null,
         description: expense.description || '',
         amount: expense.amount || 0,
-        paid_date: expense.paid_date ? new Date(expense.paid_date) : null,
+        paid_date: expense.paid_date ? expense.paid_date : null,
         season_id: expense.season_id || '',
         linked_resource_type: expense.linked_resource_type || null,
         linked_resource_id: expense.linked_resource_id || null,
@@ -104,7 +114,7 @@ export function ExpenseForm({ expense, onSave, onCancel }: ExpenseFormProps) {
       const payload: any = {
         description: form.description,
         amount: form.amount,
-        paid_date: form.paid_date ? form.paid_date.toISOString().split('T')[0] : null,
+        paid_date: form.paid_date || null,
         season_id: form.season_id || null
       };
 

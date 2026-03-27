@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { AppShell, Burger, Group, Text, ActionIcon, Avatar, Box, Badge, Image } from '@mantine/core';
+import { AppShell, Burger, Group, Text, ActionIcon, Avatar, Box, Image } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { useAuth } from '../../providers/AuthProvider';
 import { Sidebar } from './Sidebar';

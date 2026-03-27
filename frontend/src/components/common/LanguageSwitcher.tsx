@@ -1,4 +1,3 @@
-import React from 'react';
 import { SegmentedControl } from '@mantine/core';
 import { useTranslation } from 'react-i18next';
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Modal,
   Stack,
@@ -337,7 +337,7 @@ export function HandoverStatusModal({
             <Divider label={t('status_history') || 'سجل الحالات'} labelPosition="center" />
             
             <Timeline active={handover.status_history.length - 1} bulletSize={24} lineWidth={2}>
-              {handover.status_history.map((item, index) => (
+              {handover.status_history.map((item) => (
                 <Timeline.Item
                   key={item.id}
                   bullet={

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import {
   Paper,
@@ -64,10 +64,10 @@ export function HotelInventoryPage() {
   const [editingInventory, setEditingInventory] = useState<HotelInventory | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<HotelInventory | null>(null);
   const [seasonFilter, setSeasonFilter] = useState<string | null>(null);
-  const [accommodationFilter, setAccommodationFilter] = useState<string | null>(
+  const [accommodationFilter, _setAccommodationFilter] = useState<string | null>(
     (location.state as any)?.accommodation_id || null
   );
-  const [roomTypeFilter, setRoomTypeFilter] = useState<string | null>(
+  const [roomTypeFilter, _setRoomTypeFilter] = useState<string | null>(
     (location.state as any)?.room_type_id || null
   );
   const [seasons, setSeasons] = useState<any[]>([]);

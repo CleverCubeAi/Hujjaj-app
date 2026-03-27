@@ -3,7 +3,6 @@ import {
   Box,
   Image,
   Text,
-  Group,
   ActionIcon,
   LoadingOverlay,
   Paper,

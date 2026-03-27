@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Paper,
   Table,
@@ -18,7 +18,6 @@ import {
   Tabs,
   Card,
   SimpleGrid,
-  Tooltip,
   Alert
 } from '@mantine/core';
 import { useTranslation } from 'react-i18next';
@@ -206,14 +205,22 @@ export function DiscountSettings() {
 
     try {
       if (editingDiscount) {
-        await api.updateDiscountSetting(editingDiscount.id, form);
+        await api.updateDiscountSetting(editingDiscount.id, {
+          ...form,
+          max_discount_amount: form.max_discount_amount ?? undefined,
+          min_booking_amount: form.min_booking_amount ?? undefined
+        });
         notifications.show({
           title: t('success') || 'نجاح',
           message: t('discount_updated') || 'تم تحديث الخصم',
           color: 'green'
         });
       } else {
-        await api.createDiscountSetting(form);
+        await api.createDiscountSetting({
+          ...form,
+          max_discount_amount: form.max_discount_amount ?? undefined,
+          min_booking_amount: form.min_booking_amount ?? undefined
+        });
         notifications.show({
           title: t('success') || 'نجاح',
           message: t('discount_created') || 'تم إنشاء الخصم',

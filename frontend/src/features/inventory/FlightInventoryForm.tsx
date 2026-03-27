@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Stack,
   Select,
@@ -197,8 +197,6 @@ export function FlightInventoryForm({ inventory, onSave, onCancel }: FlightInven
     business: t('business') || 'Business',
     first_class: t('first_class') || 'First class'
   };
-
-  const costRequiredForClass = (cls: SeatClass) => form[`${cls}_seats` as keyof typeof form] > 0;
 
   return (
     <Stack gap="md">

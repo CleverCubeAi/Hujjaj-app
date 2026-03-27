@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Paper,
   Stack,
@@ -32,7 +32,7 @@ export function AgencySettings() {
   const isAdmin = role === 'agency_admin' || role === 'super_admin';
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [agency, setAgency] = useState<Agency | null>(null);
+  const [_agency, setAgency] = useState<Agency | null>(null);
   const [form, setForm] = useState({
     name: '',
     country: '',
@@ -71,8 +71,7 @@ export function AgencySettings() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const data = await api.updateAgency(form);
-      setAgency(data);
+      await api.updateAgency(form);
       notifications.show({
         title: t('success') || 'نجاح',
         message: t('agency_updated') || 'تم تحديث إعدادات الوكالة بنجاح',

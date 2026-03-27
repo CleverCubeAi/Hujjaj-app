@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Title,
@@ -61,7 +61,7 @@ export function BookingPaymentPage() {
   const [paymentForm, setPaymentForm] = useState({
     amount: 0,
     payment_method: 'cash',
-    payment_date: new Date(),
+    payment_date: new Date().toISOString().split('T')[0],
     reference: '',
     notes: ''
   });
@@ -107,7 +107,7 @@ export function BookingPaymentPage() {
       await api.createBookingPayment(id!, {
         amount: paymentForm.amount,
         payment_method: paymentForm.payment_method,
-        payment_date: paymentForm.payment_date,
+        payment_date: paymentForm.payment_date || new Date().toISOString().split('T')[0],
         reference: paymentForm.reference || undefined,
         notes: paymentForm.notes || undefined
       });
@@ -115,7 +115,7 @@ export function BookingPaymentPage() {
       setPaymentForm({
         amount: 0,
         payment_method: 'cash',
-        payment_date: new Date(),
+        payment_date: new Date().toISOString().split('T')[0],
         reference: '',
         notes: ''
       });
@@ -313,7 +313,7 @@ export function BookingPaymentPage() {
           <DateInput
             label={t('date') || 'التاريخ'}
             value={paymentForm.payment_date}
-            onChange={(v) => setPaymentForm({ ...paymentForm, payment_date: v || new Date() })}
+            onChange={(v) => setPaymentForm({ ...paymentForm, payment_date: v || new Date().toISOString().split('T')[0] })}
             valueFormat="YYYY-MM-DD"
           />
 

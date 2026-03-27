@@ -1,18 +1,18 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Title, Stack, Paper, Card, Group, Text, Select,
   Button, Table, Badge, SimpleGrid, Tabs, LoadingOverlay,
-  Divider, Box, ThemeIcon, Progress, Accordion, Alert
+  Divider, ThemeIcon, Accordion, Alert
 } from '@mantine/core';
 import { DateInput } from '@mantine/dates';
 import { useTranslation } from 'react-i18next';
 import { notifications } from '@mantine/notifications';
 import { api } from '../../lib/api';
 import {
-  FileText, Download, TrendingUp, DollarSign, Users, Calendar,
+  Download, TrendingUp, DollarSign, Users, Calendar,
   Hotel, Plane, CreditCard, BarChart3, Wallet, ArrowUpCircle,
   ArrowDownCircle, Receipt, BedDouble, PlaneTakeoff, AlertCircle,
-  Send, HandCoins
+  Send
 } from 'lucide-react';
 import { HandoverFormModal } from './HandoverFormModal';
 import { HandoversList } from './HandoversList';
@@ -166,8 +166,8 @@ export function ReportsPage() {
   const [reportData, setReportData] = useState<ReportData | null>(null);
   const [financialStatus, setFinancialStatus] = useState<FinancialStatusData | null>(null);
   const [selectedSeason, setSelectedSeason] = useState<string | null>(null);
-  const [dateFrom, setDateFrom] = useState<Date | null>(null);
-  const [dateTo, setDateTo] = useState<Date | null>(null);
+  const [dateFrom, setDateFrom] = useState<string | null>(null);
+  const [dateTo, setDateTo] = useState<string | null>(null);
   const [seasons, setSeasons] = useState<Array<{ id: string; name: string }>>([]);
   const [activeTab, setActiveTab] = useState<string | null>('financial');
 
@@ -179,7 +179,7 @@ export function ReportsPage() {
   const [defaultHandoverType, setDefaultHandoverType] = useState<'sales_to_admin' | 'expense_reimbursement'>('sales_to_admin');
 
   // Check if current user is admin (simplified - in real app, get from auth context)
-  const [isAdmin, setIsAdmin] = useState(true); // TODO: Get from auth context
+  const isAdmin = true; // TODO: Get from auth context
 
   const fetchSeasons = async () => {
     try {
@@ -197,12 +197,10 @@ export function ReportsPage() {
       const params = new URLSearchParams();
       if (selectedSeason) params.set('season_id', selectedSeason);
       if (dateFrom) {
-        const dateStr = dateFrom instanceof Date ? dateFrom.toISOString().split('T')[0] : dateFrom;
-        params.set('date_from', dateStr);
+        params.set('date_from', dateFrom);
       }
       if (dateTo) {
-        const dateStr = dateTo instanceof Date ? dateTo.toISOString().split('T')[0] : dateTo;
-        params.set('date_to', dateStr);
+        params.set('date_to', dateTo);
       }
 
       const data = await api.getReports(params.toString());
@@ -225,10 +223,10 @@ export function ReportsPage() {
       const params: any = {};
       if (selectedSeason) params.season_id = selectedSeason;
       if (dateFrom) {
-        params.date_from = dateFrom instanceof Date ? dateFrom.toISOString().split('T')[0] : dateFrom;
+        params.date_from = dateFrom;
       }
       if (dateTo) {
-        params.date_to = dateTo instanceof Date ? dateTo.toISOString().split('T')[0] : dateTo;
+        params.date_to = dateTo;
       }
 
       const data = await api.getFinancialStatus(params);
@@ -261,8 +259,8 @@ export function ReportsPage() {
     try {
       const params = new URLSearchParams();
       if (selectedSeason) params.set('season_id', selectedSeason);
-      if (dateFrom) params.set('date_from', dateFrom.toISOString().split('T')[0]);
-      if (dateTo) params.set('date_to', dateTo.toISOString().split('T')[0]);
+      if (dateFrom) params.set('date_from', dateFrom);
+      if (dateTo) params.set('date_to', dateTo);
       params.set('format', format);
       params.set('tab', activeTab || 'financial');
 
@@ -1059,7 +1057,7 @@ export function ReportsPage() {
           fetchFinancialStatus();
         }}
         defaultType={defaultHandoverType}
-        salesAmount={financialStatus?.balance.net_balance > 0 ? financialStatus.balance.net_balance : 0}
+        salesAmount={financialStatus?.balance?.net_balance != null && financialStatus.balance.net_balance > 0 ? financialStatus.balance.net_balance : 0}
         expenseAmount={financialStatus?.summary.total_purchases || 0}
         seasonId={selectedSeason}
       />

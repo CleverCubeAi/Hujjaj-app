@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Table, Badge, Title, Button, Group, Modal, TextInput, Select, Stack, Paper, ActionIcon, Menu } from '@mantine/core';
 import { DateInput } from '@mantine/dates';
 import { useTranslation } from 'react-i18next';
@@ -228,7 +228,7 @@ export function SeasonsList() {
             valueFormat="YYYY-MM-DD"
             value={form.start_date}
             onChange={(date) => {
-              const validDate = date ? (date instanceof Date ? date : new Date(date)) : null;
+              const validDate = date ? new Date(date) : null;
               setForm({ ...form, start_date: validDate });
             }}
           />
@@ -238,7 +238,7 @@ export function SeasonsList() {
             valueFormat="YYYY-MM-DD"
             value={form.end_date}
             onChange={(date) => {
-              const validDate = date ? (date instanceof Date ? date : new Date(date)) : null;
+              const validDate = date ? new Date(date) : null;
               setForm({ ...form, end_date: validDate });
             }}
           />

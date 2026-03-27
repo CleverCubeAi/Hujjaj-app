@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
   Paper,
@@ -27,6 +27,7 @@ import { useAuth } from '../../providers/AuthProvider';
 
 interface FlightInventory {
   id: string;
+  seat_class?: string;
   seats_purchased: number;
   seats_sold: number;
   seats_available: number;
@@ -50,7 +51,7 @@ export default function FlightInventoryPage() {
   const [editingInventory, setEditingInventory] = useState<FlightInventory | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<FlightInventory | null>(null);
   const [seasonFilter, setSeasonFilter] = useState<string | null>(null);
-  const [flightFilter, setFlightFilter] = useState<string | null>(
+  const [flightFilter, _setFlightFilter] = useState<string | null>(
     (location.state as any)?.flight_id || null
   );
   const [seasons, setSeasons] = useState<any[]>([]);
@@ -332,7 +333,7 @@ export default function FlightInventoryPage() {
             <Button variant="subtle" onClick={() => setDeleteConfirm(null)}>
               {t('cancel') || 'إلغاء'}
             </Button>
-            <Button color="red" onClick={handleDelete} disabled={deleteConfirm?.seats_sold > 0}>
+            <Button color="red" onClick={handleDelete} disabled={(deleteConfirm?.seats_sold ?? 0) > 0}>
               {t('delete') || 'حذف'}
             </Button>
           </Group>

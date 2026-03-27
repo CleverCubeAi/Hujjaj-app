@@ -33,7 +33,7 @@ const AppProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   return (
-    <DirectionProvider direction={dir}>
+    <DirectionProvider initialDirection={dir}>
       <MantineProvider
         theme={{
           fontFamily: "'Tajawal', -apple-system, BlinkMacSystemFont, system-ui, sans-serif",

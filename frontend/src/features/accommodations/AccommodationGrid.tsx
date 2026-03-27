@@ -1,13 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../../lib/api';
 import { 
   Title, Paper, Table, Badge, Text, Loader, Center, Button, Group, 
-  Modal, TextInput, Select, Stack, ActionIcon, Menu, NumberInput,
-  Accordion, Card, Tooltip, Image, Box
+  Modal, TextInput, Select, Stack, ActionIcon,
+  Accordion, Card, Tooltip, Box
 } from '@mantine/core';
-import { Plus, MoreVertical, Edit, Trash2, Building, BedDouble, Package, AlertCircle } from 'lucide-react';
+import { Plus, Edit, Trash2, Building, BedDouble, Package, AlertCircle } from 'lucide-react';
 import { countries, getCitiesByCountry, getLocalizedLabel } from '../../data/locations';
 import { ImageUpload } from '../../components/common/ImageUpload';
 import { HotelInventoryForm } from '../inventory/HotelInventoryForm';

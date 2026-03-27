@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { 
   Table, Title, Button, Group, Modal, TextInput, Stack, Paper, 
   Badge, Card, Text, SimpleGrid, Select, ActionIcon,
-  LoadingOverlay, Alert, Checkbox, Divider, ScrollArea, Box,
+  LoadingOverlay, Alert, Checkbox, Divider, ScrollArea,
   Avatar, Image, Anchor
 } from '@mantine/core';
 import { DateInput } from '@mantine/dates';

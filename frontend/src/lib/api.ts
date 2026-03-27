@@ -15,8 +15,8 @@ async function request(endpoint: string, options: RequestInit = {}) {
     headers: {
       'Content-Type': 'application/json',
       ...authHeader,
-      ...options.headers,
-    },
+      ...(options.headers as Record<string, string> || {}),
+    } as Record<string, string>,
   });
 
   if (!response.ok) {
@@ -34,7 +34,7 @@ async function requestMultipart(endpoint: string, formData: FormData) {
     method: 'POST',
     headers: {
       ...authHeader,
-    },
+    } as Record<string, string>,
     body: formData,
   });
 
@@ -213,7 +213,7 @@ export const api = {
       method: 'GET',
       headers: {
         ...authHeader,
-      },
+      } as Record<string, string>,
     });
 
     if (!response.ok) {
@@ -310,7 +310,7 @@ export const api = {
       method: 'GET',
       headers: {
         ...authHeader,
-      },
+      } as Record<string, string>,
     });
 
     if (!response.ok) {
@@ -635,4 +635,11 @@ export const api = {
   updateMessageTemplate: (id: string, data: { name?: string; name_ar?: string; body?: string; channel?: string }) =>
     request(`/messages/templates/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   deleteMessageTemplate: (id: string) => request(`/messages/templates/${id}`, { method: 'DELETE' }),
+  getPrepaymentBalances: (params?: any) => {
+    const query = new URLSearchParams();
+    if (params?.resource_type) query.set('resource_type', params.resource_type);
+    if (params?.season_id) query.set('season_id', params.season_id);
+    return request(`/expenses/prepayments${query.toString() ? `?${query}` : ''}`);
+  },
+  getExpenseAllocations: (expenseId: string) => request(`/expenses/${expenseId}/allocations`),
 };
