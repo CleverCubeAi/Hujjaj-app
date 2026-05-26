@@ -19,6 +19,7 @@ import { api } from '../../lib/api';
 import { useAuth } from '../../providers/AuthProvider';
 import { DeleteBookingModal } from './DeleteBookingModal';
 import { notifications } from '@mantine/notifications';
+import { formatLocalDate } from '../../lib/dates';
 import {
   ArrowRight,
   User,
@@ -132,6 +133,7 @@ export function BookingDetailsPage() {
   const { t } = useTranslation();
   const { role } = useAuth();
   const [booking, setBooking] = useState<Booking | null>(null);
+  const [bookingHotels, setBookingHotels] = useState<any[]>([]); // Issue #24: all hotels for multi-hotel
   const [loading, setLoading] = useState(true);
   const [deleteModalOpened, setDeleteModalOpened] = useState(false);
   const [extendingHold, setExtendingHold] = useState(false);
@@ -146,8 +148,12 @@ export function BookingDetailsPage() {
 
   const fetchBooking = async () => {
     try {
-      const data = await api.getBookingById(id!);
+      const [data, hotels] = await Promise.all([
+        api.getBookingById(id!),
+        api.getBookingHotels(id!).catch(() => []),
+      ]);
       setBooking(data);
+      setBookingHotels(Array.isArray(hotels) ? hotels : []);
     } catch (error) {
       console.error('Error fetching booking:', error);
     } finally {
@@ -325,24 +331,40 @@ export function BookingDetailsPage() {
                 </Text>
                 <Group gap="xs">
                   <Calendar size={14} />
-                  <Text size="sm">{new Date(booking.flights.departure_date).toLocaleDateString('en')}</Text>
+                  <Text size="sm">{formatLocalDate(booking.flights.departure_date)}</Text>
                 </Group>
               </>
             )}
           </Stack>
         </Card>
 
-        {/* Accommodation */}
+        {/* Accommodation — Issue #24 fix: list ALL hotels for multi-hotel bookings */}
         <Card withBorder p="md">
           <Group mb="sm">
             <Building2 size={20} />
             <Text fw={600}>{t('accommodation') || 'السكن'}</Text>
           </Group>
           <Stack gap="xs">
-            <Text>{booking.accommodations?.name_ar || booking.accommodations?.name}</Text>
-            <Text size="sm" c="dimmed">{booking.accommodations?.city}</Text>
-            {booking.room_types && (
-              <Badge variant="light">{t(booking.room_types.type) || booking.room_types.type}</Badge>
+            {bookingHotels.length > 0 ? (
+              bookingHotels.map((h: any, i: number) => (
+                <Group key={i} justify="space-between" wrap="nowrap">
+                  <div>
+                    <Text size="sm">{h.accommodation?.name_ar || h.accommodation?.name}</Text>
+                    <Text size="xs" c="dimmed">{h.accommodation?.city}</Text>
+                  </div>
+                  {h.room_type && (
+                    <Badge variant="light">{t(h.room_type.type) || h.room_type.type}</Badge>
+                  )}
+                </Group>
+              ))
+            ) : (
+              <>
+                <Text>{booking.accommodations?.name_ar || booking.accommodations?.name}</Text>
+                <Text size="sm" c="dimmed">{booking.accommodations?.city}</Text>
+                {booking.room_types && (
+                  <Badge variant="light">{t(booking.room_types.type) || booking.room_types.type}</Badge>
+                )}
+              </>
             )}
           </Stack>
         </Card>
@@ -357,16 +379,16 @@ export function BookingDetailsPage() {
         <SimpleGrid cols={3}>
           <div>
             <Text size="sm" c="dimmed">{t('total') || 'المجموع'}</Text>
-            <Text size="xl" fw={700}>{booking.total_amount?.toLocaleString('en')} د.م</Text>
+            <Text size="xl" fw={700}>{booking.total_amount?.toLocaleString('en')} {t('mad') || 'MAD'}</Text>
           </div>
           <div>
             <Text size="sm" c="dimmed">{t('paid') || 'المدفوع'}</Text>
-            <Text size="xl" fw={700} c="green">{booking.paid_amount?.toLocaleString('en')} د.م</Text>
+            <Text size="xl" fw={700} c="green">{booking.paid_amount?.toLocaleString('en')} {t('mad') || 'MAD'}</Text>
           </div>
           <div>
             <Text size="sm" c="dimmed">{t('remaining') || 'المتبقي'}</Text>
             <Text size="xl" fw={700} c={booking.remaining_balance > 0 ? 'red' : 'green'}>
-              {booking.remaining_balance?.toLocaleString('en')} د.م
+              {booking.remaining_balance?.toLocaleString('en')} {t('mad') || 'MAD'}
             </Text>
           </div>
         </SimpleGrid>

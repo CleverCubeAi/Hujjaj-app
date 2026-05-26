@@ -156,21 +156,37 @@ export function FlightsList() {
 
   const formatDateForApi = (date: Date | string | null | undefined): string => {
     if (date == null) return '';
-    const d = typeof date === 'string' ? new Date(date) : date;
-    if (!(d instanceof Date) || isNaN(d.getTime())) return '';
-    const year = d.getFullYear();
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
+    // String in YYYY-MM-DD form: pass through, never round-trip through Date (avoids TZ shift)
+    if (typeof date === 'string') return date.slice(0, 10);
+    if (date instanceof Date && !isNaN(date.getTime())) {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+    return '';
+  };
+
+  // Normalize Mantine DateInput onChange value (string | Date | null) to YYYY-MM-DD string
+  const toIsoDate = (value: unknown): string | null => {
+    if (!value) return null;
+    if (typeof value === 'string') return value.slice(0, 10);
+    if (value instanceof Date && !isNaN(value.getTime())) {
+      const year = value.getFullYear();
+      const month = String(value.getMonth() + 1).padStart(2, '0');
+      const day = String(value.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+    return null;
   };
 
   const handleSave = async () => {
     try {
       const payload = {
-        code: form.code,
-        carrier: form.carrier,
-        departure_city: form.departure_city,
-        arrival_city: form.arrival_city,
+        code: form.code.trim(),
+        carrier: form.carrier.trim(),
+        departure_city: form.departure_city.trim(),
+        arrival_city: form.arrival_city.trim(),
         departure_date: formatDateForApi(form.departure_date),
         return_date: formatDateForApi(form.return_date),
         season_id: form.season_id || undefined,
@@ -255,7 +271,12 @@ export function FlightsList() {
 
   const formatDate = (dateStr: string) => {
     if (!dateStr) return '-';
-    return new Date(dateStr).toLocaleDateString('en');
+    // Avoid Date object (which parses YYYY-MM-DD as UTC and shifts in local TZ).
+    // Split the ISO date string directly and format as DD/MM/YYYY.
+    const datePart = dateStr.split('T')[0];
+    const [y, m, d] = datePart.split('-');
+    if (!y || !m || !d) return dateStr;
+    return `${d}/${m}/${y}`;
   };
 
   const formatDuration = (minutes: number) => {
@@ -527,7 +548,7 @@ export function FlightsList() {
               label={t('departure_date') || 'تاريخ المغادرة'}
               placeholder={t('select_date') || 'اختر التاريخ'}
               value={form.departure_date}
-              onChange={(date) => setForm({ ...form, departure_date: date })}
+              onChange={(value) => setForm({ ...form, departure_date: toIsoDate(value) })}
               valueFormat="YYYY-MM-DD"
               clearable
               required
@@ -537,7 +558,7 @@ export function FlightsList() {
               label={t('return_date') || 'تاريخ العودة'}
               placeholder={t('select_date') || 'اختر التاريخ'}
               value={form.return_date}
-              onChange={(date) => setForm({ ...form, return_date: date })}
+              onChange={(value) => setForm({ ...form, return_date: toIsoDate(value) })}
               valueFormat="YYYY-MM-DD"
               clearable
               popoverProps={{ withinPortal: true }}

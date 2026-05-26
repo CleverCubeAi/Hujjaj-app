@@ -39,7 +39,6 @@
   "paid": "Payé",
   "unpaid": "Non payé",
   "partial": "Partiel",
-  
   "clients": "Clients",
   "client": "Client",
   "bookings": "Réservations",
@@ -60,7 +59,6 @@
   "female": "Femme",
   "couple": "Couple",
   "family_group": "Groupe familial",
-  
   "name": "Nom",
   "name_ar": "Nom en arabe",
   "full_name": "Nom complet",
@@ -74,12 +72,10 @@
   "search": "Rechercher",
   "no_data": "Aucune donnée",
   "confirm_delete": "Êtes-vous sûr de vouloir supprimer ?",
-  
   "draft": "Brouillon",
   "confirmed": "Confirmé",
   "cancelled": "Annulé",
   "completed": "Terminé",
-  
   "category": "Catégorie",
   "description": "Description",
   "price": "Prix",
@@ -89,7 +85,6 @@
   "tours": "Visites",
   "insurance": "Assurance",
   "other": "Autre",
-  
   "season": "Saison",
   "flight": "Vol",
   "accommodation": "Hébergement",
@@ -98,12 +93,10 @@
   "quantity": "Quantité",
   "unit_price": "Prix unitaire",
   "total_price": "Prix total",
-  
   "cash": "Espèces",
   "card": "Carte",
   "bank_transfer": "Virement bancaire",
   "check": "Chèque",
-  
   "passport_number": "N° Passeport",
   "passport_scan": "Copie du passeport",
   "passport_scan_upload": "Télécharger la photo du passeport",
@@ -114,18 +107,15 @@
   "date_of_birth": "Date de naissance",
   "spouse": "Époux/Épouse",
   "parent": "Parent",
-  
   "auto_allocate": "Attribution automatique",
   "manual_allocate": "Attribution manuelle",
   "room_number": "N° Chambre",
   "assign": "Attribuer",
-  
   "confirm_booking": "Confirmer la réservation",
   "cancel_booking": "Annuler la réservation",
   "add_payment": "Ajouter un paiement",
   "view_details": "Voir les détails",
   "print_invoice": "Imprimer la facture",
-  
   "add_accommodation": "Ajouter un hébergement",
   "edit_accommodation": "Modifier l'hébergement",
   "delete_accommodation_confirm": "Êtes-vous sûr de vouloir supprimer cet hébergement ? Tous les types de chambres seront également supprimés.",
@@ -136,7 +126,6 @@
   "total_rooms": "Nombre de chambres",
   "price_per_bed": "Prix par lit",
   "city": "Ville",
-  
   "add_season": "Ajouter une saison",
   "add_new_season": "Ajouter une nouvelle saison",
   "edit_season": "Modifier la saison",
@@ -150,7 +139,6 @@
   "hajj": "Hajj",
   "omra": "Omra",
   "ramadan": "Ramadan",
-  
   "select_hotel": "Sélectionner l'hôtel",
   "rooms": "chambres",
   "room": "chambre",
@@ -160,7 +148,6 @@
   "not_enough_beds": "Pas assez de lits disponibles",
   "will_use": "Utilisation de",
   "rooms_for": "chambres pour",
-  
   "room_allocation_rules": "Règles d'attribution des chambres",
   "gender_separation": "Séparation par genre (hommes avec hommes, femmes avec femmes)",
   "mahram_sharing": "Les mahram (couples, mère/fils) peuvent partager la même chambre",
@@ -172,12 +159,10 @@
   "female_rooms": "Chambres femmes",
   "total_rooms_needed": "Total des chambres nécessaires",
   "skip_and_finish": "Passer et terminer",
-  
   "back": "Retour",
   "booking_not_found": "Réservation non trouvée",
   "trip_info": "Informations du voyage",
   "financial_summary": "Résumé financier",
-  
   "invoice_not_found": "Facture non trouvée",
   "invoice_number": "Numéro de facture",
   "date": "Date",
@@ -191,7 +176,6 @@
   "no_payments": "Aucun paiement enregistré",
   "fully_paid": "Entièrement payé",
   "half_payment": "Moitié du montant",
-  
   "unassigned": "Non attribués",
   "unassigned_pilgrims": "Pèlerins sans chambre",
   "no_room_assignments": "Aucune attribution de chambre. Utilisez l'attribution automatique ou manuelle.",
@@ -200,7 +184,7 @@
   "male_room": "Chambre hommes",
   "female_room": "Chambre femmes",
   "mixed_room": "Chambre mixte (mahram)",
-  "select_pilgrim": "Sélectionner le pèlerin",
+  "select_pilgrim": "Sélectionnez le pèlerin",
   "enter_room_number": "Entrer le numéro de chambre",
   "existing_rooms": "Chambres existantes",
   "manual_assign": "Attribution manuelle",
@@ -209,7 +193,6 @@
   "allocation_failed": "Échec de l'attribution des chambres",
   "assignment_failed": "Échec de l'attribution de la chambre",
   "missing_accommodation_info": "Informations d'hébergement incomplètes",
-  
   "visual_map": "Plan des chambres",
   "list_view": "Vue liste",
   "no_room_type_selected": "Aucun type de chambre sélectionné",
@@ -223,7 +206,6 @@
   "all_pilgrims_assigned": "Tous les pèlerins ont été attribués",
   "assign_to_room": "Attribuer à la chambre",
   "select_pilgrim_to_assign": "Sélectionnez le pèlerin à attribuer à cette chambre",
-  
   "add_pilgrim": "Ajouter pèlerin",
   "add_client_as_pilgrim": "Ajouter le client comme pèlerin",
   "add_client_as_pilgrim_too": "Ajouter le client comme pèlerin aussi",
@@ -242,11 +224,9 @@
   "is_mahram_desc": "Ce pèlerin peut partager une chambre avec le sexe opposé (comme conjoint, parent/enfant)",
   "mahram_with": "Mahram avec qui?",
   "select_mahram_partner": "Sélectionnez le pèlerin qui est mahram avec cette personne",
-  "select_pilgrim": "Sélectionnez le pèlerin",
   "select_mahram_required": "Vous devez sélectionner le mahram",
   "none": "Aucun",
   "please_select_client": "Veuillez sélectionner ou créer un client",
-  
   "total_pilgrims": "Total pèlerins",
   "linked_to_client": "Lié à un client",
   "search_pilgrims": "Rechercher par nom ou passeport...",
@@ -286,7 +266,6 @@
   "pilgrim_created": "Pèlerin ajouté",
   "pilgrim_updated": "Pèlerin mis à jour",
   "pilgrim_deleted": "Pèlerin supprimé",
-  
   "add_flight": "Ajouter un vol",
   "edit_flight": "Modifier le vol",
   "flight_code": "Code vol",
@@ -303,7 +282,6 @@
   "flight_updated": "Vol mis à jour",
   "flight_deleted": "Vol supprimé",
   "delete_flight_warning": "Êtes-vous sûr de vouloir supprimer ce vol ?",
-  
   "direct": "Direct",
   "indirect": "Indirect",
   "stops": "escales",
@@ -322,10 +300,8 @@
   "if_different": "Si différent",
   "hour_short": "h",
   "min_short": "m",
-  
   "bookings_management": "Gestion des réservations",
   "configuration": "Configuration",
-  
   "reports": "Rapports",
   "export_pdf": "Exporter PDF",
   "export_excel": "Exporter Excel",
@@ -353,7 +329,6 @@
   "total_flights": "Total des vols",
   "by_season": "Par saison",
   "error_fetching_reports": "Erreur lors de la récupération des rapports",
-  
   "settings": "Paramètres",
   "profile": "Profil",
   "agency": "Agence",
@@ -434,7 +409,6 @@
   "test_phone_required": "Veuillez entrer un numéro de téléphone de test",
   "test_sms": "Tester SMS",
   "test_sms_sent": "SMS de test envoyé avec succès",
-  
   "expense_categories": "Catégories de dépenses",
   "add_category": "Ajouter une catégorie",
   "edit_category": "Modifier la catégorie",
@@ -469,7 +443,6 @@
   "simple_expenses": "Dépenses simples",
   "prepayment_expenses": "Acomptes",
   "filter_by_type": "Filtrer par type",
-  "type": "Type",
   "total_expenses": "Total des dépenses",
   "paid_date": "Date de paiement",
   "expense_allocations": "Allocations de dépenses",
@@ -485,7 +458,6 @@
   "amount_required": "Le montant est requis",
   "confirm_delete_category": "Êtes-vous sûr de vouloir supprimer cette catégorie ?",
   "resource": "Ressource",
-  
   "hotel_room_inventory": "Inventaire des lits d'hôtel",
   "hotel_bed_inventory": "Inventaire des lits d'hôtel",
   "flight_seat_inventory": "Inventaire des sièges d'avion",
@@ -565,7 +537,7 @@
   "season_period": "Période de la saison",
   "full_coverage_required": "La période entière doit être couverte",
   "days": "jours",
-  "to": "à",
+  "to": "À",
   "selection_must_cover_full_season": "Le lot sélectionné ne couvre pas toute la période. Choisissez un lot qui couvre toute la saison.",
   "covers_full_season": "Couverture complète",
   "partial_period": "Période partielle",
@@ -576,7 +548,6 @@
   "selected_batches": "Lots sélectionnés",
   "add_from_hotel": "Ajouter depuis l'hôtel",
   "or_change_to_add_from_another": "(changez l'hôtel ci-dessus pour ajouter depuis un autre)",
-  
   "security_settings": "Paramètres de sécurité",
   "deletion_password": "Mot de passe de suppression",
   "deletion_password_info": "Le mot de passe de suppression est requis pour supprimer des réservations. C'est un mot de passe séparé du mot de passe de connexion pour une protection supplémentaire.",
@@ -594,7 +565,6 @@
   "deletion_password_set": "Mot de passe de suppression défini avec succès",
   "deletion_password_min_length": "Le mot de passe de suppression doit contenir au moins 4 caractères",
   "current_deletion_password_required": "Le mot de passe de suppression actuel est requis",
-  
   "delete_booking": "Supprimer la réservation",
   "delete_warning_title": "Attention: Cette action est irréversible",
   "delete_booking_warning": "Vous êtes sur le point de supprimer cette réservation. Toutes les allocations associées seront annulées.",
@@ -627,7 +597,6 @@
   "client_pilgrims": "Pèlerins associés à ce client",
   "pilgrims_can_be_added_in_next_step": "Vous pouvez ajouter ces pèlerins à l'étape suivante",
   "existing_client_pilgrims": "Pèlerins existants de ce client",
-  
   "financial_status": "Situation Financière",
   "balance_to_admin": "Solde dû à l'administration",
   "amount_to_hand_admin": "Montant à remettre à l'administration",
@@ -658,7 +627,6 @@
   "hand_amount_to_admin_message": "Ce montant doit être remis à l'administration",
   "receive_amount_from_admin_message": "Ce montant doit être reçu de l'administration",
   "error_fetching_financial_status": "Erreur lors de la récupération de la situation financière",
-
   "financial_handovers": "Remises financières",
   "create_handover": "Créer une demande de remise",
   "notify_handover": "Notifier la remise",
@@ -673,7 +641,6 @@
   "enter_wire_number": "Entrez le numéro de virement",
   "check_number": "Numéro de chèque",
   "enter_check_number": "Entrez le numéro de chèque",
-  "recipient": "Destinataire",
   "select_recipient": "Sélectionner le destinataire",
   "select_payment_method": "Sélectionner le mode de paiement",
   "send_handover": "Envoyer la demande",
@@ -692,7 +659,6 @@
   "status_refused": "Refusé",
   "status_canceled": "Annulé",
   "from": "De",
-  "to": "À",
   "handover_details": "Détails de la remise financière",
   "error_fetching_handover": "Erreur lors de la récupération des données",
   "change_status": "Changer le statut",
@@ -706,12 +672,11 @@
   "update_status": "Mettre à jour le statut",
   "status_history": "Historique des statuts",
   "close": "Fermer",
-  
-  "branches": "Agences",
+  "branches": "Succursales",
   "branch": "Agence",
-  "branch_management": "Gestion des agences",
-  "add_branch": "Ajouter une agence",
-  "edit_branch": "Modifier l'agence",
+  "branch_management": "Gestion des succursales",
+  "add_branch": "Ajouter une succursale",
+  "edit_branch": "Modifier la succursale",
   "branch_name": "Nom de l'agence",
   "branch_name_placeholder": "Ex: Agence Casablanca",
   "branch_name_required": "Le nom de l'agence est requis",
@@ -743,7 +708,7 @@
   "delete_branch_warning": "Si l'agence contient des utilisateurs, elle sera désactivée au lieu d'être supprimée.",
   "no_branches_yet": "Aucune agence pour le moment",
   "create_first_branch": "Créer la première agence",
-  "search_branches": "Rechercher des agences...",
+  "search_branches": "Rechercher des succursales...",
   "admin_only_feature": "Cette fonctionnalité est réservée aux administrateurs",
   "all_branches": "Toutes les agences",
   "no_branch": "Sans agence",
@@ -759,7 +724,6 @@
   "showing_all_data": "Affichage de toutes les données de l'agence",
   "agent_dashboard_info": "Vous ne voyez que les réservations que vous avez créées.",
   "manager_dashboard_info": "Vous ne voyez que les réservations de votre agence.",
-
   "agency_logo": "Logo de l'agence",
   "logo_hint": "Le logo apparaît dans l'en-tête et les factures. Taille idéale 200×200 pixels.",
   "profile_photo": "Photo de profil",
@@ -772,8 +736,6 @@
   "upload_failed": "Échec du téléchargement de l'image",
   "invalid_image_type": "Type d'image invalide. Utilisez JPEG, PNG, GIF ou WebP.",
   "image_too_large": "Image trop grande. Taille maximale 5 Mo.",
-
-  "rooms_available": "Chambres disponibles",
   "no_inventory_for_type": "Pas de stock pour ce type - Veuillez acheter du stock d'abord",
   "not_enough_beds_available": "Pas assez de lits disponibles",
   "select_inventory_batch": "Choisir du stock disponible",
@@ -782,17 +744,14 @@
   "not_enough_beds_in_batch": "Pas assez de lits dans ce lot",
   "no_room_inventory_available": "Aucun lit disponible en stock pour ce type",
   "no_inventory_for_hotel": "Aucun stock pour cet hôtel. Veuillez acheter du stock depuis la page d'inventaire avant de réserver.",
-  
   "lock_expires_at": "Réservation temporaire expire à",
   "reserved": "Réservé temporairement",
   "other_agents_booking": "D'autres agents réservent actuellement",
   "booking_beds": "réserve",
   "expires": "expire",
   "first_come_first_served": "Premier arrivé, premier servi. Les lits affichés peuvent ne pas être disponibles si un autre agent termine sa réservation avant vous.",
-  
   "no_pilgrims_to_assign": "Aucun pèlerin à affecter",
   "pilgrims_assigned": "pèlerins affectés",
-  
   "capacity_per_room": "Capacité/chambre",
   "inventory_purchased": "Stock acheté",
   "inventory_available": "Disponible à la réservation",
@@ -801,7 +760,6 @@
   "manage_inventory": "Gérer le stock",
   "some_room_types_no_inventory": "Certains types de chambres n'ont pas de stock",
   "add_inventory_to_book": "Les types de chambres sans stock n'apparaîtront pas dans les réservations. Ajoutez du stock depuis la page d'inventaire.",
-  
   "discounts": "Remises",
   "discount_settings": "Paramètres des remises",
   "discount_values": "Valeurs des remises",
@@ -828,7 +786,6 @@
   "sort_order": "Ordre d'affichage",
   "yes": "Oui",
   "no": "Non",
-  
   "user_permissions": "Permissions des utilisateurs",
   "user_discount_permissions": "Permissions de remises des utilisateurs",
   "assign_discount": "Attribuer une remise",
@@ -840,7 +797,6 @@
   "select_user_and_discount": "Veuillez sélectionner l'utilisateur et la remise",
   "default_discounts_note": "Les remises par défaut sont disponibles pour tous les utilisateurs automatiquement. Vous pouvez attribuer des remises supplémentaires à des utilisateurs spécifiques ici.",
   "no_permissions": "Aucune permission personnalisée. Les remises par défaut sont disponibles pour tous.",
-  
   "usage_limit": "Limite d'utilisation",
   "usage_limit_desc": "Laissez vide pour une utilisation illimitée",
   "leave_empty_unlimited": "Laissez vide pour une utilisation illimitée",
@@ -850,7 +806,6 @@
   "weekly": "Hebdomadaire",
   "monthly": "Mensuel",
   "never": "Jamais",
-  
   "usage_log": "Journal d'utilisation",
   "recent_discount_usage": "Journal d'utilisation des remises",
   "no_usage_log": "Aucun journal d'utilisation pour le moment.",
@@ -858,17 +813,14 @@
   "total_usage_count": "Nombre d'utilisations",
   "unique_users": "Utilisateurs",
   "booking_total": "Total de la réservation",
-  
   "discount_permissions": "Permissions de remises",
   "discount_permissions_desc": "Les remises par défaut sont disponibles pour tous. Sélectionnez les remises supplémentaires disponibles pour cet utilisateur.",
   "no_custom_discounts": "Aucune remise personnalisée. Toutes les remises sont par défaut et disponibles pour tous.",
-  
   "fill_required_fields": "Veuillez remplir les champs requis",
   "mad": "MAD",
   "user": "Utilisateur",
   "no_services_selected": "Aucun service sélectionné",
   "price_per_night": "nuit",
-
   "bed_map": "Plan des lits",
   "seat_map": "Plan des sièges",
   "inventory_not_found": "Inventaire introuvable",
@@ -878,5 +830,50 @@
   "front": "Avant",
   "rear": "Arrière",
   "cabin": "Cabine",
-  "seats": "place(s)"
+  "seats": "place(s)",
+  "payment": "Paiement",
+  "previous": "Précédent",
+  "next": "Suivant",
+  "existing_client": "Client existant",
+  "new_client": "Nouveau client",
+  "search_by_name_or_phone": "Rechercher par nom ou téléphone...",
+  "full_name_full": "Nom complet (prénom + nom)",
+  "full_name_ar_full": "Nom complet en arabe",
+  "additional_notes": "Notes additionnelles...",
+  "payment_amount": "Montant du paiement",
+  "enter_amount": "Entrer le montant",
+  "available_seats": "Sièges disponibles",
+  "sell_price": "Prix de vente",
+  "same_choice_for_all_pilgrims": "Même choix pour tous les pèlerins",
+  "different_choice_per_pilgrim": "Choix différent par pèlerin",
+  "extra_services_optional": "Services supplémentaires (optionnel)",
+  "apply_to_pilgrims": "Appliquer à",
+  "all_pilgrims_default": "Tous les pèlerins (par défaut)",
+  "service_total": "Total ligne",
+  "selected_discounts": "Remises appliquées",
+  "select_branch_optional": "Sélectionner une succursale (optionnel)",
+  "invalid_email_format": "Format e-mail invalide",
+  "payment_date": "Date de paiement",
+  "reference_number": "Numéro de référence",
+  "payment_notes_placeholder": "Notes sur le paiement (optionnel)",
+  "cash_method": "Espèces",
+  "card_method": "Carte",
+  "bank_transfer_method": "Virement bancaire",
+  "check_method": "Chèque",
+  "full_payment_btn": "Paiement complet",
+  "half_payment_btn": "Demi-paiement",
+  "booking_created_successfully": "Réservation créée avec succès",
+  "please_create_booking_first": "Veuillez d'abord créer la réservation",
+  "flight_number": "Numéro de vol",
+  "invoice_summary": "Résumé de la facture",
+  "description_col": "Description",
+  "quantity_col": "Quantité",
+  "price_col": "Prix",
+  "total_col": "Total",
+  "create_booking_btn": "Créer la réservation",
+  "total_general": "Total général",
+  "confirm_save_payment": "Confirmer et enregistrer le paiement",
+  "name_required": "Le nom de la remise est requis",
+  "discount_value_positive": "La valeur doit être strictement positive",
+  "percent_max_100": "Le pourcentage doit être entre 1 et 100"
 }

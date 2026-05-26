@@ -14,6 +14,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { api } from '../../lib/api';
 import { notifications } from '@mantine/notifications';
+import { parseLocalDate, formatLocalISO } from '../../lib/dates';
 
 interface HotelInventoryFormProps {
   inventory?: any;
@@ -71,11 +72,11 @@ export function HotelInventoryForm({ inventory, prefill, onSave, onCancel }: Hot
         room_type_id: inventory.room_type_id || '',
         rooms_purchased: rooms,
         total_purchase_cost: beds * pricePerBed,
-        check_in_date: inventory.check_in_date 
-          ? (inventory.check_in_date instanceof Date ? inventory.check_in_date : new Date(inventory.check_in_date))
+        check_in_date: inventory.check_in_date
+          ? (inventory.check_in_date instanceof Date ? inventory.check_in_date : parseLocalDate(inventory.check_in_date))
           : null,
-        check_out_date: inventory.check_out_date 
-          ? (inventory.check_out_date instanceof Date ? inventory.check_out_date : new Date(inventory.check_out_date))
+        check_out_date: inventory.check_out_date
+          ? (inventory.check_out_date instanceof Date ? inventory.check_out_date : parseLocalDate(inventory.check_out_date))
           : null,
         sell_price_per_bed: inventory.sell_price_per_bed || inventory.sell_price_per_room || null,
         supplier_type: (() => {
@@ -106,8 +107,8 @@ export function HotelInventoryForm({ inventory, prefill, onSave, onCancel }: Hot
   useEffect(() => {
     const season = seasons.find((s: any) => String(s.id) === String(form.season_id));
     if (!season?.start_date || !season?.end_date) return;
-    const start = new Date(season.start_date);
-    const end = new Date(season.end_date);
+    const start = parseLocalDate(season.start_date)!;
+    const end = parseLocalDate(season.end_date)!;
     const needsReset = !form.check_in_date || !form.check_out_date ||
       form.check_in_date < start || form.check_out_date > end;
     if (needsReset) {
@@ -155,8 +156,8 @@ export function HotelInventoryForm({ inventory, prefill, onSave, onCancel }: Hot
   const purchasePricePerBed = bedsPurchased > 0 ? form.total_purchase_cost / bedsPurchased : 0;
 
   const selectedSeason = seasons.find((s: any) => String(s.id) === String(form.season_id));
-  const seasonStart = selectedSeason?.start_date ? new Date(selectedSeason.start_date) : null;
-  const seasonEnd = selectedSeason?.end_date ? new Date(selectedSeason.end_date) : null;
+  const seasonStart = selectedSeason?.start_date ? parseLocalDate(selectedSeason.start_date) : null;
+  const seasonEnd = selectedSeason?.end_date ? parseLocalDate(selectedSeason.end_date) : null;
   const totalDays = seasonStart && seasonEnd
     ? Math.max(1, Math.ceil((seasonEnd.getTime() - seasonStart.getTime()) / (24 * 60 * 60 * 1000)) + 1)
     : 0;
@@ -213,12 +214,12 @@ export function HotelInventoryForm({ inventory, prefill, onSave, onCancel }: Hot
 
     setLoading(true);
     try {
-      const checkInDate = form.check_in_date instanceof Date 
-        ? form.check_in_date 
-        : new Date(form.check_in_date as any);
-      const checkOutDate = form.check_out_date instanceof Date 
-        ? form.check_out_date 
-        : new Date(form.check_out_date as any);
+      const checkInDate = form.check_in_date instanceof Date
+        ? form.check_in_date
+        : parseLocalDate(form.check_in_date as any);
+      const checkOutDate = form.check_out_date instanceof Date
+        ? form.check_out_date
+        : parseLocalDate(form.check_out_date as any);
 
       const payload: any = {
         season_id: form.season_id,
@@ -226,8 +227,8 @@ export function HotelInventoryForm({ inventory, prefill, onSave, onCancel }: Hot
         room_type_id: form.room_type_id,
         beds_purchased: bedsPurchased,
         purchase_price_per_bed: Math.round(purchasePricePerBed * 100) / 100,
-        check_in_date: checkInDate.toISOString().split('T')[0],
-        check_out_date: checkOutDate.toISOString().split('T')[0],
+        check_in_date: formatLocalISO(checkInDate),
+        check_out_date: formatLocalISO(checkOutDate),
         sell_price_per_bed: form.sell_price_per_bed || null,
         supplier_name: form.supplier_type === 'hotel' ? 'Hotel' : (form.supplier_type === 'other' ? form.supplier_name || null : null),
         notes: form.notes || null

@@ -1,6 +1,11 @@
 import { Request, Response } from 'express';
 import { supabaseAdmin as supabase } from '../services/supabase';
 
+// Issue #11: simple email validator. Strict enough to catch typos, loose enough to allow
+// real-world addresses. Empty/null passes through (email is optional).
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const isInvalidEmail = (e?: unknown) => typeof e === 'string' && e.length > 0 && !EMAIL_RE.test(e);
+
 // Get all clients for the agency
 export const getClients = async (req: Request, res: Response) => {
   try {
@@ -65,10 +70,13 @@ export const getClientById = async (req: Request, res: Response) => {
 export const createClient = async (req: Request, res: Response) => {
   try {
     const agencyId = req.user?.agency_id;
-    const { full_name, full_name_ar, email, phone, address, id_number, notes } = req.body;
+    const { full_name, full_name_ar, email, phone, address, id_number, notes, branch_id } = req.body;
 
     if (!full_name || !phone) {
       return res.status(400).json({ error: 'Full name and phone are required' });
+    }
+    if (isInvalidEmail(email)) {
+      return res.status(400).json({ error: 'Invalid email format', error_fr: 'Format e-mail invalide' });
     }
 
     const { data, error } = await supabase
@@ -81,7 +89,8 @@ export const createClient = async (req: Request, res: Response) => {
         phone,
         address,
         id_number,
-        notes
+        notes,
+        branch_id: branch_id || null, // Issue #10: now populated from form
       })
       .select()
       .single();
@@ -98,19 +107,20 @@ export const updateClient = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const agencyId = req.user?.agency_id;
-    const { full_name, full_name_ar, email, phone, address, id_number, notes } = req.body;
+    const { full_name, full_name_ar, email, phone, address, id_number, notes, branch_id } = req.body;
+
+    if (isInvalidEmail(email)) {
+      return res.status(400).json({ error: 'Invalid email format', error_fr: 'Format e-mail invalide' });
+    }
+
+    const updates: any = {
+      full_name, full_name_ar, email, phone, address, id_number, notes
+    };
+    if (branch_id !== undefined) updates.branch_id = branch_id || null;
 
     const { data, error } = await supabase
       .from('clients')
-      .update({
-        full_name,
-        full_name_ar,
-        email,
-        phone,
-        address,
-        id_number,
-        notes
-      })
+      .update(updates)
       .eq('id', id)
       .eq('agency_id', agencyId)
       .select()

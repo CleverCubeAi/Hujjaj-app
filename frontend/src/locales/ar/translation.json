@@ -39,7 +39,6 @@
   "paid": "مدفوع",
   "unpaid": "غير مدفوع",
   "partial": "جزئي",
-  
   "clients": "العملاء",
   "client": "عميل",
   "bookings": "الحجوزات",
@@ -60,7 +59,6 @@
   "female": "أنثى",
   "couple": "زوجين",
   "family_group": "مجموعة عائلية",
-  
   "name": "الاسم",
   "name_ar": "الاسم بالعربية",
   "full_name": "الاسم الكامل",
@@ -74,12 +72,10 @@
   "search": "بحث",
   "no_data": "لا توجد بيانات",
   "confirm_delete": "هل أنت متأكد من الحذف؟",
-  
   "draft": "مسودة",
   "confirmed": "مؤكد",
   "cancelled": "ملغى",
   "completed": "مكتمل",
-  
   "category": "الفئة",
   "description": "الوصف",
   "price": "السعر",
@@ -89,7 +85,6 @@
   "tours": "الجولات",
   "insurance": "التأمين",
   "other": "أخرى",
-  
   "season": "الموسم",
   "flight": "الرحلة",
   "accommodation": "السكن",
@@ -98,12 +93,10 @@
   "quantity": "الكمية",
   "unit_price": "سعر الوحدة",
   "total_price": "المجموع",
-  
   "cash": "نقداً",
   "card": "بطاقة",
   "bank_transfer": "تحويل بنكي",
   "check": "شيك",
-  
   "passport_number": "رقم الجواز",
   "passport_scan": "نسخة جواز السفر",
   "passport_scan_upload": "رفع صورة الجواز",
@@ -114,18 +107,15 @@
   "date_of_birth": "تاريخ الميلاد",
   "spouse": "زوج/زوجة",
   "parent": "ولي الأمر",
-  
   "auto_allocate": "توزيع تلقائي",
   "manual_allocate": "توزيع يدوي",
   "room_number": "رقم الغرفة",
   "assign": "تعيين",
-  
   "confirm_booking": "تأكيد الحجز",
   "cancel_booking": "إلغاء الحجز",
   "add_payment": "إضافة دفعة",
   "view_details": "عرض التفاصيل",
   "print_invoice": "طباعة الفاتورة",
-  
   "add_accommodation": "إضافة سكن",
   "edit_accommodation": "تعديل السكن",
   "delete_accommodation_confirm": "هل أنت متأكد من حذف هذا السكن؟ سيتم حذف جميع أنواع الغرف أيضاً.",
@@ -136,7 +126,6 @@
   "total_rooms": "عدد الغرف",
   "price_per_bed": "السعر لكل سرير",
   "city": "المدينة",
-  
   "add_season": "إضافة موسم",
   "add_new_season": "إضافة موسم جديد",
   "edit_season": "تعديل الموسم",
@@ -150,7 +139,6 @@
   "hajj": "حج",
   "omra": "عمرة",
   "ramadan": "رمضان",
-  
   "select_hotel": "اختر الفندق",
   "rooms": "غرف",
   "room": "غرفة",
@@ -160,7 +148,6 @@
   "not_enough_beds": "لا توجد أسرة كافية",
   "will_use": "سيتم استخدام",
   "rooms_for": "غرف لـ",
-  
   "room_allocation_rules": "قواعد توزيع الغرف",
   "gender_separation": "الفصل بين الجنسين (الرجال مع الرجال، النساء مع النساء)",
   "mahram_sharing": "المحارم (الأزواج، الأم/الابن) يمكنهم المشاركة في نفس الغرفة",
@@ -172,12 +159,10 @@
   "female_rooms": "غرف النساء",
   "total_rooms_needed": "إجمالي الغرف المطلوبة",
   "skip_and_finish": "تخطي والانتهاء",
-  
   "back": "رجوع",
   "booking_not_found": "الحجز غير موجود",
   "trip_info": "معلومات الرحلة",
   "financial_summary": "الملخص المالي",
-  
   "invoice_not_found": "الفاتورة غير موجودة",
   "invoice_number": "رقم الفاتورة",
   "date": "التاريخ",
@@ -191,7 +176,6 @@
   "no_payments": "لا توجد دفعات بعد",
   "fully_paid": "تم سداد المبلغ بالكامل",
   "half_payment": "نصف المبلغ",
-  
   "unassigned": "غير موزعين",
   "unassigned_pilgrims": "معتمرين بدون غرف",
   "no_room_assignments": "لم يتم توزيع الغرف بعد. استخدم التوزيع التلقائي أو قم بالتعيين يدوياً.",
@@ -209,7 +193,6 @@
   "allocation_failed": "فشل توزيع الغرف",
   "assignment_failed": "فشل تعيين الغرفة",
   "missing_accommodation_info": "معلومات السكن غير مكتملة",
-  
   "visual_map": "خريطة الغرف",
   "list_view": "عرض قائمة",
   "no_room_type_selected": "لم يتم تحديد نوع غرفة",
@@ -223,7 +206,6 @@
   "all_pilgrims_assigned": "تم توزيع جميع المعتمرين",
   "assign_to_room": "تعيين لغرفة",
   "select_pilgrim_to_assign": "اختر المعتمر لتعيينه في هذه الغرفة",
-  
   "add_pilgrim": "إضافة معتمر",
   "add_client_as_pilgrim": "إضافة العميل كمعتمر",
   "add_client_as_pilgrim_too": "إضافة العميل كمعتمر أيضاً",
@@ -242,11 +224,9 @@
   "is_mahram_desc": "يمكن لهذا المعتمر مشاركة الغرفة مع الجنس الآخر (مثل الزوج/الزوجة، الأب/الأم)",
   "mahram_with": "محرم مع من؟",
   "select_mahram_partner": "اختر المعتمر الذي يعتبر محرماً له",
-  "select_pilgrim": "اختر المعتمر",
   "select_mahram_required": "يجب اختيار المحرم",
   "none": "لا يوجد",
   "please_select_client": "يرجى اختيار أو إنشاء عميل",
-  
   "total_pilgrims": "إجمالي المعتمرين",
   "linked_to_client": "مرتبط بعميل",
   "search_pilgrims": "بحث بالاسم أو رقم الجواز...",
@@ -286,7 +266,6 @@
   "pilgrim_created": "تم إضافة المعتمر",
   "pilgrim_updated": "تم تحديث المعتمر",
   "pilgrim_deleted": "تم حذف المعتمر",
-  
   "add_flight": "إضافة رحلة",
   "edit_flight": "تعديل رحلة",
   "flight_code": "رمز الرحلة",
@@ -303,7 +282,6 @@
   "flight_updated": "تم تحديث الرحلة",
   "flight_deleted": "تم حذف الرحلة",
   "delete_flight_warning": "هل أنت متأكد من حذف هذه الرحلة؟",
-  
   "direct": "مباشر",
   "indirect": "غير مباشر",
   "stops": "توقفات",
@@ -322,10 +300,8 @@
   "if_different": "إذا كان مختلفاً",
   "hour_short": "س",
   "min_short": "د",
-  
   "bookings_management": "إدارة الحجوزات",
   "configuration": "الإعدادات والتكوين",
-  
   "reports": "التقارير",
   "export_pdf": "تصدير PDF",
   "export_excel": "تصدير Excel",
@@ -353,7 +329,6 @@
   "total_flights": "إجمالي الرحلات",
   "by_season": "حسب الموسم",
   "error_fetching_reports": "خطأ في جلب التقارير",
-  
   "settings": "الإعدادات",
   "profile": "الملف الشخصي",
   "agency": "الوكالة",
@@ -434,7 +409,6 @@
   "test_phone_required": "يرجى إدخال رقم هاتف للاختبار",
   "test_sms": "اختبار SMS",
   "test_sms_sent": "تم إرسال رسالة الاختبار بنجاح",
-  
   "expense_categories": "فئات المصاريف",
   "add_category": "إضافة فئة",
   "edit_category": "تعديل فئة",
@@ -469,7 +443,6 @@
   "simple_expenses": "مصاريف بسيطة",
   "prepayment_expenses": "دفعات مقدمة",
   "filter_by_type": "تصفية حسب النوع",
-  "type": "النوع",
   "total_expenses": "إجمالي المصاريف",
   "paid_date": "تاريخ الدفع",
   "expense_allocations": "توزيعات المصروف",
@@ -485,7 +458,6 @@
   "amount_required": "المبلغ مطلوب",
   "confirm_delete_category": "هل أنت متأكد من حذف هذه الفئة؟",
   "resource": "المورد",
-  
   "hotel_room_inventory": "مخزون أسرة الفنادق",
   "hotel_bed_inventory": "مخزون أسرة الفنادق",
   "flight_seat_inventory": "مخزون مقاعد الطائرات",
@@ -534,7 +506,7 @@
   "all_fields_required": "جميع الحقول المطلوبة يجب ملؤها",
   "check_out_after_check_in": "تاريخ المغادرة يجب أن يكون بعد تاريخ الوصول",
   "rooms_sold": "الغرف المباعة",
-  "rooms_available": "الغرف المتاحة",
+  "rooms_available": "غرف متاحة",
   "beds_sold": "الأسرة المباعة",
   "beds_available": "الأسرة المتاحة",
   "total_seats": "إجمالي المقاعد",
@@ -576,7 +548,6 @@
   "selected_batches": "الدفعات المختارة",
   "add_from_hotel": "أضف من الفندق",
   "or_change_to_add_from_another": "(غيّر الفندق أعلاه لإضافة من فندق آخر)",
-  
   "security_settings": "إعدادات الأمان",
   "deletion_password": "كلمة مرور الحذف",
   "deletion_password_info": "كلمة مرور الحذف مطلوبة لحذف الحجوزات. هذه كلمة مرور منفصلة عن كلمة مرور الدخول للحماية الإضافية.",
@@ -594,7 +565,6 @@
   "deletion_password_set": "تم تعيين كلمة مرور الحذف بنجاح",
   "deletion_password_min_length": "كلمة مرور الحذف يجب أن تكون 4 أحرف على الأقل",
   "current_deletion_password_required": "كلمة مرور الحذف الحالية مطلوبة",
-  
   "delete_booking": "حذف الحجز",
   "delete_warning_title": "تحذير: هذا الإجراء لا يمكن التراجع عنه",
   "delete_booking_warning": "أنت على وشك حذف هذا الحجز. سيتم التراجع عن جميع التخصيصات المرتبطة.",
@@ -627,7 +597,6 @@
   "client_pilgrims": "المعتمرين المرتبطين بهذا العميل",
   "pilgrims_can_be_added_in_next_step": "يمكنك إضافة هؤلاء المعتمرين في الخطوة التالية",
   "existing_client_pilgrims": "المعتمرين المسجلين لهذا العميل",
-  
   "financial_status": "الوضعية المالية",
   "balance_to_admin": "الرصيد المستحق للإدارة",
   "amount_to_hand_admin": "مبلغ يجب تسليمه للإدارة",
@@ -658,7 +627,6 @@
   "hand_amount_to_admin_message": "يجب تسليم هذا المبلغ للإدارة",
   "receive_amount_from_admin_message": "يجب استلام هذا المبلغ من الإدارة",
   "error_fetching_financial_status": "خطأ في جلب الوضعية المالية",
-
   "financial_handovers": "التسليمات المالية",
   "create_handover": "إنشاء طلب تسليم مالي",
   "notify_handover": "إبلاغ بالتسليم",
@@ -673,7 +641,6 @@
   "enter_wire_number": "أدخل رقم التحويل",
   "check_number": "رقم الشيك",
   "enter_check_number": "أدخل رقم الشيك",
-  "recipient": "المستلم",
   "select_recipient": "اختر المستلم",
   "select_payment_method": "اختر طريقة الدفع",
   "send_handover": "إرسال طلب التسليم",
@@ -692,7 +659,6 @@
   "status_refused": "مرفوض",
   "status_canceled": "ملغى",
   "from": "من",
-  "to": "إلى",
   "handover_details": "تفاصيل التسليم المالي",
   "error_fetching_handover": "خطأ في جلب بيانات التسليم",
   "change_status": "تغيير الحالة",
@@ -706,7 +672,6 @@
   "update_status": "تحديث الحالة",
   "status_history": "سجل الحالات",
   "close": "إغلاق",
-  
   "branches": "الفروع",
   "branch": "الفرع",
   "branch_management": "إدارة الفروع",
@@ -759,7 +724,6 @@
   "showing_all_data": "عرض جميع بيانات الوكالة",
   "agent_dashboard_info": "أنت ترى بيانات الحجوزات التي أنشأتها فقط.",
   "manager_dashboard_info": "أنت ترى بيانات الحجوزات من فرعك فقط.",
-
   "agency_logo": "شعار الوكالة",
   "logo_hint": "يظهر الشعار في رأس الصفحة والفواتير. الحجم المثالي 200×200 بكسل.",
   "profile_photo": "صورة الملف الشخصي",
@@ -772,8 +736,6 @@
   "upload_failed": "فشل رفع الصورة",
   "invalid_image_type": "نوع الصورة غير صالح. استخدم JPEG أو PNG أو GIF أو WebP.",
   "image_too_large": "الصورة كبيرة جداً. الحد الأقصى 5 ميغابايت.",
-
-  "rooms_available": "غرف متاحة",
   "no_inventory_for_type": "لا يوجد مخزون لهذا النوع - يرجى شراء مخزون أولاً",
   "not_enough_beds_available": "لا توجد أسرة كافية متاحة",
   "select_inventory_batch": "اختر من المخزون المتاح",
@@ -782,17 +744,14 @@
   "not_enough_beds_in_batch": "لا توجد أسرة كافية في هذه الدفعة",
   "no_room_inventory_available": "لا توجد أسرة متاحة في المخزون لهذا النوع",
   "no_inventory_for_hotel": "لا يوجد مخزون لهذا الفندق. يرجى شراء مخزون من صفحة المخزون أولاً قبل الحجز.",
-  
   "lock_expires_at": "الحجز مؤقت ينتهي في",
   "reserved": "محجوز مؤقتاً",
   "other_agents_booking": "وكلاء آخرون يحجزون حالياً",
   "booking_beds": "يحجز",
   "expires": "ينتهي",
   "first_come_first_served": "الأسبقية لمن يكمل الحجز أولاً. قد لا تتوفر الأسرة المعروضة إذا أكمل وكيل آخر حجزه قبلك.",
-  
   "no_pilgrims_to_assign": "لا يوجد معتمرين لتوزيعهم",
   "pilgrims_assigned": "معتمر تم توزيعهم",
-  
   "capacity_per_room": "السعة/غرفة",
   "inventory_purchased": "المخزون المشترى",
   "inventory_available": "المتاح للحجز",
@@ -801,7 +760,6 @@
   "manage_inventory": "إدارة المخزون",
   "some_room_types_no_inventory": "بعض أنواع الغرف ليس لها مخزون",
   "add_inventory_to_book": "أنواع الغرف بدون مخزون لن تظهر في الحجوزات. أضف مخزون من صفحة المخزون.",
-  
   "discounts": "الخصومات",
   "discount_settings": "إعدادات الخصومات",
   "discount_values": "قيم الخصومات",
@@ -828,7 +786,6 @@
   "sort_order": "ترتيب العرض",
   "yes": "نعم",
   "no": "لا",
-  
   "user_permissions": "صلاحيات المستخدمين",
   "user_discount_permissions": "صلاحيات خصومات المستخدمين",
   "assign_discount": "تعيين خصم",
@@ -840,7 +797,6 @@
   "select_user_and_discount": "يرجى اختيار المستخدم والخصم",
   "default_discounts_note": "الخصومات الافتراضية متاحة لجميع المستخدمين تلقائياً. هنا يمكنك تعيين خصومات إضافية لمستخدمين محددين.",
   "no_permissions": "لا توجد صلاحيات مخصصة. الخصومات الافتراضية متاحة للجميع.",
-  
   "usage_limit": "حد الاستخدام",
   "usage_limit_desc": "اتركه فارغاً للاستخدام غير المحدود",
   "leave_empty_unlimited": "اتركه فارغاً للاستخدام غير المحدود",
@@ -850,7 +806,6 @@
   "weekly": "أسبوعي",
   "monthly": "شهري",
   "never": "أبداً",
-  
   "usage_log": "سجل الاستخدام",
   "recent_discount_usage": "سجل استخدام الخصومات",
   "no_usage_log": "لا يوجد سجل استخدام بعد.",
@@ -858,17 +813,14 @@
   "total_usage_count": "عدد مرات الاستخدام",
   "unique_users": "المستخدمون",
   "booking_total": "إجمالي الحجز",
-  
   "discount_permissions": "صلاحيات الخصومات",
   "discount_permissions_desc": "الخصومات الافتراضية متاحة للجميع. اختر الخصومات الإضافية المتاحة لهذا المستخدم.",
   "no_custom_discounts": "لا توجد خصومات مخصصة. جميع الخصومات افتراضية ومتاحة للجميع.",
-  
   "fill_required_fields": "يرجى ملء الحقول المطلوبة",
   "mad": "د.م",
   "user": "المستخدم",
   "no_services_selected": "لا خدمات محددة",
   "price_per_night": "ليلة",
-
   "bed_map": "خريطة الأسرة",
   "seat_map": "خريطة المقاعد",
   "inventory_not_found": "المخزون غير موجود",
@@ -878,5 +830,50 @@
   "front": "أمام",
   "rear": "خلف",
   "cabin": "المقصورة",
-  "seats": "مقعد"
+  "seats": "مقعد",
+  "payment": "الدفع",
+  "previous": "السابق",
+  "next": "التالي",
+  "existing_client": "عميل موجود",
+  "new_client": "عميل جديد",
+  "search_by_name_or_phone": "ابحث بالاسم أو رقم الهاتف...",
+  "full_name_full": "الاسم الكامل (الاسم واللقب)",
+  "full_name_ar_full": "الاسم الكامل بالعربية",
+  "additional_notes": "ملاحظات إضافية...",
+  "payment_amount": "مبلغ الدفعة",
+  "enter_amount": "أدخل المبلغ",
+  "available_seats": "المقاعد المتاحة",
+  "sell_price": "سعر البيع",
+  "same_choice_for_all_pilgrims": "نفس الاختيار لجميع المعتمرين",
+  "different_choice_per_pilgrim": "اختيار مختلف لكل معتمر",
+  "extra_services_optional": "الخدمات الإضافية (اختياري)",
+  "apply_to_pilgrims": "تطبيق على",
+  "all_pilgrims_default": "جميع المعتمرين (افتراضي)",
+  "service_total": "إجمالي السطر",
+  "selected_discounts": "الخصومات المطبقة",
+  "select_branch_optional": "اختر فرعا (اختياري)",
+  "invalid_email_format": "صيغة البريد غير صحيحة",
+  "payment_date": "تاريخ الدفع",
+  "reference_number": "رقم المرجع",
+  "payment_notes_placeholder": "ملاحظات حول الدفعة (اختياري)",
+  "cash_method": "نقداً",
+  "card_method": "بطاقة",
+  "bank_transfer_method": "تحويل بنكي",
+  "check_method": "شيك",
+  "full_payment_btn": "دفع كامل",
+  "half_payment_btn": "دفع نصف المبلغ",
+  "booking_created_successfully": "تم إنشاء الحجز بنجاح",
+  "please_create_booking_first": "يرجى إنشاء الحجز أولاً",
+  "flight_number": "رقم الرحلة",
+  "invoice_summary": "ملخص الفاتورة",
+  "description_col": "الوصف",
+  "quantity_col": "الكمية",
+  "price_col": "السعر",
+  "total_col": "المجموع",
+  "create_booking_btn": "إنشاء الحجز",
+  "total_general": "المجموع الكلي",
+  "confirm_save_payment": "تأكيد وحفظ الدفعة",
+  "name_required": "اسم الخصم مطلوب",
+  "discount_value_positive": "يجب أن تكون القيمة أكبر من صفر",
+  "percent_max_100": "يجب أن تكون النسبة بين 1 و 100"
 }

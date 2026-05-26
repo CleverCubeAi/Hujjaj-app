@@ -187,19 +187,25 @@ export function DiscountSettings() {
       max_discount_amount: discount.max_discount_amount || null,
       min_booking_amount: discount.min_booking_amount || null,
       is_default: discount.is_default,
-      is_active: discount.is_active,
+      // Issue #8: default to true if the field comes back undefined/null from the API
+      is_active: discount.is_active ?? true,
       sort_order: discount.sort_order
     });
     setModalOpen(true);
   };
 
   const handleSubmit = async () => {
-    if (!form.name || !form.discount_value) {
-      notifications.show({
-        title: t('error') || 'خطأ',
-        message: t('fill_required_fields') || 'يرجى ملء الحقول المطلوبة',
-        color: 'red'
-      });
+    // Issue #9: clearer per-field validation messages (was: single misleading "required" toast)
+    if (!form.name?.trim()) {
+      notifications.show({ title: t('error') || 'Erreur', message: t('name_required') || 'Le nom de la remise est requis', color: 'red' });
+      return;
+    }
+    if (!form.discount_value || form.discount_value <= 0) {
+      notifications.show({ title: t('error') || 'Erreur', message: t('discount_value_positive') || 'La valeur doit être strictement positive', color: 'red' });
+      return;
+    }
+    if (form.discount_type === 'percent' && form.discount_value > 100) {
+      notifications.show({ title: t('error') || 'Erreur', message: t('percent_max_100') || 'Le pourcentage doit être entre 1 et 100', color: 'red' });
       return;
     }
 
@@ -314,7 +320,7 @@ export function DiscountSettings() {
     if (discount.discount_type === 'percent') {
       return `${discount.discount_value}%`;
     }
-    return `${discount.discount_value} ${t('mad') || 'د.م'}`;
+    return `${discount.discount_value} ${t('mad') || 'MAD'}`;
   };
 
   return (
@@ -383,7 +389,7 @@ export function DiscountSettings() {
                     </Table.Td>
                     <Table.Td>
                       {discount.max_discount_amount ? (
-                        <Text>{discount.max_discount_amount} {t('mad') || 'د.م'}</Text>
+                        <Text>{discount.max_discount_amount} {t('mad') || 'MAD'}</Text>
                       ) : (
                         <Text c="dimmed">-</Text>
                       )}
@@ -516,7 +522,7 @@ export function DiscountSettings() {
                 <Card withBorder p="lg">
                   <Text size="sm" c="dimmed">{t('total_discounts_given') || 'إجمالي الخصومات'}</Text>
                   <Text size="xl" fw={700} c="green">
-                    {usageStats.total_discount_amount?.toLocaleString() || 0} {t('mad') || 'د.م'}
+                    {usageStats.total_discount_amount?.toLocaleString() || 0} {t('mad') || 'MAD'}
                   </Text>
                 </Card>
                 <Card withBorder p="lg">
@@ -563,7 +569,7 @@ export function DiscountSettings() {
                         </Text>
                       </Table.Td>
                       <Table.Td>
-                        <Badge color="red" size="lg">-{log.discount_amount} {t('mad') || 'د.م'}</Badge>
+                        <Badge color="red" size="lg">-{log.discount_amount} {t('mad') || 'MAD'}</Badge>
                       </Table.Td>
                       <Table.Td>
                         <Text size="sm">{log.booking_total_before} → {log.booking_total_after}</Text>

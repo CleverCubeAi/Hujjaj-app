@@ -193,16 +193,16 @@ export function BookingPaymentPage() {
         <Group grow>
           <Card p="md" style={{ backgroundColor: '#f5f5f5' }}>
             <Text size="sm" c="dimmed">{t('total') || 'المجموع'}</Text>
-            <Text size="xl" fw={700}>{booking.total_amount?.toLocaleString('en')} د.م</Text>
+            <Text size="xl" fw={700}>{booking.total_amount?.toLocaleString('en')} MAD</Text>
           </Card>
           <Card p="md" style={{ backgroundColor: '#e8f5e9' }}>
             <Text size="sm" c="dimmed">{t('paid') || 'المدفوع'}</Text>
-            <Text size="xl" fw={700} c="green">{booking.paid_amount?.toLocaleString('en')} د.م</Text>
+            <Text size="xl" fw={700} c="green">{booking.paid_amount?.toLocaleString('en')} MAD</Text>
           </Card>
           <Card p="md" style={{ backgroundColor: booking.remaining_balance > 0 ? '#ffebee' : '#e8f5e9' }}>
             <Text size="sm" c="dimmed">{t('remaining') || 'المتبقي'}</Text>
             <Text size="xl" fw={700} c={booking.remaining_balance > 0 ? 'red' : 'green'}>
-              {booking.remaining_balance?.toLocaleString('en')} د.م
+              {booking.remaining_balance?.toLocaleString('en')} MAD
             </Text>
           </Card>
         </Group>
@@ -241,7 +241,7 @@ export function BookingPaymentPage() {
                   <Table.Td>{idx + 1}</Table.Td>
                   <Table.Td>{new Date(payment.payment_date).toLocaleDateString('en')}</Table.Td>
                   <Table.Td>
-                    <Text fw={600} c="green">{payment.amount?.toLocaleString('en')} د.م</Text>
+                    <Text fw={600} c="green">{payment.amount?.toLocaleString('en')} MAD</Text>
                   </Table.Td>
                   <Table.Td>
                     <Badge variant="light">
@@ -278,7 +278,7 @@ export function BookingPaymentPage() {
             min={0}
             max={booking.remaining_balance}
             required
-            rightSection={<Text size="sm" c="dimmed">د.م</Text>}
+            rightSection={<Text size="sm" c="dimmed">MAD</Text>}
           />
           
           <Group grow>

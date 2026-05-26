@@ -23,6 +23,7 @@ import { api } from '../../lib/api';
 import { notifications } from '@mantine/notifications';
 import { Plus, Edit, Trash2, LayoutGrid } from 'lucide-react';
 import { FlightInventoryForm } from './FlightInventoryForm';
+import { formatLocalDate } from '../../lib/dates';
 import { useAuth } from '../../providers/AuthProvider';
 
 interface FlightInventory {
@@ -221,7 +222,7 @@ export default function FlightInventoryPage() {
                 </Table.Td>
                 <Table.Td>
                   {inv.flights?.departure_date && (
-                    <Text size="sm">{new Date(inv.flights.departure_date).toLocaleDateString()}</Text>
+                    <Text size="sm">{formatLocalDate(inv.flights.departure_date)}</Text>
                   )}
                 </Table.Td>
                 <Table.Td>{inv.seats_purchased}</Table.Td>

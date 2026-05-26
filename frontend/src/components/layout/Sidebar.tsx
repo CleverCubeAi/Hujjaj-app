@@ -56,10 +56,11 @@ export function Sidebar({ closeMobile }: { closeMobile: () => void }) {
     { label: t('seasons') || 'المواسم', icon: Sun, link: '/seasons' },
   ];
 
+  // Issue #1 fix: use t() instead of hardcoded Arabic
   const settingsLinks = [
-    { label: 'الإعدادات', icon: Settings, link: '/settings' },
-    { label: 'التقارير', icon: FileText, link: '/reports' },
-    { label: 'الرسائل', icon: MessageSquare, link: '/messages' },
+    { label: t('settings') || 'الإعدادات', icon: Settings, link: '/settings' },
+    { label: t('reports') || 'التقارير', icon: FileText, link: '/reports' },
+    { label: t('messages') || 'الرسائل', icon: MessageSquare, link: '/messages' },
   ];
 
   const isBookingGroupActive = path.startsWith('/bookings') || path.startsWith('/clients') || path.startsWith('/pilgrims');

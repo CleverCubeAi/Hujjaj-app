@@ -17,27 +17,26 @@ interface Season {
 interface FormState {
   name: string;
   type: string;
-  start_date: Date | null;
-  end_date: Date | null;
+  start_date: string | null;
+  end_date: string | null;
   status: string;
 }
 
 const emptyForm: FormState = { name: '', type: 'omra', start_date: null, end_date: null, status: 'draft' };
 
-const formatDateForApi = (date: Date | null): string => {
-  if (!date) return '';
-  const d = date instanceof Date ? date : new Date(date);
-  if (isNaN(d.getTime())) return '';
-  const year = d.getFullYear();
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-};
-
-const parseDate = (dateStr: string): Date | null => {
-  if (!dateStr) return null;
-  const d = new Date(dateStr);
-  return isNaN(d.getTime()) ? null : d;
+// Normalize anything Mantine hands us (string | Date | null) into a plain "YYYY-MM-DD" string,
+// using LOCAL date components so the user's picked date is preserved across timezones.
+const toIsoDate = (value: unknown): string | null => {
+  if (!value) return null;
+  if (typeof value === 'string') return value.slice(0, 10);
+  if (value instanceof Date) {
+    if (isNaN(value.getTime())) return null;
+    const year = value.getFullYear();
+    const month = String(value.getMonth() + 1).padStart(2, '0');
+    const day = String(value.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+  return null;
 };
 
 export function SeasonsList() {
@@ -73,8 +72,8 @@ export function SeasonsList() {
     setForm({
       name: season.name,
       type: season.type,
-      start_date: parseDate(season.start_date),
-      end_date: parseDate(season.end_date),
+      start_date: season.start_date || null,
+      end_date: season.end_date || null,
       status: season.status || 'draft',
     });
     setModalOpen(true);
@@ -86,14 +85,14 @@ export function SeasonsList() {
       return;
     }
     
-    const startDateStr = formatDateForApi(form.start_date);
-    const endDateStr = formatDateForApi(form.end_date);
-    
+    const startDateStr = form.start_date;
+    const endDateStr = form.end_date;
+
     if (!startDateStr || !endDateStr) {
       console.error('Invalid date format');
       return;
     }
-    
+
     try {
       const payload = {
         name: form.name,
@@ -227,20 +226,14 @@ export function SeasonsList() {
             required
             valueFormat="YYYY-MM-DD"
             value={form.start_date}
-            onChange={(date) => {
-              const validDate = date ? new Date(date) : null;
-              setForm({ ...form, start_date: validDate });
-            }}
+            onChange={(value) => setForm({ ...form, start_date: toIsoDate(value) })}
           />
           <DateInput
             label={t('end_date')}
             required
             valueFormat="YYYY-MM-DD"
             value={form.end_date}
-            onChange={(date) => {
-              const validDate = date ? new Date(date) : null;
-              setForm({ ...form, end_date: validDate });
-            }}
+            onChange={(value) => setForm({ ...form, end_date: toIsoDate(value) })}
           />
           {editingSeason && (
             <Select

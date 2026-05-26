@@ -15,6 +15,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { api } from '../../lib/api';
 import { notifications } from '@mantine/notifications';
+import { formatLocalDate } from '../../lib/dates';
 
 const SEAT_CLASSES = ['economy', 'business', 'first_class'] as const;
 type SeatClass = (typeof SEAT_CLASSES)[number];
@@ -219,7 +220,7 @@ export function FlightInventoryForm({ inventory, onSave, onCancel }: FlightInven
         onChange={(value) => setForm({ ...form, flight_id: value || '' })}
         data={flights.map(f => ({ 
           value: String(f.id || ''), 
-          label: `${f.code || ''} - ${f.departure_city || ''} → ${f.arrival_city || ''} (${f.departure_date ? new Date(f.departure_date).toLocaleDateString() : ''})` 
+          label: `${f.code || ''} - ${f.departure_city || ''} → ${f.arrival_city || ''} (${formatLocalDate(f.departure_date)})`
         }))}
         required
         searchable

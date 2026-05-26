@@ -220,8 +220,8 @@ export function BookingInvoicePage() {
                   <Text size="xs" c="dimmed">{item.item_type}</Text>
                 </Table.Td>
                 <Table.Td style={{ textAlign: 'center' }}>{item.quantity}</Table.Td>
-                <Table.Td style={{ textAlign: 'center' }}>{item.unit_price.toLocaleString('en')} د.م</Table.Td>
-                <Table.Td style={{ textAlign: 'center' }} fw={500}>{item.total_price.toLocaleString('en')} د.م</Table.Td>
+                <Table.Td style={{ textAlign: 'center' }}>{item.unit_price.toLocaleString('en')} MAD</Table.Td>
+                <Table.Td style={{ textAlign: 'center' }} fw={500}>{item.total_price.toLocaleString('en')} MAD</Table.Td>
               </Table.Tr>
             ))}
           </Table.Tbody>
@@ -233,17 +233,17 @@ export function BookingInvoicePage() {
             <Stack gap="xs">
               <Group justify="space-between">
                 <Text>{t('subtotal') || 'المجموع الفرعي'}:</Text>
-                <Text fw={500}>{booking.total_amount?.toLocaleString('en')} د.م</Text>
+                <Text fw={500}>{booking.total_amount?.toLocaleString('en')} MAD</Text>
               </Group>
               <Group justify="space-between">
                 <Text c="green">{t('paid') || 'المدفوع'}:</Text>
-                <Text fw={500} c="green">{booking.paid_amount?.toLocaleString('en')} د.م</Text>
+                <Text fw={500} c="green">{booking.paid_amount?.toLocaleString('en')} MAD</Text>
               </Group>
               <Divider />
               <Group justify="space-between">
                 <Text fw={700} size="lg">{t('remaining') || 'المتبقي'}:</Text>
                 <Text fw={700} size="lg" c={booking.remaining_balance > 0 ? 'red' : 'green'}>
-                  {booking.remaining_balance?.toLocaleString('en')} د.م
+                  {booking.remaining_balance?.toLocaleString('en')} MAD
                 </Text>
               </Group>
             </Stack>
@@ -267,7 +267,7 @@ export function BookingInvoicePage() {
                 {payments.map((payment) => (
                   <Table.Tr key={payment.id}>
                     <Table.Td>{new Date(payment.payment_date).toLocaleDateString('en')}</Table.Td>
-                    <Table.Td fw={500} c="green">{payment.amount?.toLocaleString('en')} د.م</Table.Td>
+                    <Table.Td fw={500} c="green">{payment.amount?.toLocaleString('en')} MAD</Table.Td>
                     <Table.Td>
                       <Badge variant="light">
                         {t(payment.payment_method) || payment.payment_method}

@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { supabaseAdmin as supabase } from '../services/supabase';
 import { verifyDeletionPassword } from './settings.controller';
+import { autoAllocateRooms } from '../services/roomAllocation';
 import PDFDocument from 'pdfkit';
 import path from 'path';
 
@@ -426,18 +427,24 @@ export const createBooking = async (req: Request, res: Response) => {
       }
     }
 
-    // Generate booking number
+    // Generate booking number — booking_number is GLOBALLY unique (Issue #18 fix:
+    // RPC generate_booking_number scopes per-agency but DB UNIQUE is global, so a
+    // second tenant's first booking would collide). Scope globally here instead.
+    const year = new Date().getFullYear();
     let generatedNumber: string;
-    const { data: bookingNumber, error: numError } = await supabase
-      .rpc('generate_booking_number', { p_agency_id: agencyId });
-
-    if (numError) {
-      // Fallback to simple number generation
-      const timestamp = Date.now().toString().slice(-6);
-      const year = new Date().getFullYear();
-      generatedNumber = `BK-${year}-${timestamp}`;
-    } else {
-      generatedNumber = bookingNumber;
+    {
+      const { data: maxRow } = await supabase
+        .from('bookings')
+        .select('booking_number')
+        .like('booking_number', `BK-${year}-%`)
+        .order('booking_number', { ascending: false })
+        .limit(1);
+      let nextSeq = 1;
+      if (maxRow && maxRow.length > 0) {
+        const m = String(maxRow[0].booking_number || '').match(new RegExp(`^BK-${year}-(\\d+)$`));
+        if (m) nextSeq = parseInt(m[1], 10) + 1;
+      }
+      generatedNumber = `BK-${year}-${String(nextSeq).padStart(4, '0')}`;
     }
 
     // Generate hold session ID and calculate expiration (24 hours)
@@ -761,10 +768,26 @@ export const createBooking = async (req: Request, res: Response) => {
             .single();
 
           if (serviceData && insertedPilgrims) {
-            // Apply service to specified pilgrims or all
-            const targetPilgrims = service.pilgrim_ids?.length > 0
-              ? insertedPilgrims.filter((p: any) => service.pilgrim_ids.includes(p.id))
-              : insertedPilgrims;
+            // Issue #22 fix: pilgrim_ids may arrive from the wizard as either
+            // (a) array of UUIDs (existing pilgrims) OR (b) array of stringified indices into
+            // insertedPilgrims (because new pilgrims have no UUID at wizard time).
+            // Resolve both cases, defaulting to all when empty.
+            let targetPilgrims: any[] = insertedPilgrims;
+            if (Array.isArray(service.pilgrim_ids) && service.pilgrim_ids.length > 0) {
+              const uuidRe = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+              const resolved = new Set<string>();
+              for (const ref of service.pilgrim_ids) {
+                const key = String(ref);
+                if (uuidRe.test(key)) {
+                  resolved.add(key);
+                } else if (/^\d+$/.test(key)) {
+                  const idx = parseInt(key, 10);
+                  if (insertedPilgrims[idx]?.id) resolved.add(insertedPilgrims[idx].id);
+                }
+              }
+              targetPilgrims = insertedPilgrims.filter((p: any) => resolved.has(p.id));
+              if (targetPilgrims.length === 0) targetPilgrims = insertedPilgrims; // safety fallback
+            }
 
             for (const pilgrim of targetPilgrims) {
               serviceItems.push({
@@ -1178,6 +1201,21 @@ export const confirmBooking = async (req: Request, res: Response) => {
       console.error('Error auto-allocating inventory:', allocError);
       // Surface allocation errors to user - don't silently confirm with failed allocation
       throw allocError;
+    }
+
+    // Issue #21 fix: auto-assign room numbers based on mahram/gender rules.
+    // Non-blocking — bookings can be confirmed even if allocation has warnings.
+    try {
+      const allocResult = await autoAllocateRooms(id as string, {
+        separateGenders: true,
+        allowMahram: true,
+        preferFamilyGroups: true,
+      });
+      if (allocResult.warnings?.length) {
+        console.warn(`[confirmBooking ${id}] room allocation warnings:`, allocResult.warnings);
+      }
+    } catch (roomErr: any) {
+      console.error(`[confirmBooking ${id}] room allocation failed (non-fatal):`, roomErr.message);
     }
 
     res.json(updatedBooking);

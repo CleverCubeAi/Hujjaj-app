@@ -6,6 +6,7 @@ import {
   TextInput,
   NumberInput,
   Select,
+  MultiSelect,
   Paper,
   Title,
   Stack,
@@ -31,6 +32,7 @@ import { notifications } from '@mantine/notifications';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../../lib/api';
+import { formatLocalDate, parseLocalDate } from '../../lib/dates';
 import { ImageUpload } from '../../components/common/ImageUpload';
 import {
   User,
@@ -163,12 +165,21 @@ export function BookingWizard() {
   // Step 6: Invoice
   const [notes, setNotes] = useState('');
   const [discount, setDiscount] = useState(0);
-  const [selectedDiscountId, setSelectedDiscountId] = useState<string | null>(null);
+  const [selectedDiscountIds, setSelectedDiscountIds] = useState<string[]>([]);
+  // Per-discount breakdown — Issue #25 (multi-discount) + Issue #23 (per-pilgrim fixed-discount multiplier).
+  // base = raw computed amount per the discount rule (with cap, etc.). multiplier (for fixed type) lets
+  // the user apply the same flat discount N times (e.g. "500 MAD × 2 seniors").
+  const [discountBreakdown, setDiscountBreakdown] = useState<Record<string, { name: string; base: number; multiplier: number; type: 'percent' | 'fixed' }>>({});
   const [availableDiscounts, setAvailableDiscounts] = useState<any[]>([]);
 
   // Step 7: Payment
   const [paymentAmount, setPaymentAmount] = useState(0);
   const [paymentMethod, setPaymentMethod] = useState<string | null>('cash');
+  // Issue #19: payment date + reference + notes were missing from the wizard's payment step.
+  const todayStr = (() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; })();
+  const [paymentDate, setPaymentDate] = useState<string>(todayStr);
+  const [paymentReference, setPaymentReference] = useState<string>('');
+  const [paymentNotes, setPaymentNotes] = useState<string>('');
 
   // Created booking
   const [createdBooking, setCreatedBooking] = useState<any>(null);
@@ -453,30 +464,58 @@ export function BookingWizard() {
     }
   };
 
-  const handleDiscountSelect = async (discountId: string | null) => {
-    setSelectedDiscountId(discountId);
-    if (!discountId) {
+  const handleDiscountSelect = async (discountIds: string[]) => {
+    setSelectedDiscountIds(discountIds);
+    if (!discountIds || discountIds.length === 0) {
+      setDiscountBreakdown({});
       setDiscount(0);
       return;
     }
-    
-    try {
-      const result = await api.calculateDiscount(discountId, calculateTotal());
-      if (result.error) {
-        notifications.show({
-          title: t('error') || 'خطأ',
-          message: result.error,
-          color: 'orange'
-        });
-        setDiscount(0);
-        setSelectedDiscountId(null);
-      } else {
-        setDiscount(result.discount_amount);
+
+    const preDiscountSubtotal = calculatePackageTotal() + calculateServicesTotal();
+    const newBreakdown: Record<string, { name: string; base: number; multiplier: number; type: 'percent' | 'fixed' }> = {};
+    const accepted: string[] = [];
+
+    for (const discountId of discountIds) {
+      try {
+        const meta = availableDiscounts.find((d: any) => d.id === discountId);
+        const result = await api.calculateDiscount(discountId, preDiscountSubtotal);
+        if (result?.error) {
+          notifications.show({
+            title: t('error') || 'خطأ',
+            message: `${meta?.name_ar || meta?.name || ''}: ${result.error}`,
+            color: 'orange'
+          });
+          continue;
+        }
+        if (result?.discount_amount > 0) {
+          // Preserve existing multiplier when user re-selects same discount
+          const prevMultiplier = discountBreakdown[discountId]?.multiplier;
+          newBreakdown[discountId] = {
+            name: meta?.name_ar || meta?.name || 'خصم',
+            base: result.discount_amount,
+            multiplier: prevMultiplier || 1,
+            type: meta?.discount_type || 'percent',
+          };
+          accepted.push(discountId);
+        }
+      } catch (error: any) {
+        console.error(`Error calculating discount ${discountId}:`, error);
       }
-    } catch (error: any) {
-      console.error('Error calculating discount:', error);
-      setDiscount(0);
     }
+
+    setDiscountBreakdown(newBreakdown);
+    setSelectedDiscountIds(accepted);
+    setDiscount(Object.values(newBreakdown).reduce((sum, d) => sum + d.base * d.multiplier, 0));
+  };
+
+  // Issue #23: update multiplier for a fixed-type discount (e.g. "500 MAD × 2 seniors")
+  const updateDiscountMultiplier = (discountId: string, multiplier: number) => {
+    const m = Math.max(1, Math.floor(multiplier || 1));
+    const next = { ...discountBreakdown };
+    if (next[discountId]) next[discountId] = { ...next[discountId], multiplier: m };
+    setDiscountBreakdown(next);
+    setDiscount(Object.values(next).reduce((sum, d) => sum + d.base * d.multiplier, 0));
   };
 
   const loadAvailableFlightInventory = async (seasonId: string) => {
@@ -688,7 +727,20 @@ export function BookingWizard() {
   };
 
   const calculateServicesTotal = () => {
-    return selectedServices.reduce((sum, s) => sum + (s.price * s.quantity * pilgrims.length), 0);
+    // Issue #22 fix: respect per-service pilgrim_ids and quantity.
+    // - If pilgrim_ids is empty -> apply to all pilgrims (default).
+    // - If non-empty -> apply only to those pilgrims (e.g. 1 wheelchair for 1 pilgrim).
+    return selectedServices.reduce((sum, s) => {
+      const applyCount = (s.pilgrim_ids && s.pilgrim_ids.length > 0) ? s.pilgrim_ids.length : pilgrims.length;
+      return sum + (s.price * (s.quantity || 1) * applyCount);
+    }, 0);
+  };
+
+  // Issue #22: update quantity or pilgrim_ids on a selected service
+  const updateService = (serviceId: string, updates: Partial<ServiceSelection>) => {
+    setSelectedServices(selectedServices.map(s =>
+      s.service_id === serviceId ? { ...s, ...updates } : s
+    ));
   };
 
   const calculateTotal = () => {
@@ -697,8 +749,8 @@ export function BookingWizard() {
 
   // Season period coverage for accommodation
   const selectedSeasonData = seasons.find(s => s.id === selectedSeason);
-  const seasonStart = selectedSeasonData?.start_date ? new Date(selectedSeasonData.start_date) : null;
-  const seasonEnd = selectedSeasonData?.end_date ? new Date(selectedSeasonData.end_date) : null;
+  const seasonStart = selectedSeasonData?.start_date ? parseLocalDate(selectedSeasonData.start_date) : null;
+  const seasonEnd = selectedSeasonData?.end_date ? parseLocalDate(selectedSeasonData.end_date) : null;
   const seasonDays = seasonStart && seasonEnd ? Math.max(0, Math.ceil((seasonEnd.getTime() - seasonStart.getTime()) / (24 * 60 * 60 * 1000))) : 0;
   void seasonDays;
   // (removed unused per-inventory _inventoryCoversSeason function)
@@ -708,7 +760,7 @@ export function BookingWizard() {
     if (!seasonStart || !seasonEnd || !inventories?.length) return false;
     const ranges = inventories
       .filter((inv: any) => inv?.check_in_date && inv?.check_out_date)
-      .map((inv: any) => ({ start: new Date(inv.check_in_date).getTime(), end: new Date(inv.check_out_date).getTime() }))
+      .map((inv: any) => ({ start: parseLocalDate(inv.check_in_date)!.getTime(), end: parseLocalDate(inv.check_out_date)!.getTime() }))
       .sort((a: any, b: any) => a.start - b.start);
     if (ranges.length === 0) return false;
     const seasonStartMs = seasonStart.getTime();
@@ -756,7 +808,7 @@ export function BookingWizard() {
     if (!inv) return 0;
     if (inv.nights != null) return Number(inv.nights);
     if (!inv.check_in_date || !inv.check_out_date) return 0;
-    return Math.max(0, Math.ceil((new Date(inv.check_out_date).getTime() - new Date(inv.check_in_date).getTime()) / (24 * 60 * 60 * 1000)));
+    return Math.max(0, Math.ceil((parseLocalDate(inv.check_out_date)!.getTime() - parseLocalDate(inv.check_in_date)!.getTime()) / (24 * 60 * 60 * 1000)));
   };
 
 
@@ -927,28 +979,27 @@ export function BookingWizard() {
       const booking = await api.createBooking(bookingData);
       setCreatedBooking(booking);
 
-      // Add discount as invoice item if any
-      if (discount > 0) {
-        const selectedDiscount = availableDiscounts.find((d: any) => d.id === selectedDiscountId);
+      // Issue #25 + #23: add ONE invoice item per selected discount, applying multiplier for fixed-type.
+      const preDiscountTotal = calculatePackageTotal() + calculateServicesTotal();
+      for (const [discountId, info] of Object.entries(discountBreakdown)) {
+        const finalAmount = info.base * (info.multiplier || 1);
+        if (!finalAmount || finalAmount <= 0) continue;
+        const desc = info.multiplier > 1 ? `${info.name} ×${info.multiplier}` : info.name;
         await api.addInvoiceItem(booking.id, {
           item_type: 'discount',
-          description: selectedDiscount?.name_ar || selectedDiscount?.name || 'خصم',
+          description: desc,
           quantity: 1,
-          unit_price: -discount
+          unit_price: -finalAmount,
         });
-
-        // Log discount usage for tracking
-        if (selectedDiscountId) {
-          try {
-            await api.logDiscountUsage({
-              booking_id: booking.id,
-              discount_setting_id: selectedDiscountId,
-              discount_amount: discount,
-              booking_total_before: calculateTotal()
-            });
-          } catch (e) {
-            console.error('Failed to log discount usage:', e);
-          }
+        try {
+          await api.logDiscountUsage({
+            booking_id: booking.id,
+            discount_setting_id: discountId,
+            discount_amount: finalAmount,
+            booking_total_before: preDiscountTotal,
+          });
+        } catch (e) {
+          console.error('Failed to log discount usage:', e);
         }
       }
 
@@ -968,11 +1019,14 @@ export function BookingWizard() {
       // Confirm booking
       await api.confirmBooking(createdBooking.id);
 
-      // Add payment if amount > 0
+      // Add payment if amount > 0 (Issue #19: now includes date + reference + notes)
       if (paymentAmount > 0) {
         await api.createBookingPayment(createdBooking.id, {
           amount: paymentAmount,
-          payment_method: paymentMethod
+          payment_method: paymentMethod,
+          payment_date: paymentDate || undefined,
+          reference_number: paymentReference || undefined,
+          notes: paymentNotes || undefined,
         });
       }
 
@@ -1052,12 +1106,14 @@ export function BookingWizard() {
         if (sameSelectionForAll) {
           if (!selectedAccommodationId || !selectedRoomType) return false;
           const invs = getSameForAllInventories();
-          const cov = getSameForAllCoverage();
-          return invs.length > 0 && cov.covered;
+          // Issue #15 fix: don't require inventory to cover the entire season period.
+          // Real trips are always shorter than the season window.
+          // The coverage indicator is still shown as informational guidance.
+          return invs.length > 0;
         }
         return pilgrims.every((_, i) => {
           const cov = getPilgrimCoverage(i);
-          return cov.inventories.length > 0 && cov.covered;
+          return cov.inventories.length > 0;
         });
       }
       case 4: return true; // Services are optional
@@ -1080,38 +1136,38 @@ export function BookingWizard() {
         <LoadingOverlay visible={loading} />
         
         <Stepper active={active} onStepClick={setActive} allowNextStepsSelect={false} size="sm" mb="xl">
-          <Stepper.Step 
-            label="العميل" 
-            icon={<User size={18} />} 
+          <Stepper.Step
+            label={t('client') || 'العميل'}
+            icon={<User size={18} />}
             description={getStepDescription(0)}
           />
-          <Stepper.Step 
-            label="المعتمرين" 
-            icon={<Users size={18} />} 
+          <Stepper.Step
+            label={t('pilgrims') || 'المعتمرين'}
+            icon={<Users size={18} />}
             description={getStepDescription(1)}
           />
-          <Stepper.Step 
-            label="الرحلة" 
-            icon={<Plane size={18} />} 
+          <Stepper.Step
+            label={t('flight') || 'الرحلة'}
+            icon={<Plane size={18} />}
             description={getStepDescription(2)}
           />
-          <Stepper.Step 
-            label="السكن" 
-            icon={<Building2 size={18} />} 
+          <Stepper.Step
+            label={t('accommodation') || 'السكن'}
+            icon={<Building2 size={18} />}
             description={getStepDescription(3)}
           />
-          <Stepper.Step 
-            label="الخدمات" 
-            icon={<Plus size={18} />} 
+          <Stepper.Step
+            label={t('extra_services') || 'الخدمات'}
+            icon={<Plus size={18} />}
             description={getStepDescription(4)}
           />
-          <Stepper.Step 
-            label="الفاتورة" 
-            icon={<CreditCard size={18} />} 
+          <Stepper.Step
+            label={t('invoice') || 'الفاتورة'}
+            icon={<CreditCard size={18} />}
             description={getStepDescription(5)}
           />
-          <Stepper.Step label="الدفع" icon={<CreditCard size={18} />} />
-          <Stepper.Step label="الغرف" icon={<BedDouble size={18} />} />
+          <Stepper.Step label={t('payment') || 'الدفع'} icon={<CreditCard size={18} />} />
+          <Stepper.Step label={t('rooms') || 'الغرف'} icon={<BedDouble size={18} />} />
         </Stepper>
 
         {/* Step 1: Client Selection */}
@@ -1128,15 +1184,15 @@ export function BookingWizard() {
               }}
             >
               <Group>
-                <Radio value="existing" label="عميل موجود" />
-                <Radio value="new" label="عميل جديد" />
+                <Radio value="existing" label={t('existing_client') || 'عميل موجود'} />
+                <Radio value="new" label={t('new_client') || 'عميل جديد'} />
               </Group>
             </Radio.Group>
 
             {!isNewClient ? (
               <Stack>
                 <TextInput
-                  placeholder="ابحث بالاسم أو رقم الهاتف..."
+                  placeholder={t('search_by_name_or_phone') || 'ابحث بالاسم أو رقم الهاتف...'}
                   leftSection={<Search size={18} />}
                   value={clientSearch}
                   onChange={(e) => setClientSearch(e.currentTarget.value)}
@@ -1225,7 +1281,7 @@ export function BookingWizard() {
               <Stack gap="md">
                 <SimpleGrid cols={2}>
                   <TextInput
-                    label="الاسم الكامل (الاسم واللقب)"
+                    label={t('full_name_full') || 'الاسم الكامل (الاسم واللقب)'}
                     placeholder="مثال: Ahmed Ben Ali"
                     description="أدخل الاسم الأول واللقب معاً"
                     value={newClient.full_name}
@@ -1233,7 +1289,7 @@ export function BookingWizard() {
                     required
                   />
                   <TextInput
-                    label="الاسم الكامل بالعربية"
+                    label={t('full_name_ar_full') || 'الاسم الكامل بالعربية'}
                     placeholder="مثال: أحمد بن علي"
                     description="أدخل الاسم الأول واللقب بالعربية"
                     value={newClient.full_name_ar}
@@ -1241,14 +1297,14 @@ export function BookingWizard() {
                     dir="rtl"
                   />
                   <TextInput
-                    label="الهاتف"
+                    label={t('phone') || 'الهاتف'}
                     placeholder="+212 6XX XXX XXX"
                     value={newClient.phone}
                     onChange={(e) => setNewClient({ ...newClient, phone: e.currentTarget.value })}
                     required
                   />
                   <TextInput
-                    label="البريد الإلكتروني"
+                    label={t('email') || 'البريد الإلكتروني'}
                     placeholder="email@example.com"
                     value={newClient.email}
                     onChange={(e) => setNewClient({ ...newClient, email: e.currentTarget.value })}
@@ -1407,6 +1463,12 @@ export function BookingWizard() {
                       required
                     />
                     <TextInput
+                      label={t('date_of_birth') || 'تاريخ الميلاد'}
+                      type="date"
+                      value={typeof pilgrim.date_of_birth === 'string' ? pilgrim.date_of_birth : (pilgrim.date_of_birth instanceof Date ? `${pilgrim.date_of_birth.getFullYear()}-${String(pilgrim.date_of_birth.getMonth() + 1).padStart(2, '0')}-${String(pilgrim.date_of_birth.getDate()).padStart(2, '0')}` : '')}
+                      onChange={(e) => updatePilgrim(index, 'date_of_birth', (e.currentTarget.value || null) as any)}
+                    />
+                    <TextInput
                       label={t('passport_number') || 'رقم الجواز'}
                       placeholder="Passport Number"
                       value={pilgrim.passport_number}
@@ -1522,8 +1584,8 @@ export function BookingWizard() {
         {active === 2 && (
           <Stack>
             <Select
-              label="الموسم"
-              placeholder="اختر الموسم"
+              label={t('season') || 'الموسم'}
+              placeholder={t('select_season') || 'اختر الموسم'}
               data={seasons.map(s => ({ value: String(s.id || ''), label: `${s.name || ''} (${s.type || ''})` }))}
               value={selectedSeason || ''}
               onChange={(value) => setSelectedSeason(value || null)}
@@ -1533,11 +1595,11 @@ export function BookingWizard() {
             {selectedSeason && (
               <>
                 <Select
-                  label="الرحلة"
-                  placeholder="اختر الرحلة"
-                  data={flights.map(f => ({ 
-                    value: f.id, 
-                    label: `${f.code} - ${f.departure_city} → ${f.arrival_city} (${new Date(f.departure_date).toLocaleDateString('en')})` 
+                  label={t('flight') || 'الرحلة'}
+                  placeholder={t('select_flight') || 'اختر الرحلة'}
+                  data={flights.map(f => ({
+                    value: f.id,
+                    label: `${f.code} - ${f.departure_city} → ${f.arrival_city} (${formatLocalDate(f.departure_date)})`
                   }))}
                   value={selectedFlight || ''}
                   onChange={(v) => {
@@ -1707,13 +1769,13 @@ export function BookingWizard() {
                     <Text size="sm" fw={600} mb="xs">{t('season_period') || 'فترة الموسم'} — {t('full_coverage_required') || 'يجب تغطية الفترة كاملة'}</Text>
                     <Box mb="xs">
                       <Text size="xs" c="dimmed" mb={4}>
-                        {seasonStart.toLocaleDateString()} — {seasonEnd.toLocaleDateString()} ({seasonDays} {t('days') || 'يوم'})
+                        {formatLocalDate(selectedSeasonData?.start_date)} — {formatLocalDate(selectedSeasonData?.end_date)} ({seasonDays} {t('days') || 'يوم'})
                       </Text>
                       {sameSelectionForAll ? (
                         <Box style={{ height: 28, borderRadius: 4, overflow: 'hidden', backgroundColor: 'var(--mantine-color-gray-2)', position: 'relative' }}>
                           {getSameForAllCoverage().inventories?.map((inv: any, i: number) => {
-                            const ci = new Date(inv.check_in_date);
-                            const co = new Date(inv.check_out_date);
+                            const ci = parseLocalDate(inv.check_in_date)!;
+                            const co = parseLocalDate(inv.check_out_date)!;
                             const total = seasonEnd.getTime() - seasonStart.getTime();
                             const leftPct = Math.max(0, (ci.getTime() - seasonStart.getTime()) / total * 100);
                             const rightPct = Math.max(0, (seasonEnd.getTime() - co.getTime()) / total * 100);
@@ -1732,8 +1794,8 @@ export function BookingWizard() {
                                   <Text size="xs" c="dimmed" mb={2}>{p.full_name_ar || p.full_name}</Text>
                                   <Box style={{ height: 16, borderRadius: 4, overflow: 'hidden', backgroundColor: 'var(--mantine-color-gray-2)', position: 'relative' }}>
                                     {cov.inventories.length > 0 ? cov.inventories.map((inv: any, i: number) => {
-                                      const ci = new Date(inv.check_in_date);
-                                      const co = new Date(inv.check_out_date);
+                                      const ci = parseLocalDate(inv.check_in_date)!;
+                                      const co = parseLocalDate(inv.check_out_date)!;
                                       const total = seasonEnd.getTime() - seasonStart.getTime();
                                       const leftPct = Math.max(0, (ci.getTime() - seasonStart.getTime()) / total * 100);
                                       const rightPct = Math.max(0, (seasonEnd.getTime() - co.getTime()) / total * 100);
@@ -1750,7 +1812,7 @@ export function BookingWizard() {
                       )}
                       {sameSelectionForAll && getSameForAllInventories().length > 0 && !getSameForAllCoverage().covered && (
                         <Alert color="orange" variant="light" p="xs" mt="xs">
-                          <Text size="xs">{t('selection_must_cover_full_season') || 'الدفعة المختارة لا تغطي فترة الموسم كاملة. اختر دفعة تغطي من'} {seasonStart.toLocaleDateString()} {t('to') || 'إلى'} {seasonEnd.toLocaleDateString()}</Text>
+                          <Text size="xs">{t('selection_must_cover_full_season') || 'الدفعة المختارة لا تغطي فترة الموسم كاملة. اختر دفعة تغطي من'} {formatLocalDate(selectedSeasonData?.start_date)} {t('to') || 'إلى'} {formatLocalDate(selectedSeasonData?.end_date)}</Text>
                         </Alert>
                       )}
                     </Box>
@@ -1796,12 +1858,12 @@ export function BookingWizard() {
                   <Paper withBorder p="sm" radius="md" mb="md">
                     <Text size="xs" fw={600} mb="xs">{t('selected_batches') || 'الدفعات المختارة'}:</Text>
                     <Stack gap={4}>
-                      {[...getSameForAllInventories()].sort((a: any, b: any) => new Date(a.check_in_date).getTime() - new Date(b.check_in_date).getTime()).map((inv: any, pos: number) => (
+                      {[...getSameForAllInventories()].sort((a: any, b: any) => parseLocalDate(a.check_in_date)!.getTime() - parseLocalDate(b.check_in_date)!.getTime()).map((inv: any, pos: number) => (
                         <Group key={inv.id} justify="space-between" style={{ backgroundColor: 'var(--mantine-color-gray-0)', padding: '6px 10px', borderRadius: 4 }}>
                           <Group gap="sm">
                             <Badge size="xs" variant="outline">{t('batch')} {pos + 1}</Badge>
                             <Text size="xs">{inv.accommodations?.name_ar || inv.accommodations?.name || '-'}</Text>
-                            <Badge size="xs" variant="light">{new Date(inv.check_in_date).toLocaleDateString()} — {new Date(inv.check_out_date).toLocaleDateString()}</Badge>
+                            <Badge size="xs" variant="light">{formatLocalDate(inv.check_in_date)} — {formatLocalDate(inv.check_out_date)}</Badge>
                             <Text size="xs" c="brown">{Number(inv.sell_price_per_bed ?? inv.sell_price ?? 0).toLocaleString('en')} د.م/{t('bed') || 'سرير'}</Text>
                           </Group>
                           <ActionIcon size="sm" color="red" variant="subtle" onClick={() => setSelectedRoomInventories(prev => prev.filter(x => x.id !== inv.id))}>
@@ -1872,7 +1934,7 @@ export function BookingWizard() {
                                 <Text size="xs" fw={500}>{avail} {t('beds') || 'أسرة'}</Text>
                                 {alreadyAdded && <ThemeIcon color="green" size="xs"><CheckCircle size={12} /></ThemeIcon>}
                               </Group>
-                              <Text size="xs" c="dimmed">{new Date(inv.check_in_date).toLocaleDateString()} — {new Date(inv.check_out_date).toLocaleDateString()}</Text>
+                              <Text size="xs" c="dimmed">{formatLocalDate(inv.check_in_date)} — {formatLocalDate(inv.check_out_date)}</Text>
                               <Text size="xs" fw={500} c="brown">{Number(inv.sell_price_per_bed || inv.sell_price || 0).toLocaleString('en')} د.م/{t('bed') || 'سرير'}</Text>
                             </Card>
                           );
@@ -1905,11 +1967,11 @@ export function BookingWizard() {
                         {invs.length > 0 && (
                           <Paper withBorder p="xs" radius="md" mb="md">
                             <Stack gap={4}>
-                              {[...invs].sort((a: any, b: any) => new Date(a.check_in_date).getTime() - new Date(b.check_in_date).getTime()).map((inv: any, pos: number) => (
+                              {[...invs].sort((a: any, b: any) => parseLocalDate(a.check_in_date)!.getTime() - parseLocalDate(b.check_in_date)!.getTime()).map((inv: any, pos: number) => (
                                 <Group key={inv.id} justify="space-between" style={{ padding: '4px 8px', borderRadius: 4, backgroundColor: 'var(--mantine-color-gray-0)' }}>
                                   <Group gap="xs">
                                     <Badge size="xs" variant="outline">{t('batch')} {pos + 1}</Badge>
-                                    <Text size="xs">{inv.accommodations?.name_ar || inv.accommodations?.name || '-'} • {new Date(inv.check_in_date).toLocaleDateString()} — {new Date(inv.check_out_date).toLocaleDateString()}</Text>
+                                    <Text size="xs">{inv.accommodations?.name_ar || inv.accommodations?.name || '-'} • {formatLocalDate(inv.check_in_date)} — {formatLocalDate(inv.check_out_date)}</Text>
                                   </Group>
                                   <ActionIcon size="xs" color="red" variant="subtle" onClick={() => setPilgrimRoomSelections(prev => ({ ...prev, [idx]: { accommodationId: accIdForBackend || '', roomTypeId: rtIdForBackend || '', inventoryId: '', inventories: (prev[idx]?.inventories || []).filter((x: any) => x.id !== inv.id) } }))}>
                                     <Trash2 size={12} />
@@ -1985,7 +2047,7 @@ export function BookingWizard() {
                                         <Text size="xs">{avail} {t('beds') || 'أسرة'}</Text>
                                         {alreadyAdded && <ThemeIcon color="green" size="xs"><CheckCircle size={10} /></ThemeIcon>}
                                       </Group>
-                                      <Text size="xs" c="dimmed">{new Date(inv.check_in_date).toLocaleDateString()} — {new Date(inv.check_out_date).toLocaleDateString()}</Text>
+                                      <Text size="xs" c="dimmed">{formatLocalDate(inv.check_in_date)} — {formatLocalDate(inv.check_out_date)}</Text>
                                       <Text size="xs" fw={500} c="brown">{Number(inv.sell_price_per_bed || inv.sell_price || 0).toLocaleString('en')} د.م/{t('bed') || 'سرير'}</Text>
                                     </Card>
                                   );
@@ -2015,10 +2077,13 @@ export function BookingWizard() {
         {/* Step 5: Extra Services */}
         {active === 4 && (
           <Stack>
-            <Text fw={500}>الخدمات الإضافية (اختياري)</Text>
+            <Text fw={500}>{t('extra_services_optional') || 'الخدمات الإضافية (اختياري)'}</Text>
             <SimpleGrid cols={2}>
               {availableServices.map((service) => {
-                const isSelected = selectedServices.some(s => s.service_id === service.id);
+                const selected = selectedServices.find(s => s.service_id === service.id);
+                const isSelected = !!selected;
+                const applyCount = (selected?.pilgrim_ids?.length || 0) > 0 ? selected!.pilgrim_ids.length : pilgrims.length;
+                const lineTotal = isSelected ? (selected!.price * (selected!.quantity || 1) * applyCount) : 0;
                 return (
                   <Card
                     key={service.id}
@@ -2026,22 +2091,53 @@ export function BookingWizard() {
                     radius="md"
                     withBorder
                     style={{
-                      cursor: 'pointer',
                       borderColor: isSelected ? '#8B7355' : undefined,
-                      backgroundColor: isSelected ? '#F5EFE6' : undefined
+                      backgroundColor: isSelected ? '#F5EFE6' : undefined,
                     }}
-                    onClick={() => toggleService(service)}
                   >
-                    <Group justify="space-between">
+                    <Group
+                      justify="space-between"
+                      style={{ cursor: 'pointer' }}
+                      onClick={() => toggleService(service)}
+                    >
                       <div>
                         <Text fw={500}>{service.name_ar || service.name}</Text>
                         <Badge size="sm" variant="light">{service.category}</Badge>
                       </div>
                       <div style={{ textAlign: 'left' }}>
-                        <Text fw={600} c="brown">{service.price?.toLocaleString('en')} د.م</Text>
+                        <Text fw={600} c="brown">{service.price?.toLocaleString('en')} {t('mad') || 'د.م'}</Text>
                         <Checkbox checked={isSelected} readOnly />
                       </div>
                     </Group>
+                    {isSelected && (
+                      <Stack gap="xs" mt="sm" pl="sm" style={{ borderLeft: '2px solid #D4C5B0' }}>
+                        <Group>
+                          <NumberInput
+                            label={t('quantity') || 'Quantité'}
+                            value={selected!.quantity}
+                            onChange={(v) => updateService(service.id, { quantity: Number(v) || 1 })}
+                            min={1}
+                            max={pilgrims.length * 10}
+                            w={120}
+                          />
+                          <MultiSelect
+                            label={t('apply_to_pilgrims') || 'Appliquer à'}
+                            placeholder={t('all_pilgrims_default') || 'Tous les pèlerins (par défaut)'}
+                            data={pilgrims.map((p, i) => ({
+                              value: String(i),
+                              label: p.full_name_ar || p.full_name || `${t('pilgrim') || 'Pèlerin'} ${i + 1}`,
+                            }))}
+                            value={(selected!.pilgrim_ids || []).map(String)}
+                            onChange={(vals) => updateService(service.id, { pilgrim_ids: vals })}
+                            clearable
+                            w={300}
+                          />
+                        </Group>
+                        <Text size="xs" c="dimmed">
+                          {t('service_total') || 'Total ligne'}: {(selected!.quantity || 1)} × {applyCount} × {selected!.price} = <strong>{lineTotal.toLocaleString('en')} {t('mad') || 'د.م'}</strong>
+                        </Text>
+                      </Stack>
+                    )}
                   </Card>
                 );
               })}
@@ -2052,16 +2148,16 @@ export function BookingWizard() {
         {/* Step 6: Invoice Review */}
         {active === 5 && (
           <Stack>
-            <Title order={4}>ملخص الفاتورة</Title>
-            
+            <Title order={4}>{t('invoice_summary') || 'ملخص الفاتورة'}</Title>
+
             <Card withBorder p="md">
               <Table>
                 <Table.Thead>
                   <Table.Tr>
-                    <Table.Th>الوصف</Table.Th>
-                    <Table.Th>الكمية</Table.Th>
-                    <Table.Th>السعر</Table.Th>
-                    <Table.Th>المجموع</Table.Th>
+                    <Table.Th>{t('description_col') || 'الوصف'}</Table.Th>
+                    <Table.Th>{t('quantity_col') || 'الكمية'}</Table.Th>
+                    <Table.Th>{t('price_col') || 'السعر'}</Table.Th>
+                    <Table.Th>{t('total_col') || 'المجموع'}</Table.Th>
                   </Table.Tr>
                 </Table.Thead>
                 <Table.Tbody>
@@ -2151,18 +2247,19 @@ export function BookingWizard() {
 
             <Group>
               {availableDiscounts.length > 0 ? (
-                <Select
+                <MultiSelect
                   label={t('discount') || 'الخصم'}
                   placeholder={t('select_discount') || 'اختر الخصم'}
                   data={availableDiscounts.map((d: any) => ({
                     value: d.id,
-                    label: `${d.name_ar || d.name} ${d.discount_type === 'percent' ? `(${d.discount_value}%)` : `(${d.discount_value} MAD)`}${d.remaining !== null ? ` - ${t('remaining') || 'متبقي'}: ${d.remaining}` : ''}`,
-                    disabled: d.remaining === 0 || !d.can_use
+                    label: `${d.name_ar || d.name} ${d.discount_type === 'percent' ? `(${d.discount_value}%)` : `(${d.discount_value} MAD)`}${d.remaining !== null && d.remaining !== undefined ? ` - ${t('remaining') || 'متبقي'}: ${d.remaining}` : ''}`,
+                    disabled: d.remaining === 0 || !d.can_use,
                   }))}
-                  value={selectedDiscountId}
+                  value={selectedDiscountIds}
                   onChange={handleDiscountSelect}
                   clearable
-                  w={350}
+                  searchable
+                  w={500}
                 />
               ) : (
                 <NumberInput
@@ -2176,21 +2273,51 @@ export function BookingWizard() {
               )}
               {discount > 0 && (
                 <Badge color="green" size="lg">
-                  -{discount} {t('mad') || 'د.م'}
+                  -{discount.toLocaleString('en')} {t('mad') || 'د.م'}
                 </Badge>
               )}
             </Group>
 
+            {/* Issue #23: per-discount breakdown with multiplier for fixed-type discounts */}
+            {Object.keys(discountBreakdown).length > 0 && (
+              <Card withBorder p="sm" radius="md" style={{ backgroundColor: '#FDF8F0' }}>
+                <Stack gap="xs">
+                  <Text size="xs" fw={600} c="dimmed">{t('selected_discounts') || 'Remises appliquées'}</Text>
+                  {Object.entries(discountBreakdown).map(([id, info]) => (
+                    <Group key={id} justify="space-between">
+                      <Text size="sm">{info.name} {info.type === 'percent' ? `(%)` : '(MAD)'}</Text>
+                      {info.type === 'fixed' ? (
+                        <Group gap="xs">
+                          <Text size="xs" c="dimmed">{info.base.toLocaleString('en')} ×</Text>
+                          <NumberInput
+                            value={info.multiplier}
+                            onChange={(v) => updateDiscountMultiplier(id, Number(v) || 1)}
+                            min={1}
+                            max={Math.max(1, pilgrims.length)}
+                            size="xs"
+                            w={80}
+                          />
+                          <Text size="sm" fw={600} c="green">= -{(info.base * info.multiplier).toLocaleString('en')}</Text>
+                        </Group>
+                      ) : (
+                        <Text size="sm" fw={600} c="green">-{info.base.toLocaleString('en')}</Text>
+                      )}
+                    </Group>
+                  ))}
+                </Stack>
+              </Card>
+            )}
+
             <Divider />
 
             <Group justify="space-between">
-              <Text size="xl" fw={700}>المجموع الكلي:</Text>
-              <Text size="xl" fw={700} c="brown">{calculateTotal().toLocaleString('en')} د.م</Text>
+              <Text size="xl" fw={700}>{t('total_general') || 'المجموع الكلي'}:</Text>
+              <Text size="xl" fw={700} c="brown">{calculateTotal().toLocaleString('en')} {t('mad') || 'د.م'}</Text>
             </Group>
 
             <TextInput
-              label="ملاحظات"
-              placeholder="ملاحظات إضافية..."
+              label={t('notes') || 'ملاحظات'}
+              placeholder={t('additional_notes') || 'ملاحظات إضافية...'}
               value={notes}
               onChange={(e) => setNotes(e.currentTarget.value)}
             />
@@ -2203,53 +2330,71 @@ export function BookingWizard() {
             {createdBooking ? (
               <>
                 <Alert color="green" icon={<CheckCircle size={18} />}>
-                  تم إنشاء الحجز بنجاح! رقم الحجز: {createdBooking.booking_number}
+                  {t('booking_created_successfully') || 'Réservation créée avec succès'} — {t('booking_number') || 'N°'}: <strong>{createdBooking.booking_number}</strong>
                 </Alert>
 
                 <Card withBorder p="lg">
                   <Stack>
                     <Group justify="space-between">
-                      <Text>المبلغ الإجمالي:</Text>
-                      <Text fw={600}>{calculateTotal().toLocaleString('en')} د.م</Text>
+                      <Text>{t('total_amount') || 'المبلغ الإجمالي'}:</Text>
+                      <Text fw={600}>{calculateTotal().toLocaleString('en')} {t('mad') || 'د.م'}</Text>
                     </Group>
-                    
-                    <NumberInput
-                      label="مبلغ الدفعة"
-                      placeholder="أدخل المبلغ"
-                      value={paymentAmount}
-                      onChange={(v) => setPaymentAmount(Number(v) || 0)}
-                      min={0}
-                      max={calculateTotal()}
-                    />
+
+                    <Group grow>
+                      <NumberInput
+                        label={t('payment_amount') || 'مبلغ الدفعة'}
+                        placeholder={t('enter_amount') || 'أدخل المبلغ'}
+                        value={paymentAmount}
+                        onChange={(v) => setPaymentAmount(Number(v) || 0)}
+                        min={0}
+                        max={calculateTotal()}
+                      />
+                      <TextInput
+                        label={t('payment_date') || 'Date de paiement'}
+                        type="date"
+                        value={paymentDate}
+                        onChange={(e) => setPaymentDate(e.currentTarget.value)}
+                      />
+                    </Group>
 
                     <Select
-                      label="طريقة الدفع"
+                      label={t('payment_method') || 'طريقة الدفع'}
                       data={[
-                        { value: 'cash', label: 'نقداً' },
-                        { value: 'card', label: 'بطاقة' },
-                        { value: 'bank_transfer', label: 'تحويل بنكي' },
-                        { value: 'check', label: 'شيك' }
+                        { value: 'cash', label: t('cash_method') || 'Espèces' },
+                        { value: 'card', label: t('card_method') || 'Carte' },
+                        { value: 'bank_transfer', label: t('bank_transfer_method') || 'Virement bancaire' },
+                        { value: 'check', label: t('check_method') || 'Chèque' }
                       ]}
                       value={paymentMethod || ''}
                       onChange={(value) => setPaymentMethod(value || null)}
                     />
 
+                    <TextInput
+                      label={t('reference_number') || 'Numéro de référence'}
+                      placeholder={t('reference_placeholder') || 'ex: VIR-2026-001'}
+                      value={paymentReference}
+                      onChange={(e) => setPaymentReference(e.currentTarget.value)}
+                    />
+
+                    <TextInput
+                      label={t('notes') || 'Notes'}
+                      placeholder={t('payment_notes_placeholder') || 'Notes sur le paiement (optionnel)'}
+                      value={paymentNotes}
+                      onChange={(e) => setPaymentNotes(e.currentTarget.value)}
+                    />
+
                     <Group>
-                      <Button 
-                        variant="outline" 
-                        onClick={() => {
-                          setPaymentAmount(calculateTotal());
-                        }}
+                      <Button
+                        variant="outline"
+                        onClick={() => setPaymentAmount(calculateTotal())}
                       >
-                        دفع كامل
+                        {t('full_payment_btn') || 'Paiement complet'}
                       </Button>
-                      <Button 
-                        variant="outline" 
-                        onClick={() => {
-                          setPaymentAmount(Math.round(calculateTotal() / 2));
-                        }}
+                      <Button
+                        variant="outline"
+                        onClick={() => setPaymentAmount(Math.round(calculateTotal() / 2))}
                       >
-                        دفع نصف المبلغ
+                        {t('half_payment_btn') || 'Demi-paiement'}
                       </Button>
                     </Group>
                   </Stack>
@@ -2257,7 +2402,7 @@ export function BookingWizard() {
               </>
             ) : (
               <Alert color="yellow">
-                يرجى إنشاء الحجز أولاً
+                {t('please_create_booking_first') || 'Veuillez d\'abord créer la réservation'}
               </Alert>
             )}
           </Stack>
@@ -2384,24 +2529,24 @@ export function BookingWizard() {
         {/* Navigation */}
         <Group justify="space-between" mt="xl">
           <Button variant="default" onClick={prevStep} disabled={active === 0}>
-            السابق
+            {t('previous') || 'السابق'}
           </Button>
           
           {active < 5 && (
             <Button onClick={nextStep} disabled={!canProceed()}>
-              التالي
+              {t('next') || 'التالي'}
             </Button>
           )}
           
           {active === 5 && (
             <Button onClick={handleCreateBooking} disabled={!canProceed()}>
-              إنشاء الحجز
+              {t('create_booking_btn') || 'إنشاء الحجز'}
             </Button>
           )}
-          
+
           {active === 6 && createdBooking && (
             <Button onClick={handleConfirmAndPay}>
-              تأكيد وحفظ الدفعة
+              {t('confirm_save_payment') || 'تأكيد وحفظ الدفعة'}
             </Button>
           )}
         </Group>

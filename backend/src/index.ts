@@ -3,6 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import routes from './routes';
 import { scheduleExpireBookingsJob } from './jobs/expireBookings';
+import { trimBodyMiddleware } from './middleware/trimBody';
 
 dotenv.config();
 
@@ -11,6 +12,7 @@ const PORT = process.env.PORT || 3001;
 
 app.use(cors());
 app.use(express.json());
+app.use(trimBodyMiddleware); // Issue #5: trim all incoming string fields globally
 
 // API Routes
 app.use('/api', routes);

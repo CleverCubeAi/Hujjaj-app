@@ -25,6 +25,7 @@ import { Plus, Edit, Trash2, LayoutGrid } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { HotelInventoryForm } from './HotelInventoryForm';
 import { useAuth } from '../../providers/AuthProvider';
+import { formatLocalDate } from '../../lib/dates';
 
 interface HotelInventory {
   id: string;
@@ -245,8 +246,8 @@ export function HotelInventoryPage() {
                   <Text size="xs" c="dimmed">{inv.room_types?.total_beds} {t('beds') || 'أسرة'}</Text>
                 </Table.Td>
                 <Table.Td>
-                  <Text size="sm">{new Date(inv.check_in_date).toLocaleDateString()}</Text>
-                  <Text size="xs" c="dimmed">→ {new Date(inv.check_out_date).toLocaleDateString()}</Text>
+                  <Text size="sm">{formatLocalDate(inv.check_in_date)}</Text>
+                  <Text size="xs" c="dimmed">→ {formatLocalDate(inv.check_out_date)}</Text>
                   <Text size="xs" c="dimmed">({inv.nights} {t('nights') || 'ليلة'})</Text>
                 </Table.Td>
                 <Table.Td>{bedsPurchased}</Table.Td>

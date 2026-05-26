@@ -20,6 +20,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { api } from '../../lib/api';
 import { ArrowLeft, BedDouble, User, Building2, Pencil, Check, X } from 'lucide-react';
+import { formatLocalDate } from '../../lib/dates';
 
 interface BedMapData {
   inventory: {
@@ -141,7 +142,7 @@ export function BedMapPage() {
           <Badge color="blue">{inventory.beds_sold} {t('occupied') || 'مشغولة'}</Badge>
           <Badge color="green">{inventory.beds_purchased - inventory.beds_sold} {t('available') || 'متاحة'}</Badge>
           <Text size="xs" c="dimmed">
-            {new Date(inventory.check_in_date).toLocaleDateString()} → {new Date(inventory.check_out_date).toLocaleDateString()}
+            {formatLocalDate(inventory.check_in_date)} → {formatLocalDate(inventory.check_out_date)}
           </Text>
         </Group>
       </Group>

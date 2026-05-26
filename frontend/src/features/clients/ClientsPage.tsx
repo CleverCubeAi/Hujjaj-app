@@ -5,19 +5,24 @@ import {
   Table, 
   Button, 
   Group, 
-  TextInput, 
-  Modal, 
-  Stack, 
+  TextInput,
+  Modal,
+  Stack,
   Text,
   ActionIcon,
   Badge,
   Box,
   Textarea,
-  LoadingOverlay
+  Select,
+  LoadingOverlay,
+  Notification
 } from '@mantine/core';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../lib/api';
 import { Plus, Search, Edit, Trash2, Phone, Mail, User } from 'lucide-react';
+
+// Issue #11: client-side email format check
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 interface Client {
   id: string;
@@ -28,6 +33,7 @@ interface Client {
   address?: string;
   id_number?: string;
   notes?: string;
+  branch_id?: string | null;
   created_at: string;
   bookings?: any[];
 }
@@ -46,8 +52,11 @@ export function ClientsPage() {
     phone: '',
     address: '',
     id_number: '',
-    notes: ''
+    notes: '',
+    branch_id: '' as string,
   });
+  const [branches, setBranches] = useState<Array<{ id: string; name: string; city?: string }>>([]);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const fetchClients = async () => {
     setLoading(true);
@@ -63,6 +72,8 @@ export function ClientsPage() {
 
   useEffect(() => {
     fetchClients();
+    // Issue #10: load branches for the selector
+    api.getBranches({ active_only: true }).then(setBranches).catch(() => setBranches([]));
   }, []);
 
   useEffect(() => {
@@ -80,9 +91,11 @@ export function ClientsPage() {
       phone: '',
       address: '',
       id_number: '',
-      notes: ''
+      notes: '',
+      branch_id: '',
     });
     setEditingClient(null);
+    setSubmitError(null);
   };
 
   const openCreateModal = () => {
@@ -99,23 +112,33 @@ export function ClientsPage() {
       phone: client.phone,
       address: client.address || '',
       id_number: client.id_number || '',
-      notes: client.notes || ''
+      notes: client.notes || '',
+      branch_id: client.branch_id || '',
     });
+    setSubmitError(null);
     setModalOpen(true);
   };
 
   const handleSubmit = async () => {
+    setSubmitError(null);
+    // Issue #11: client-side email validation
+    if (form.email && !EMAIL_RE.test(form.email)) {
+      setSubmitError(t('invalid_email_format') || 'Format e-mail invalide');
+      return;
+    }
     try {
+      const payload = { ...form, branch_id: form.branch_id || null };
       if (editingClient) {
-        await api.updateClient(editingClient.id, form);
+        await api.updateClient(editingClient.id, payload);
       } else {
-        await api.createClient(form);
+        await api.createClient(payload);
       }
       setModalOpen(false);
       resetForm();
       fetchClients();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving client:', error);
+      setSubmitError(error?.message || 'Error saving');
     }
   };
 
@@ -257,11 +280,22 @@ export function ClientsPage() {
             <TextInput
               label={t('email') || 'البريد الإلكتروني'}
               placeholder="email@example.com"
+              type="email"
               value={form.email}
               onChange={(e) => setForm({ ...form, email: e.currentTarget.value })}
               leftSection={<Mail size={16} />}
+              error={form.email && !EMAIL_RE.test(form.email) ? (t('invalid_email_format') || 'Format e-mail invalide') : undefined}
             />
           </Group>
+
+          <Select
+            label={t('branch') || 'Succursale'}
+            placeholder={t('select_branch_optional') || 'Sélectionner une succursale (optionnel)'}
+            data={branches.map(b => ({ value: b.id, label: `${b.name}${b.city ? ' — ' + b.city : ''}` }))}
+            value={form.branch_id || null}
+            onChange={(v) => setForm({ ...form, branch_id: v || '' })}
+            clearable
+          />
 
           <TextInput
             label={t('id_number') || 'رقم الهوية (CIN)'}
@@ -284,6 +318,10 @@ export function ClientsPage() {
             onChange={(e) => setForm({ ...form, notes: e.currentTarget.value })}
             rows={3}
           />
+
+          {submitError && (
+            <Notification color="red" withCloseButton={false}>{submitError}</Notification>
+          )}
 
           <Group justify="flex-end" mt="md">
             <Button variant="subtle" onClick={() => { setModalOpen(false); resetForm(); }}>

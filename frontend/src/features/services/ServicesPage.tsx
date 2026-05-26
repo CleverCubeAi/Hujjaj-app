@@ -204,7 +204,7 @@ export function ServicesPage() {
                     </Text>
                   </Table.Td>
                   <Table.Td>
-                    <Text fw={600}>{service.price.toLocaleString('en')} د.م</Text>
+                    <Text fw={600}>{service.price.toLocaleString('en')} MAD</Text>
                   </Table.Td>
                   <Table.Td>
                     <Switch
@@ -272,7 +272,7 @@ export function ServicesPage() {
           />
 
           <NumberInput
-            label={t('price') || 'السعر (د.م)'}
+            label={t('price') || 'السعر (MAD)'}
             value={form.price}
             onChange={(value) => setForm({ ...form, price: Number(value) || 0 })}
             min={0}

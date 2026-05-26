@@ -17,6 +17,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { api } from '../../lib/api';
 import { ArrowLeft, Plane, User } from 'lucide-react';
+import { formatLocalDate } from '../../lib/dates';
 
 interface SeatMapData {
   inventory: {
@@ -103,7 +104,7 @@ export function SeatMapPage() {
           )}
           {flight?.departure_date && (
             <Text size="xs" c="dimmed">
-              {new Date(flight.departure_date).toLocaleDateString()}
+              {formatLocalDate(flight.departure_date)}
             </Text>
           )}
         </Group>
