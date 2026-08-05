@@ -21,10 +21,11 @@ interface UserProfile {
 
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [opened, { toggle }] = useDisclosure();
-  const { signOut, user } = useAuth();
+  const { signOut, user, role } = useAuth();
   const { t } = useTranslation();
   const [agency, setAgency] = useState<AgencyInfo | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const isPlatformSuperAdmin = role === 'super_admin' && !user?.user_metadata?.agency_id;
 
   useEffect(() => {
     const fetchData = async () => {
@@ -87,7 +88,9 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
               />
             ) : (
               <Text size="lg" fw={700} c="#8B7355">
-                {agency?.name || t('app_name')}
+                {isPlatformSuperAdmin
+                  ? (agency?.name || 'Hujjaj')
+                  : (agency?.name || t('app_name'))}
               </Text>
             )}
           </Group>

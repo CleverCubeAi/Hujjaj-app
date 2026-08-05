@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Quick Deployment Script for Remote Server
-# This script helps deploy the Ashamel platform to a remote server
+# This script helps deploy the Hujjaj platform to a remote server
 
 set -e
 
@@ -13,7 +13,7 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 echo -e "${BLUE}========================================${NC}"
-echo -e "${BLUE}  Ashamel Platform - Remote Deployment${NC}"
+echo -e "${BLUE}  Hujjaj Platform - Remote Deployment${NC}"
 echo -e "${BLUE}========================================${NC}"
 echo ""
 

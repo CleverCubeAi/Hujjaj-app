@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Ashamel Platform Monitoring Script
+# Hujjaj Platform Monitoring Script
 # Check the health and status of all services
 
 # Colors
@@ -11,7 +11,7 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 echo -e "${BLUE}========================================${NC}"
-echo -e "${BLUE}  Ashamel Platform Health Monitor${NC}"
+echo -e "${BLUE}  Hujjaj Platform Health Monitor${NC}"
 echo -e "${BLUE}========================================${NC}"
 echo ""
 
@@ -35,8 +35,8 @@ if [ -z "$containers" ]; then
 fi
 
 # Parse and display container status
-backend_status=$(docker inspect -f '{{.State.Status}}' ashamel-backend 2>/dev/null)
-frontend_status=$(docker inspect -f '{{.State.Status}}' ashamel-frontend 2>/dev/null)
+backend_status=$(docker inspect -f '{{.State.Status}}' hujjaj-backend 2>/dev/null)
+frontend_status=$(docker inspect -f '{{.State.Status}}' hujjaj-frontend 2>/dev/null)
 
 if [ "$backend_status" == "running" ]; then
     echo -e "${GREEN}✓ Backend:  Running${NC}"
@@ -75,7 +75,7 @@ echo ""
 
 # Resource usage
 echo -e "${BLUE}Resource Usage:${NC}"
-docker stats --no-stream --format "table {{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}" ashamel-backend ashamel-frontend 2>/dev/null
+docker stats --no-stream --format "table {{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}" hujjaj-backend hujjaj-frontend 2>/dev/null
 
 echo ""
 

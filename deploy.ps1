@@ -1,10 +1,10 @@
-# Ashamel Platform Deployment Script (PowerShell)
+# Hujjaj Platform Deployment Script (PowerShell)
 # This script helps you deploy the platform quickly on Windows
 
 $ErrorActionPreference = "Stop"
 
 Write-Host "========================================" -ForegroundColor Green
-Write-Host "  Ashamel Platform Deployment Script" -ForegroundColor Green
+Write-Host "  Hujjaj Platform Deployment Script" -ForegroundColor Green
 Write-Host "========================================" -ForegroundColor Green
 Write-Host ""
 

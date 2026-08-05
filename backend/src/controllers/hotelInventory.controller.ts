@@ -9,9 +9,9 @@ export const listHotelInventory = async (req: Request, res: Response) => {
     const agencyId = req.agencyId || req.user?.agency_id;
     const { season_id, accommodation_id, room_type_id } = req.query;
 
-    if (!agencyId) {
-      return res.status(403).json({ error: 'Agency ID not found' });
-    }
+    if (!agencyId && req.user?.role !== 'super_admin') {
+    return res.status(403).json({ error: 'Agency ID not found' });
+  }
 
     let query = supabase
       .from(TABLE_NAME)
@@ -42,9 +42,9 @@ export const getHotelInventory = async (req: Request, res: Response) => {
     const { id } = req.params;
     const agencyId = req.agencyId || req.user?.agency_id;
 
-    if (!agencyId) {
-      return res.status(403).json({ error: 'Agency ID not found' });
-    }
+    if (!agencyId && req.user?.role !== 'super_admin') {
+    return res.status(403).json({ error: 'Agency ID not found' });
+  }
 
     const { data, error } = await supabase
       .from(TABLE_NAME)
@@ -96,9 +96,9 @@ export const createHotelInventory = async (req: Request, res: Response) => {
     const actualPurchasePrice = purchase_price_per_bed || purchase_price_per_room;
     const actualSellPrice = sell_price_per_bed || sell_price_per_room;
 
-    if (!agencyId) {
-      return res.status(403).json({ error: 'Agency ID not found' });
-    }
+    if (!agencyId && req.user?.role !== 'super_admin') {
+    return res.status(403).json({ error: 'Agency ID not found' });
+  }
 
     // Only agency_admin and super_admin can purchase inventory
     if (role !== 'agency_admin' && role !== 'super_admin') {
@@ -179,9 +179,9 @@ export const updateHotelInventory = async (req: Request, res: Response) => {
     const role = req.user?.role;
     const updateData = req.body;
 
-    if (!agencyId) {
-      return res.status(403).json({ error: 'Agency ID not found' });
-    }
+    if (!agencyId && req.user?.role !== 'super_admin') {
+    return res.status(403).json({ error: 'Agency ID not found' });
+  }
 
     // Only agency_admin and super_admin can update
     if (role !== 'agency_admin' && role !== 'super_admin') {
@@ -258,9 +258,9 @@ export const deleteHotelInventory = async (req: Request, res: Response) => {
     const agencyId = req.agencyId || req.user?.agency_id;
     const role = req.user?.role;
 
-    if (!agencyId) {
-      return res.status(403).json({ error: 'Agency ID not found' });
-    }
+    if (!agencyId && req.user?.role !== 'super_admin') {
+    return res.status(403).json({ error: 'Agency ID not found' });
+  }
 
     // Only agency_admin and super_admin can delete
     if (role !== 'agency_admin' && role !== 'super_admin') {
@@ -303,9 +303,9 @@ export const getAvailableBeds = async (req: Request, res: Response) => {
     const agencyId = req.agencyId || req.user?.agency_id;
     const { season_id, accommodation_id, room_type_id, check_in_date, check_out_date } = req.query;
 
-    if (!agencyId) {
-      return res.status(403).json({ error: 'Agency ID not found' });
-    }
+    if (!agencyId && req.user?.role !== 'super_admin') {
+    return res.status(403).json({ error: 'Agency ID not found' });
+  }
 
     if (!season_id) {
       return res.status(400).json({ error: 'season_id is required' });
@@ -370,9 +370,9 @@ export const getBedMap = async (req: Request, res: Response) => {
     const { id } = req.params;
     const agencyId = req.agencyId || req.user?.agency_id;
 
-    if (!agencyId) {
-      return res.status(403).json({ error: 'Agency ID not found' });
-    }
+    if (!agencyId && req.user?.role !== 'super_admin') {
+    return res.status(403).json({ error: 'Agency ID not found' });
+  }
 
     // 1. Get inventory
     const { data: inventory, error: invError } = await supabase

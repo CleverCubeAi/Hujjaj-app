@@ -166,8 +166,8 @@ export function BookingInvoicePage() {
         {/* Header */}
         <Group justify="space-between" mb="xl">
           <div>
-            <Title order={2} c="brown">الشامل للحج والعمرة</Title>
-            <Text size="sm" c="dimmed">Ashamel Hajj & Omra</Text>
+            <Title order={2} c="brown">حجاج للحج والعمرة</Title>
+            <Text size="sm" c="dimmed">Hujjaj Hajj & Omra</Text>
           </div>
           <div style={{ textAlign: 'left' }}>
             <Text fw={700} size="xl">فاتورة</Text>
@@ -220,8 +220,8 @@ export function BookingInvoicePage() {
                   <Text size="xs" c="dimmed">{item.item_type}</Text>
                 </Table.Td>
                 <Table.Td style={{ textAlign: 'center' }}>{item.quantity}</Table.Td>
-                <Table.Td style={{ textAlign: 'center' }}>{item.unit_price.toLocaleString('en')} MAD</Table.Td>
-                <Table.Td style={{ textAlign: 'center' }} fw={500}>{item.total_price.toLocaleString('en')} MAD</Table.Td>
+                <Table.Td style={{ textAlign: 'center' }}>{Number(item.unit_price || 0).toLocaleString('en')} MAD</Table.Td>
+                <Table.Td style={{ textAlign: 'center' }} fw={500}>{Number(item.total_price || 0).toLocaleString('en')} MAD</Table.Td>
               </Table.Tr>
             ))}
           </Table.Tbody>
@@ -284,7 +284,7 @@ export function BookingInvoicePage() {
         {/* Footer */}
         <Divider my="xl" />
         <Text size="sm" c="dimmed" ta="center">
-          شكراً لثقتكم بنا - الشامل للحج والعمرة
+          شكراً لثقتكم بنا - حجاج للحج والعمرة
         </Text>
       </Paper>
 

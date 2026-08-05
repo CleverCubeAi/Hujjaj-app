@@ -1,26 +1,25 @@
 import { Request, Response, NextFunction } from 'express';
-import { supabaseAdmin } from '../services/supabase';
+import { verifyToken } from '../services/auth.service';
 
-// Extend Express Request type
 declare global {
   namespace Express {
     interface Request {
       user?: {
         id: string;
         email?: string;
-        agency_id?: string;
+        agency_id?: string | null;
         role?: string;
-        branch_id?: string;
+        branch_id?: string | null;
         user_metadata?: any;
       };
-      agencyId?: string;
+      agencyId?: string | null;
     }
   }
 }
 
 export const authMiddleware = async (req: Request, res: Response, next: NextFunction) => {
   const authHeader = req.headers.authorization;
-  
+
   if (!authHeader) {
     return res.status(401).json({ error: 'Missing authorization header' });
   }
@@ -28,25 +27,25 @@ export const authMiddleware = async (req: Request, res: Response, next: NextFunc
   const token = authHeader.replace('Bearer ', '');
 
   try {
-    const { data: { user }, error } = await supabaseAdmin.auth.getUser(token);
+    const payload = verifyToken(token);
 
-    if (error || !user) {
-      return res.status(401).json({ error: 'Invalid token' });
-    }
-
-    // Set user with flattened agency_id and branch_id for easy access
     req.user = {
-      id: user.id,
-      email: user.email,
-      agency_id: user.user_metadata?.agency_id,
-      role: user.user_metadata?.role,
-      branch_id: user.user_metadata?.branch_id,
-      user_metadata: user.user_metadata
+      id: payload.sub,
+      email: payload.email,
+      agency_id: payload.agency_id || undefined,
+      role: payload.role || undefined,
+      branch_id: payload.branch_id || undefined,
+      user_metadata: {
+        agency_id: payload.agency_id,
+        role: payload.role,
+        branch_id: payload.branch_id,
+        full_name: payload.full_name,
+      },
     };
-    req.agencyId = user.user_metadata?.agency_id;
+    req.agencyId = payload.agency_id || undefined;
 
     next();
-  } catch (err) {
-    res.status(500).json({ error: 'Internal server error during auth' });
+  } catch {
+    return res.status(401).json({ error: 'Invalid token' });
   }
 };

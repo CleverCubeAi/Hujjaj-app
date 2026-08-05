@@ -12,9 +12,12 @@ import { DiscountSettings } from './DiscountSettings';
 import { useTranslation } from 'react-i18next';
 
 export function SettingsPage() {
-  const { role } = useAuth();
+  const { role, agencyId } = useAuth();
   const { t } = useTranslation();
-  const isAdmin = role === 'agency_admin' || role === 'super_admin';
+  const isSuperAdmin = role === 'super_admin';
+  // Agency-scoped admin tabs — hidden for platform super admin (no agency)
+  const isAgencyAdmin = role === 'agency_admin' || (isSuperAdmin && !!agencyId);
+  const canSecurity = isAgencyAdmin || isSuperAdmin;
 
   return (
     <Container size="xl" py="xl">
@@ -27,27 +30,27 @@ export function SettingsPage() {
           <Tabs.Tab value="profile">
             {t('profile') || 'الملف الشخصي'}
           </Tabs.Tab>
-          {isAdmin && (
+          {canSecurity && (
             <Tabs.Tab value="security">
               {t('security') || 'الأمان'}
             </Tabs.Tab>
           )}
-          {isAdmin && (
+          {isAgencyAdmin && (
             <Tabs.Tab value="agency">
               {t('agency') || 'الوكالة'}
             </Tabs.Tab>
           )}
-          {isAdmin && (
+          {isAgencyAdmin && (
             <Tabs.Tab value="team">
               {t('team') || 'الفريق'}
             </Tabs.Tab>
           )}
-          {isAdmin && (
+          {isAgencyAdmin && (
             <Tabs.Tab value="branches">
               {t('branches') || 'الفروع'}
             </Tabs.Tab>
           )}
-          {isAdmin && (
+          {isAgencyAdmin && (
             <Tabs.Tab value="discounts">
               {t('discounts') || 'الخصومات'}
             </Tabs.Tab>
@@ -55,12 +58,12 @@ export function SettingsPage() {
           <Tabs.Tab value="preferences">
             {t('preferences') || 'التفضيلات'}
           </Tabs.Tab>
-          {isAdmin && (
+          {isAgencyAdmin && (
             <Tabs.Tab value="email">
               {t('email') || 'البريد الإلكتروني'}
             </Tabs.Tab>
           )}
-          {isAdmin && (
+          {isAgencyAdmin && (
             <Tabs.Tab value="sms">
               {t('sms') || 'الرسائل النصية'}
             </Tabs.Tab>
@@ -71,31 +74,31 @@ export function SettingsPage() {
           <ProfileSettings />
         </Tabs.Panel>
 
-        {isAdmin && (
+        {canSecurity && (
           <Tabs.Panel value="security" pt="xl">
             <SecuritySettings />
           </Tabs.Panel>
         )}
 
-        {isAdmin && (
+        {isAgencyAdmin && (
           <Tabs.Panel value="agency" pt="xl">
             <AgencySettings />
           </Tabs.Panel>
         )}
 
-        {isAdmin && (
+        {isAgencyAdmin && (
           <Tabs.Panel value="team" pt="xl">
             <TeamManagement />
           </Tabs.Panel>
         )}
 
-        {isAdmin && (
+        {isAgencyAdmin && (
           <Tabs.Panel value="branches" pt="xl">
             <BranchManagement />
           </Tabs.Panel>
         )}
 
-        {isAdmin && (
+        {isAgencyAdmin && (
           <Tabs.Panel value="discounts" pt="xl">
             <DiscountSettings />
           </Tabs.Panel>
@@ -105,13 +108,13 @@ export function SettingsPage() {
           <PreferencesSettings />
         </Tabs.Panel>
 
-        {isAdmin && (
+        {isAgencyAdmin && (
           <Tabs.Panel value="email" pt="xl">
             <EmailSettings />
           </Tabs.Panel>
         )}
 
-        {isAdmin && (
+        {isAgencyAdmin && (
           <Tabs.Panel value="sms" pt="xl">
             <SMSSettings />
           </Tabs.Panel>

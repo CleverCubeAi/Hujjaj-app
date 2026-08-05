@@ -5,7 +5,7 @@ export const listPilgrims = async (req: Request, res: Response) => {
   const agencyId = req.agencyId;
   const { season_id, flight_id, booking_id, client_id } = req.query;
   
-  if (!agencyId) {
+  if (!agencyId && req.user?.role !== 'super_admin') {
     return res.status(403).json({ error: 'Agency ID not found' });
   }
 
@@ -34,7 +34,7 @@ export const getPilgrim = async (req: Request, res: Response) => {
   const agencyId = req.agencyId;
   const { id } = req.params;
   
-  if (!agencyId) {
+  if (!agencyId && req.user?.role !== 'super_admin') {
     return res.status(403).json({ error: 'Agency ID not found' });
   }
 
@@ -62,7 +62,7 @@ export const createPilgrim = async (req: Request, res: Response) => {
   const agencyId = req.agencyId;
   const body = req.body;
   
-  if (!agencyId) {
+  if (!agencyId && req.user?.role !== 'super_admin') {
     return res.status(403).json({ error: 'Agency ID not found' });
   }
 
@@ -89,7 +89,7 @@ export const updatePilgrim = async (req: Request, res: Response) => {
   const { id } = req.params;
   const updates = req.body;
   
-  if (!agencyId) {
+  if (!agencyId && req.user?.role !== 'super_admin') {
     return res.status(403).json({ error: 'Agency ID not found' });
   }
 
@@ -116,7 +116,7 @@ export const deletePilgrim = async (req: Request, res: Response) => {
   const agencyId = req.agencyId;
   const { id } = req.params;
   
-  if (!agencyId) {
+  if (!agencyId && req.user?.role !== 'super_admin') {
     return res.status(403).json({ error: 'Agency ID not found' });
   }
 
@@ -145,7 +145,7 @@ export const importPilgrims = async (req: Request, res: Response) => {
   const agencyId = req.agencyId;
   const { pilgrims } = req.body; // Array of pilgrim objects
   
-  if (!agencyId) {
+  if (!agencyId && req.user?.role !== 'super_admin') {
     return res.status(403).json({ error: 'Agency ID not found' });
   }
 

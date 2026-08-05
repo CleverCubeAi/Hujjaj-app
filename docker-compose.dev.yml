@@ -1,62 +1,89 @@
 version: '3.8'
 
-# Development Docker Compose Configuration
-# This configuration includes volume mounts for hot-reload during development
-
 services:
-  # Backend API Service (Development)
+  postgres:
+    image: postgres:16-alpine
+    container_name: hujjaj-postgres-dev
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-hujjaj}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-hujjaj}
+      POSTGRES_DB: ${POSTGRES_DB:-hujjaj}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres-data-dev:/var/lib/postgresql/data
+    networks:
+      - hujjaj-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-hujjaj} -d ${POSTGRES_DB:-hujjaj}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile.dev
-    container_name: ashamel-backend-dev
+    container_name: hujjaj-backend-dev
     restart: unless-stopped
     ports:
       - "3001:3001"
     environment:
       - NODE_ENV=development
       - PORT=3001
-      - SUPABASE_URL=${SUPABASE_URL}
-      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
-      - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
-      - EMAIL_HOST=${EMAIL_HOST}
-      - EMAIL_PORT=${EMAIL_PORT}
-      - EMAIL_USER=${EMAIL_USER}
-      - EMAIL_PASSWORD=${EMAIL_PASSWORD}
-      - TWILIO_ACCOUNT_SID=${TWILIO_ACCOUNT_SID}
-      - TWILIO_AUTH_TOKEN=${TWILIO_AUTH_TOKEN}
-      - TWILIO_PHONE_NUMBER=${TWILIO_PHONE_NUMBER}
+      - DATABASE_URL=${DATABASE_URL:-postgres://hujjaj:hujjaj@postgres:5432/hujjaj}
+      - JWT_SECRET=${JWT_SECRET:-dev-secret}
+      - JWT_EXPIRES_IN=${JWT_EXPIRES_IN:-7d}
+      - PUBLIC_URL=${PUBLIC_URL:-http://localhost:3001}
+      - SUPER_ADMIN_EMAIL=${SUPER_ADMIN_EMAIL:-admin@hujjaj.app}
+      - SUPER_ADMIN_PASSWORD=${SUPER_ADMIN_PASSWORD:-Admin123!}
+      - SUPER_ADMIN_NAME=${SUPER_ADMIN_NAME:-Super Admin}
+      - SEED_DEMO=${SEED_DEMO:-true}
+      - DEMO_PASSWORD=${DEMO_PASSWORD:-Demo123!}
+      - EMAIL_HOST=${EMAIL_HOST:-}
+      - EMAIL_PORT=${EMAIL_PORT:-}
+      - EMAIL_USER=${EMAIL_USER:-}
+      - EMAIL_PASSWORD=${EMAIL_PASSWORD:-}
+      - TWILIO_ACCOUNT_SID=${TWILIO_ACCOUNT_SID:-}
+      - TWILIO_AUTH_TOKEN=${TWILIO_AUTH_TOKEN:-}
+      - TWILIO_PHONE_NUMBER=${TWILIO_PHONE_NUMBER:-}
     volumes:
       - ./backend/src:/app/src
+      - ./backend/db:/app/db
       - ./backend/uploads:/app/uploads
       - /app/node_modules
+    depends_on:
+      postgres:
+        condition: service_healthy
     networks:
-      - ashamel-network
-    command: npm run dev
+      - hujjaj-network
+    command: sh -c "npx knex migrate:latest && npm run seed:super-admin && npm run seed:demo && npm run dev"
 
-  # Frontend Service (Development)
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile.dev
-    container_name: ashamel-frontend-dev
+    container_name: hujjaj-frontend-dev
     restart: unless-stopped
     ports:
       - "5173:5173"
     environment:
-      - VITE_SUPABASE_URL=${SUPABASE_URL}
-      - VITE_SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
       - VITE_API_URL=http://localhost:3001/api
     volumes:
       - ./frontend/src:/app/src
       - ./frontend/public:/app/public
       - /app/node_modules
     networks:
-      - ashamel-network
+      - hujjaj-network
     depends_on:
       - backend
     command: npm run dev
 
 networks:
-  ashamel-network:
+  hujjaj-network:
     driver: bridge
+
+volumes:
+  postgres-data-dev:
+    driver: local

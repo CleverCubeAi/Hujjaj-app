@@ -123,7 +123,7 @@ export async function testConnection(config: SMSConfig, testPhoneNumber: string)
     await sendSMS(
       config,
       testPhoneNumber,
-      'Test SMS from Ashamel - Your SMS configuration is working correctly!'
+      'Test SMS from Hujjaj - Your SMS configuration is working correctly!'
     );
     return true;
   } catch (error: any) {

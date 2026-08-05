@@ -12,7 +12,7 @@ export const listDiscountSettings = async (req: Request, res: Response) => {
   const agencyId = req.agencyId;
   const { active_only } = req.query;
 
-  if (!agencyId) {
+  if (!agencyId && req.user?.role !== 'super_admin') {
     return res.status(403).json({ error: 'Agency ID not found' });
   }
 
@@ -45,7 +45,7 @@ export const getDiscountSetting = async (req: Request, res: Response) => {
   const agencyId = req.agencyId;
   const { id } = req.params;
 
-  if (!agencyId) {
+  if (!agencyId && req.user?.role !== 'super_admin') {
     return res.status(403).json({ error: 'Agency ID not found' });
   }
 
@@ -75,7 +75,7 @@ export const createDiscountSetting = async (req: Request, res: Response) => {
   const userId = req.user?.id;
   const role = req.user?.role;
 
-  if (!agencyId) {
+  if (!agencyId && req.user?.role !== 'super_admin') {
     return res.status(403).json({ error: 'Agency ID not found' });
   }
 
@@ -134,7 +134,7 @@ export const updateDiscountSetting = async (req: Request, res: Response) => {
   const role = req.user?.role;
   const { id } = req.params;
 
-  if (!agencyId) {
+  if (!agencyId && req.user?.role !== 'super_admin') {
     return res.status(403).json({ error: 'Agency ID not found' });
   }
 
@@ -174,7 +174,7 @@ export const deleteDiscountSetting = async (req: Request, res: Response) => {
   const role = req.user?.role;
   const { id } = req.params;
 
-  if (!agencyId) {
+  if (!agencyId && req.user?.role !== 'super_admin') {
     return res.status(403).json({ error: 'Agency ID not found' });
   }
 
@@ -361,9 +361,9 @@ export const listUserPermissions = async (req: Request, res: Response) => {
   const role = req.user?.role;
   const { user_id, discount_id } = req.query;
 
-    if (!agencyId) {
-      return res.status(403).json({ error: 'Agency ID not found' });
-    }
+    if (!agencyId && req.user?.role !== 'super_admin') {
+    return res.status(403).json({ error: 'Agency ID not found' });
+  }
 
     if (role !== 'agency_admin' && role !== 'super_admin') {
       return res.status(403).json({ error: 'Only admins can view all permissions' });
@@ -463,7 +463,7 @@ export const getUserPermissions = async (req: Request, res: Response) => {
   const role = req.user?.role;
   const { user_id } = req.params;
 
-  if (!agencyId) {
+  if (!agencyId && req.user?.role !== 'super_admin') {
     return res.status(403).json({ error: 'Agency ID not found' });
   }
 
@@ -497,7 +497,7 @@ export const createUserPermission = async (req: Request, res: Response) => {
   const grantedBy = req.user?.id;
   const role = req.user?.role;
 
-  if (!agencyId) {
+  if (!agencyId && req.user?.role !== 'super_admin') {
     return res.status(403).json({ error: 'Agency ID not found' });
   }
 
@@ -558,7 +558,7 @@ export const updateUserPermission = async (req: Request, res: Response) => {
   const role = req.user?.role;
   const { id } = req.params;
 
-  if (!agencyId) {
+  if (!agencyId && req.user?.role !== 'super_admin') {
     return res.status(403).json({ error: 'Agency ID not found' });
   }
 
@@ -598,7 +598,7 @@ export const deleteUserPermission = async (req: Request, res: Response) => {
   const role = req.user?.role;
   const { id } = req.params;
 
-  if (!agencyId) {
+  if (!agencyId && req.user?.role !== 'super_admin') {
     return res.status(403).json({ error: 'Agency ID not found' });
   }
 
@@ -630,7 +630,7 @@ export const bulkUpdateUserPermissions = async (req: Request, res: Response) => 
   const { user_id } = req.params;
   const { permissions } = req.body; // Array of { discount_setting_id, usage_limit, reset_period, is_active }
 
-  if (!agencyId) {
+  if (!agencyId && req.user?.role !== 'super_admin') {
     return res.status(403).json({ error: 'Agency ID not found' });
   }
 
@@ -792,7 +792,7 @@ export const getUsageLog = async (req: Request, res: Response) => {
   const role = req.user?.role;
   const { user_id, discount_id, date_from, date_to, limit } = req.query;
 
-  if (!agencyId) {
+  if (!agencyId && req.user?.role !== 'super_admin') {
     return res.status(403).json({ error: 'Agency ID not found' });
   }
 
@@ -838,7 +838,7 @@ export const getUsageStats = async (req: Request, res: Response) => {
   const role = req.user?.role;
   const { date_from, date_to } = req.query;
 
-  if (!agencyId) {
+  if (!agencyId && req.user?.role !== 'super_admin') {
     return res.status(403).json({ error: 'Agency ID not found' });
   }
 

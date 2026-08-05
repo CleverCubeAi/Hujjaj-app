@@ -1,8 +1,8 @@
-# Ashamel Platform Monitoring Script (PowerShell)
+# Hujjaj Platform Monitoring Script (PowerShell)
 # Check the health and status of all services
 
 Write-Host "========================================" -ForegroundColor Blue
-Write-Host "  Ashamel Platform Health Monitor" -ForegroundColor Blue
+Write-Host "  Hujjaj Platform Health Monitor" -ForegroundColor Blue
 Write-Host "========================================" -ForegroundColor Blue
 Write-Host ""
 
@@ -21,7 +21,7 @@ Write-Host ""
 Write-Host "Container Status:" -ForegroundColor Blue
 
 try {
-    $backendStatus = docker inspect -f '{{.State.Status}}' ashamel-backend 2>$null
+    $backendStatus = docker inspect -f '{{.State.Status}}' hujjaj-backend 2>$null
     if ($backendStatus -eq "running") {
         Write-Host "✓ Backend:  Running" -ForegroundColor Green
     } else {
@@ -32,7 +32,7 @@ try {
 }
 
 try {
-    $frontendStatus = docker inspect -f '{{.State.Status}}' ashamel-frontend 2>$null
+    $frontendStatus = docker inspect -f '{{.State.Status}}' hujjaj-frontend 2>$null
     if ($frontendStatus -eq "running") {
         Write-Host "✓ Frontend: Running" -ForegroundColor Green
     } else {
@@ -70,7 +70,7 @@ Write-Host ""
 # Resource usage
 Write-Host "Resource Usage:" -ForegroundColor Blue
 try {
-    docker stats --no-stream --format "table {{.Name}}`t{{.CPUPerc}}`t{{.MemUsage}}" ashamel-backend ashamel-frontend
+    docker stats --no-stream --format "table {{.Name}}`t{{.CPUPerc}}`t{{.MemUsage}}" hujjaj-backend hujjaj-frontend
 } catch {
     Write-Host "Could not retrieve resource usage" -ForegroundColor Yellow
 }

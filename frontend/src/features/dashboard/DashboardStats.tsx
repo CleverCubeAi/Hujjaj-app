@@ -84,6 +84,11 @@ export function DashboardStats() {
     isFiltered: false
   });
 
+  const fmt = (value: unknown) => {
+    const n = Number(value);
+    return (Number.isFinite(n) ? n : 0).toLocaleString('en');
+  };
+
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
@@ -99,7 +104,7 @@ export function DashboardStats() {
     fetchDashboardData();
   }, []);
 
-  const paymentPercentage = data.financial.paymentPercentage;
+  const paymentPercentage = Number(data.financial.paymentPercentage) || 0;
 
   const getRoleLabel = () => {
     if (role === 'agent') return t('agent') || 'وكيل';
@@ -140,30 +145,30 @@ export function DashboardStats() {
       <SimpleGrid cols={{ base: 1, sm: 2, lg: 4 }} spacing="lg">
         <StatCard
           title={t('total_pilgrims') || 'مجموع المعتمرين'}
-          value={data.pilgrims.total.toLocaleString('en')}
+          value={fmt(data.pilgrims.total)}
           icon={<Users size={24} />}
           color="blue"
         />
         
         <StatCard
           title={t('bookings_count') || 'عدد الحجوزات'}
-          value={data.bookings.total.toLocaleString('en')}
+          value={fmt(data.bookings.total)}
           icon={<CalendarDays size={24} />}
           color="orange"
         />
 
         <StatCard
           title={t('total_received') || 'المبالغ المستلمة'}
-          value={`${data.financial.totalPaid.toLocaleString('en')} MAD`}
+          value={`${fmt(data.financial.totalPaid)} MAD`}
           icon={<CreditCard size={24} />}
           color="green"
         />
 
         <StatCard
           title={t('total_pending') || 'المبالغ المتبقية'}
-          value={`${data.financial.totalRemaining.toLocaleString('en')} MAD`}
+          value={`${fmt(data.financial.totalRemaining)} MAD`}
           icon={<CreditCard size={24} />}
-          color={data.financial.totalRemaining > 0 ? 'red' : 'green'}
+          color={Number(data.financial.totalRemaining) > 0 ? 'red' : 'green'}
         />
       </SimpleGrid>
 
@@ -242,7 +247,7 @@ export function DashboardStats() {
             <Text fw={600} size="lg">{t('financial_summary') || 'الملخص المالي'}</Text>
             <Badge variant="light" color="brown" size="sm">{paymentPercentage}%</Badge>
           </Group>
-          <Text size="32px" fw={700} mb="xs">{data.financial.totalAgreed.toLocaleString('en')}</Text>
+          <Text size="32px" fw={700} mb="xs">{fmt(data.financial.totalAgreed)}</Text>
           <Text size="sm" c="dimmed" mb="xl">
             {t('total_revenue') || 'إجمالي الإيرادات'} (MAD)
           </Text>
@@ -250,21 +255,21 @@ export function DashboardStats() {
             <Box>
               <Group justify="space-between" mb={4}>
                 <Text size="xs" c="dimmed">{t('total_revenue') || 'المتفق عليه'}</Text>
-                <Text size="xs" fw={600}>{data.financial.totalAgreed.toLocaleString('en')} MAD</Text>
+                <Text size="xs" fw={600}>{fmt(data.financial.totalAgreed)} MAD</Text>
               </Group>
               <Progress value={100} color="brown" size="sm" radius="xl" />
             </Box>
             <Box>
               <Group justify="space-between" mb={4}>
                 <Text size="xs" c="dimmed">{t('total_received') || 'المدفوع'}</Text>
-                <Text size="xs" fw={600} c="green">{data.financial.totalPaid.toLocaleString('en')} MAD</Text>
+                <Text size="xs" fw={600} c="green">{fmt(data.financial.totalPaid)} MAD</Text>
               </Group>
               <Progress value={paymentPercentage} color="green" size="sm" radius="xl" />
             </Box>
             <Box>
               <Group justify="space-between" mb={4}>
                 <Text size="xs" c="dimmed">{t('total_pending') || 'المتبقي'}</Text>
-                <Text size="xs" fw={600} c="red">{data.financial.totalRemaining.toLocaleString('en')} MAD</Text>
+                <Text size="xs" fw={600} c="red">{fmt(data.financial.totalRemaining)} MAD</Text>
               </Group>
               <Progress value={100 - paymentPercentage} color="red" size="sm" radius="xl" />
             </Box>
@@ -321,7 +326,7 @@ export function DashboardStats() {
 
             <Box p="md" style={{ backgroundColor: '#F5EFE6', borderRadius: 8 }}>
               <Text size="xs" c="dimmed" mb={4}>{t('total_pilgrims') || 'إجمالي المعتمرين'}</Text>
-              <Text size="xl" fw={700}>{data.pilgrims.total.toLocaleString('en')}</Text>
+              <Text size="xl" fw={700}>{fmt(data.pilgrims.total)}</Text>
             </Box>
           </Stack>
         </Card>
@@ -365,7 +370,7 @@ export function DashboardStats() {
               </Group>
               <Group>
                 <Box ta="right">
-                  <Text size="sm" fw={500}>{booking.total_amount?.toLocaleString('en')} MAD</Text>
+                  <Text size="sm" fw={500}>{fmt(booking.total_amount)} MAD</Text>
                   <Text size="xs" c="dimmed">{booking.pilgrims_count} {t('pilgrims') || 'معتمرين'}</Text>
                 </Box>
                 <Text size="xs" c="dimmed">{new Date(booking.created_at).toLocaleDateString('en')}</Text>

@@ -2194,7 +2194,7 @@ export const getBookingHoldStatus = async (req: Request, res: Response) => {
 
     // Calculate hold status
     let holdStatus = 'none';
-    let hoursRemaining = null;
+    let hoursRemaining: number | null = null;
 
     if (booking.hold_expires_at) {
       const expiresAt = new Date(booking.hold_expires_at);

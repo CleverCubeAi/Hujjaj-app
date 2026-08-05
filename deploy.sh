@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Ashamel Platform Deployment Script
+# Hujjaj Platform Deployment Script
 # This script helps you deploy the platform quickly
 
 set -e
@@ -12,7 +12,7 @@ YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
 echo -e "${GREEN}========================================${NC}"
-echo -e "${GREEN}  Ashamel Platform Deployment Script${NC}"
+echo -e "${GREEN}  Hujjaj Platform Deployment Script${NC}"
 echo -e "${GREEN}========================================${NC}"
 echo ""
 

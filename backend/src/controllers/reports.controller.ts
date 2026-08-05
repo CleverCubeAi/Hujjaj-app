@@ -11,6 +11,12 @@ const arabicReshaper = require('arabic-reshaper');
 const AMIRI_REGULAR = path.join(__dirname, '../assets/fonts/Amiri-Regular.ttf');
 const AMIRI_BOLD = path.join(__dirname, '../assets/fonts/Amiri-Bold.ttf');
 
+/** pg returns NUMERIC as strings — always coerce before arithmetic */
+function num(v: unknown): number {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : 0;
+}
+
 // Helper to check if text contains Arabic characters
 function containsArabic(text: string): boolean {
   return /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/.test(text);
@@ -101,7 +107,7 @@ export const getReports = async (req: Request, res: Response) => {
     // Financial totals — only confirmed/paid bookings, calculated from invoice_items & payments
     const activeBookings = bookings?.filter((b: any) => b.status === 'confirmed' || b.status === 'paid') || [];
     const total_revenue = activeBookings.reduce((sum: number, b: any) => {
-      const itemsTotal = (b.invoice_items || []).reduce((s: number, i: any) => s + (i.total_price != null ? i.total_price : (i.quantity * i.unit_price)), 0);
+      const itemsTotal = (b.invoice_items || []).reduce((s: number, i: any) => s + (i.total_price != null ? num(i.total_price) : (num(i.quantity) * num(i.unit_price))), 0);
       return sum + (itemsTotal > 0 ? itemsTotal : (b.total_amount || 0));
     }, 0);
     const total_received = activeBookings.reduce((sum: number, b: any) => {
@@ -117,7 +123,7 @@ export const getReports = async (req: Request, res: Response) => {
       const status = b.status || 'draft';
       if (!acc[status]) acc[status] = { status, count: 0, total: 0 };
       acc[status].count++;
-      acc[status].total += b.total_amount || 0;
+      acc[status].total += num(b.total_amount);
       return acc;
     }, {}) || {};
 
@@ -140,7 +146,7 @@ export const getReports = async (req: Request, res: Response) => {
       const seasonName = b.seasons?.name || 'بدون موسم';
       if (!acc[seasonName]) acc[seasonName] = { season_name: seasonName, count: 0, total: 0 };
       acc[seasonName].count++;
-      acc[seasonName].total += b.total_amount || 0;
+      acc[seasonName].total += num(b.total_amount);
       return acc;
     }, {}) || {};
 
@@ -331,7 +337,9 @@ export const exportReport = async (req: Request, res: Response) => {
   console.log('[Reports] exportReport called', { format, tab, season_id, date_from, date_to });
 
   if (!agencyId) {
-    return res.status(403).json({ error: 'Agency ID not found' });
+    return res.status(400).json({
+      error: 'Agency ID required to export reports. Super admin is not tied to an agency.',
+    });
   }
 
   if (!format || !['pdf', 'excel'].includes(format as string)) {
@@ -414,8 +422,8 @@ async function fetchReportDataForExport(
 
     const { data: bookings } = await bookingsQuery;
 
-    const total_revenue = bookings?.reduce((sum, b) => sum + (b.total_amount || 0), 0) || 0;
-    const total_received = bookings?.reduce((sum, b) => sum + (b.paid_amount || 0), 0) || 0;
+    const total_revenue = bookings?.reduce((sum, b) => sum + num(b.total_amount), 0) || 0;
+    const total_received = bookings?.reduce((sum, b) => sum + num(b.paid_amount), 0) || 0;
     const total_pending = total_revenue - total_received;
     const bookings_count = bookings?.length || 0;
     const average_booking_value = bookings_count > 0 ? total_revenue / bookings_count : 0;
@@ -425,7 +433,7 @@ async function fetchReportDataForExport(
       const status = b.status || 'draft';
       if (!acc[status]) acc[status] = { status, count: 0, total: 0 };
       acc[status].count++;
-      acc[status].total += b.total_amount || 0;
+      acc[status].total += num(b.total_amount);
       return acc;
     }, {}) || {};
 
@@ -457,8 +465,8 @@ async function fetchReportDataForExport(
 
     const { data: bookings } = await bookingsQuery;
 
-    const totalSales = bookings?.reduce((sum, b) => sum + (b.total_amount || 0), 0) || 0;
-    const totalReceived = bookings?.reduce((sum, b) => sum + (b.paid_amount || 0), 0) || 0;
+    const totalSales = bookings?.reduce((sum, b) => sum + num(b.total_amount), 0) || 0;
+    const totalReceived = bookings?.reduce((sum, b) => sum + num(b.paid_amount), 0) || 0;
 
     // Expenses
     let expensesQuery = supabaseAdmin
@@ -471,7 +479,7 @@ async function fetchReportDataForExport(
     if (date_to) expensesQuery = expensesQuery.lte('paid_date', date_to);
 
     const { data: expenses } = await expensesQuery;
-    const totalExpenses = expenses?.reduce((sum, e) => sum + (e.amount || 0), 0) || 0;
+    const totalExpenses = expenses?.reduce((sum, e) => sum + num(e.amount), 0) || 0;
 
     data.financialStatus = {
       sales: {
@@ -528,13 +536,13 @@ async function fetchReportDataForExport(
       const status = b.status || 'draft';
       if (!acc[status]) acc[status] = { status, count: 0, total: 0 };
       acc[status].count++;
-      acc[status].total += b.total_amount || 0;
+      acc[status].total += num(b.total_amount);
       return acc;
     }, {}) || {};
 
     data.bookings = {
       total: bookings?.length || 0,
-      total_amount: bookings?.reduce((sum, b) => sum + (b.total_amount || 0), 0) || 0,
+      total_amount: bookings?.reduce((sum, b) => sum + num(b.total_amount), 0) || 0,
       by_status: Object.values(byStatus),
       list: bookings?.map((b: any) => ({
         booking_number: b.booking_number,
@@ -992,7 +1000,7 @@ async function generatePDFExport(
   // Footer
   doc.moveDown(2);
   doc.fontSize(8).fillColor('#999999');
-  doc.text(`Page 1 | Generated by Ashamel System`, { align: 'center' });
+  doc.text(`Page 1 | Generated by Hujjaj System`, { align: 'center' });
 
   doc.end();
 }
@@ -1006,7 +1014,7 @@ async function generateExcelExport(
   filters: { season_id?: string; date_from?: string; date_to?: string }
 ) {
   const workbook = new ExcelJS.Workbook();
-  workbook.creator = 'Ashamel System';
+  workbook.creator = 'Hujjaj System';
   workbook.created = new Date();
 
   const tabTitles: { [key: string]: string } = {
@@ -1397,7 +1405,7 @@ export const getFinancialStatus = async (req: Request, res: Response) => {
 
   console.log('[Reports] Financial Status - agencyId:', agencyId, 'role:', role, 'targetUserIds:', targetUserIds);
 
-  if (!agencyId) {
+  if (!agencyId && req.user?.role !== 'super_admin') {
     return res.status(403).json({ error: 'Agency ID not found' });
   }
 
@@ -1441,8 +1449,8 @@ export const getFinancialStatus = async (req: Request, res: Response) => {
     if (bookingsError) throw bookingsError;
 
     // Calculate sales totals
-    const totalSales = bookings?.reduce((sum, b) => sum + (b.total_amount || 0), 0) || 0;
-    const totalPaymentsReceived = bookings?.reduce((sum, b) => sum + (b.paid_amount || 0), 0) || 0;
+    const totalSales = bookings?.reduce((sum, b) => sum + num(b.total_amount), 0) || 0;
+    const totalPaymentsReceived = bookings?.reduce((sum, b) => sum + num(b.paid_amount), 0) || 0;
     const pendingPayments = totalSales - totalPaymentsReceived;
 
     // Sales by booking (details)
@@ -1484,7 +1492,7 @@ export const getFinancialStatus = async (req: Request, res: Response) => {
     const { data: expenses, error: expensesError } = await expensesQuery;
     if (expensesError) throw expensesError;
 
-    const totalExpenses = expenses?.reduce((sum, e) => sum + (e.amount || 0), 0) || 0;
+    const totalExpenses = expenses?.reduce((sum, e) => sum + num(e.amount), 0) || 0;
 
     // Group expenses by category
     const expensesByCategory = expenses?.reduce((acc: any, e: any) => {
@@ -1530,10 +1538,10 @@ export const getFinancialStatus = async (req: Request, res: Response) => {
     const { data: bedInventory, error: bedsError } = await bedsQuery;
     if (bedsError) throw bedsError;
 
-    const totalBedsPurchaseCost = bedInventory?.reduce((sum, b) => sum + (b.total_purchase_cost || 0), 0) || 0;
-    const totalBedsSold = bedInventory?.reduce((sum, b) => sum + (b.beds_sold || 0), 0) || 0;
-    const totalBedsPurchased = bedInventory?.reduce((sum, b) => sum + (b.beds_purchased || 0), 0) || 0;
-    const totalBedsRevenue = bedInventory?.reduce((sum, b) => sum + ((b.beds_sold || 0) * (b.sell_price_per_bed || 0)), 0) || 0;
+    const totalBedsPurchaseCost = bedInventory?.reduce((sum, b) => sum + num(b.total_purchase_cost), 0) || 0;
+    const totalBedsSold = bedInventory?.reduce((sum, b) => sum + num(b.beds_sold), 0) || 0;
+    const totalBedsPurchased = bedInventory?.reduce((sum, b) => sum + num(b.beds_purchased), 0) || 0;
+    const totalBedsRevenue = bedInventory?.reduce((sum, b) => sum + (num(b.beds_sold) * num(b.sell_price_per_bed)), 0) || 0;
 
     const bedDetails = bedInventory?.map((b: any) => ({
       id: b.id,
@@ -1546,8 +1554,8 @@ export const getFinancialStatus = async (req: Request, res: Response) => {
       beds_sold: b.beds_sold,
       beds_available: b.beds_available,
       sell_price: b.sell_price_per_bed,
-      revenue: (b.beds_sold || 0) * (b.sell_price_per_bed || 0),
-      profit: ((b.beds_sold || 0) * (b.sell_price_per_bed || 0)) - ((b.beds_sold || 0) * (b.purchase_price_per_bed || 0)),
+      revenue: num(b.beds_sold) * num(b.sell_price_per_bed),
+      profit: (num(b.beds_sold) * num(b.sell_price_per_bed)) - (num(b.beds_sold) * num(b.purchase_price_per_bed)),
       check_in: b.check_in_date,
       check_out: b.check_out_date,
       supplier: b.supplier_name
@@ -1564,7 +1572,6 @@ export const getFinancialStatus = async (req: Request, res: Response) => {
         seats_sold,
         seats_available,
         sell_price_per_seat,
-        supplier_name,
         flights (code, departure_city, arrival_city, departure_date, return_date, carrier)
       `)
       .eq('agency_id', agencyId);
@@ -1575,10 +1582,10 @@ export const getFinancialStatus = async (req: Request, res: Response) => {
     // If table doesn't exist, just use empty array
     const flightSeats = flightsError ? [] : (flightInventory || []);
 
-    const totalFlightsPurchaseCost = flightSeats.reduce((sum: number, f: any) => sum + (f.total_purchase_cost || 0), 0);
-    const totalSeatsSold = flightSeats.reduce((sum: number, f: any) => sum + (f.seats_sold || 0), 0);
-    const totalSeatsPurchased = flightSeats.reduce((sum: number, f: any) => sum + (f.seats_purchased || 0), 0);
-    const totalFlightsRevenue = flightSeats.reduce((sum: number, f: any) => sum + ((f.seats_sold || 0) * (f.sell_price_per_seat || 0)), 0);
+    const totalFlightsPurchaseCost = flightSeats.reduce((sum: number, f: any) => sum + num(f.total_purchase_cost), 0);
+    const totalSeatsSold = flightSeats.reduce((sum: number, f: any) => sum + num(f.seats_sold), 0);
+    const totalSeatsPurchased = flightSeats.reduce((sum: number, f: any) => sum + num(f.seats_purchased), 0);
+    const totalFlightsRevenue = flightSeats.reduce((sum: number, f: any) => sum + (num(f.seats_sold) * num(f.sell_price_per_seat)), 0);
 
     const flightDetails = flightSeats.map((f: any) => ({
       id: f.id,
@@ -1592,9 +1599,9 @@ export const getFinancialStatus = async (req: Request, res: Response) => {
       seats_sold: f.seats_sold,
       seats_available: f.seats_available,
       sell_price: f.sell_price_per_seat,
-      revenue: (f.seats_sold || 0) * (f.sell_price_per_seat || 0),
-      profit: ((f.seats_sold || 0) * (f.sell_price_per_seat || 0)) - ((f.seats_sold || 0) * (f.purchase_price_per_seat || 0)),
-      supplier: f.supplier_name
+      revenue: num(f.seats_sold) * num(f.sell_price_per_seat),
+      profit: (num(f.seats_sold) * num(f.sell_price_per_seat)) - (num(f.seats_sold) * num(f.purchase_price_per_seat)),
+      supplier: null
     }));
 
     // =============================================

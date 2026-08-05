@@ -5,7 +5,7 @@ export const listAccommodations = async (req: Request, res: Response) => {
   const agencyId = req.agencyId;
   const { season_id } = req.query;
   
-  if (!agencyId) {
+  if (!agencyId && req.user?.role !== 'super_admin') {
     return res.status(403).json({ error: 'Agency ID not found' });
   }
 
@@ -26,7 +26,7 @@ export const getAccommodation = async (req: Request, res: Response) => {
   const agencyId = req.agencyId;
   const { id } = req.params;
   
-  if (!agencyId) {
+  if (!agencyId && req.user?.role !== 'super_admin') {
     return res.status(403).json({ error: 'Agency ID not found' });
   }
 
@@ -49,7 +49,7 @@ export const getCapacity = async (req: Request, res: Response) => {
   const agencyId = req.agencyId;
   const { id } = req.params; // accommodation_id
 
-  if (!agencyId) {
+  if (!agencyId && req.user?.role !== 'super_admin') {
     return res.status(403).json({ error: 'Agency ID not found' });
   }
 
@@ -66,7 +66,7 @@ export const createAccommodation = async (req: Request, res: Response) => {
   const agencyId = req.agencyId;
   const { season_id, name, name_ar, city, photo_url, room_types } = req.body;
   
-  if (!agencyId) {
+  if (!agencyId && req.user?.role !== 'super_admin') {
     return res.status(403).json({ error: 'Agency ID not found' });
   }
 
@@ -118,7 +118,7 @@ export const updateAccommodation = async (req: Request, res: Response) => {
   const { id } = req.params;
   const { name, name_ar, city, season_id, photo_url } = req.body;
   
-  if (!agencyId) {
+  if (!agencyId && req.user?.role !== 'super_admin') {
     return res.status(403).json({ error: 'Agency ID not found' });
   }
 
@@ -145,7 +145,7 @@ export const deleteAccommodation = async (req: Request, res: Response) => {
   const agencyId = req.agencyId;
   const { id } = req.params;
   
-  if (!agencyId) {
+  if (!agencyId && req.user?.role !== 'super_admin') {
     return res.status(403).json({ error: 'Agency ID not found' });
   }
 
@@ -165,7 +165,7 @@ export const createRoomType = async (req: Request, res: Response) => {
   const agencyId = req.agencyId;
   const { accommodation_id, type, total_rooms, total_beds, price_per_bed, photo_url } = req.body;
   
-  if (!agencyId) {
+  if (!agencyId && req.user?.role !== 'super_admin') {
     return res.status(403).json({ error: 'Agency ID not found' });
   }
 
@@ -203,7 +203,7 @@ export const updateRoomType = async (req: Request, res: Response) => {
   const { id } = req.params;
   const { type, total_rooms, total_beds, price_per_bed, photo_url } = req.body;
   
-  if (!agencyId) {
+  if (!agencyId && req.user?.role !== 'super_admin') {
     return res.status(403).json({ error: 'Agency ID not found' });
   }
 
@@ -229,7 +229,7 @@ export const deleteRoomType = async (req: Request, res: Response) => {
   const agencyId = req.agencyId;
   const { id } = req.params;
   
-  if (!agencyId) {
+  if (!agencyId && req.user?.role !== 'super_admin') {
     return res.status(403).json({ error: 'Agency ID not found' });
   }
 

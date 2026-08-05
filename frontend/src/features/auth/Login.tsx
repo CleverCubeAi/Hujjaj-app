@@ -237,7 +237,7 @@ export function Login() {
 
         <Center mt="xl">
           <Text size="xs" c="rgba(255, 255, 255, 0.7)">
-            © 2024 الشامل - جميع الحقوق محفوظة
+            © 2024 حجاج - جميع الحقوق محفوظة
           </Text>
         </Center>
       </Container>

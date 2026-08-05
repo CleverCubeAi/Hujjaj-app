@@ -342,17 +342,17 @@ export function BookingsPage() {
                   </Table.Td>
                   <Table.Td>
                     <Text size="sm" fw={500}>
-                      {booking.total_amount?.toLocaleString('en')} MAD
+                      {Number(booking.total_amount || 0).toLocaleString('en')} MAD
                     </Text>
                   </Table.Td>
                   <Table.Td>
                     <Text size="sm" c="green" fw={500}>
-                      {booking.paid_amount?.toLocaleString('en')} MAD
+                      {Number(booking.paid_amount || 0).toLocaleString('en')} MAD
                     </Text>
                   </Table.Td>
                   <Table.Td>
-                    <Text size="sm" c={booking.remaining_balance > 0 ? 'red' : 'green'} fw={500}>
-                      {booking.remaining_balance?.toLocaleString('en')} MAD
+                    <Text size="sm" c={Number(booking.remaining_balance) > 0 ? 'red' : 'green'} fw={500}>
+                      {Number(booking.remaining_balance || 0).toLocaleString('en')} MAD
                     </Text>
                   </Table.Td>
                   <Table.Td>

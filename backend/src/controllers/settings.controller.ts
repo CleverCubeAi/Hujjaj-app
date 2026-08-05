@@ -1,11 +1,26 @@
 import { Request, Response } from 'express';
 import { supabaseAdmin as supabase } from '../services/supabase';
+import { hashPassword, verifyPassword } from '../services/auth.service';
 import bcrypt from 'bcryptjs';
 
 // Get agency settings
 export const getAgency = async (req: Request, res: Response) => {
   try {
     const agencyId = req.user?.agency_id;
+    const role = req.user?.role;
+
+    // Platform super admin is not tied to an agency
+    if (!agencyId && role === 'super_admin') {
+      return res.json({
+        id: null,
+        name: 'Hujjaj',
+        country: null,
+        status: 'active',
+        subscription_plan: 'platform',
+        logo_url: null,
+        is_platform: true,
+      });
+    }
 
     if (!agencyId) {
       return res.status(403).json({ error: 'Agency ID not found' });
@@ -35,6 +50,11 @@ export const updateAgency = async (req: Request, res: Response) => {
     const { name, country, status, subscription_plan, logo_url } = req.body;
 
     if (!agencyId) {
+      if (role === 'super_admin') {
+        return res.status(400).json({
+          error: 'Super admin is not tied to an agency. Agency settings are per-agency.',
+        });
+      }
       return res.status(403).json({ error: 'Agency ID not found' });
     }
 
@@ -76,11 +96,6 @@ export const getProfile = async (req: Request, res: Response) => {
       return res.status(403).json({ error: 'User ID not found' });
     }
 
-    // Get user from auth.users
-    const { data: authUser, error: authError } = await supabase.auth.admin.getUserById(userId);
-    if (authError) throw authError;
-
-    // Get user profile from users table
     const { data: userProfile, error: profileError } = await supabase
       .from('users')
       .select('*')
@@ -88,13 +103,18 @@ export const getProfile = async (req: Request, res: Response) => {
       .single();
 
     if (profileError && profileError.code !== 'PGRST116') throw profileError;
+    if (!userProfile) {
+      return res.status(404).json({ error: 'User not found' });
+    }
 
     res.json({
-      id: authUser.user.id,
-      email: authUser.user.email,
-      full_name: userProfile?.full_name || authUser.user.user_metadata?.full_name,
-      role: userProfile?.role || authUser.user.user_metadata?.role,
-      agency_id: userProfile?.agency_id || authUser.user.user_metadata?.agency_id
+      id: userProfile.id,
+      email: userProfile.email,
+      full_name: userProfile.full_name,
+      role: userProfile.role,
+      agency_id: userProfile.agency_id,
+      branch_id: userProfile.branch_id,
+      avatar_url: userProfile.avatar_url,
     });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
@@ -111,77 +131,28 @@ export const updateProfile = async (req: Request, res: Response) => {
       return res.status(403).json({ error: 'User ID not found' });
     }
 
-    // Update auth user email if provided
-    if (email) {
-      const { error: emailError } = await supabase.auth.admin.updateUserById(userId, {
-        email,
-        user_metadata: {
-          ...req.user?.user_metadata,
-          full_name: full_name || req.user?.user_metadata?.full_name
-        }
-      });
-      if (emailError) throw emailError;
-    } else if (full_name) {
-      // Update only metadata if email not provided
-      const { error: metaError } = await supabase.auth.admin.updateUserById(userId, {
-        user_metadata: {
-          ...req.user?.user_metadata,
-          full_name
-        }
-      });
-      if (metaError) throw metaError;
-    }
-
-    // Update users table
-    const { data: userProfile } = await supabase
-      .from('users')
-      .select('*')
-      .eq('id', userId)
-      .single();
-
     const updateData: any = {};
     if (full_name !== undefined) updateData.full_name = full_name;
+    if (email !== undefined) updateData.email = String(email).toLowerCase().trim();
 
-    if (userProfile) {
-      const { data, error } = await supabase
-        .from('users')
-        .update(updateData)
-        .eq('id', userId)
-        .select()
-        .single();
-      if (error) throw error;
-    } else {
-      // Create user profile if it doesn't exist
-      const { data, error } = await supabase
-        .from('users')
-        .insert({
-          id: userId,
-          full_name,
-          agency_id: req.user?.agency_id,
-          role: req.user?.role
-        })
-        .select()
-        .single();
-      if (error) throw error;
-    }
-
-    // Get updated user
-    const { data: authUser } = await supabase.auth.admin.getUserById(userId);
-    const { data: updatedProfile } = await supabase
+    const { data: updatedProfile, error } = await supabase
       .from('users')
-      .select('*')
+      .update(updateData)
       .eq('id', userId)
+      .select()
       .single();
 
-    if (!authUser?.user) {
+    if (error) throw error;
+    if (!updatedProfile) {
       return res.status(404).json({ error: 'User not found' });
     }
 
     res.json({
-      id: authUser.user.id,
-      email: authUser.user.email,
-      full_name: updatedProfile?.full_name || authUser.user.user_metadata?.full_name,
-      role: updatedProfile?.role || authUser.user.user_metadata?.role
+      id: updatedProfile.id,
+      email: updatedProfile.email,
+      full_name: updatedProfile.full_name,
+      role: updatedProfile.role,
+      agency_id: updatedProfile.agency_id,
     });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
@@ -206,18 +177,26 @@ export const changePassword = async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'New password must be at least 8 characters' });
     }
 
-    // Verify current password by attempting to sign in
-    const { data: authUser } = await supabase.auth.admin.getUserById(userId);
-    if (!authUser?.user || !authUser.user.email) {
-      return res.status(400).json({ error: 'User email not found' });
+    const { data: user, error: fetchError } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', userId)
+      .single();
+
+    if (fetchError || !user) {
+      return res.status(404).json({ error: 'User not found' });
     }
 
-    // Note: Supabase Admin API doesn't support password verification directly
-    // We need to use the auth API with the user's session token
-    // For now, we'll update the password directly (in production, verify current password first)
-    const { error } = await supabase.auth.admin.updateUserById(userId, {
-      password: new_password
-    });
+    const ok = await verifyPassword(current_password, user.password_hash);
+    if (!ok) {
+      return res.status(401).json({ error: 'Current password is incorrect' });
+    }
+
+    const password_hash = await hashPassword(new_password);
+    const { error } = await supabase
+      .from('users')
+      .update({ password_hash })
+      .eq('id', userId);
 
     if (error) throw error;
     res.json({ message: 'Password updated successfully' });

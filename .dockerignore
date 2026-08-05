@@ -13,6 +13,14 @@ QUICKSTART.md
 docker-compose*.yml
 .dockerignore
 
+# Dependencies & build output (keep context small)
+**/node_modules
+frontend/dist
+backend/dist
+backend/uploads
+**/coverage
+**/.DS_Store
+
 # Environment
 .env
 .env.*

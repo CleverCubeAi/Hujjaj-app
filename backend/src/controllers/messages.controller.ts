@@ -46,7 +46,7 @@ function replacePlaceholders(body: string, vars: Record<string, string>): string
 export const listSentMessages = async (req: Request, res: Response) => {
   try {
     const agencyId = req.user?.agency_id;
-    if (!agencyId) return res.status(403).json({ error: 'Agency ID not found' });
+    if (!agencyId && req.user?.role !== 'super_admin') return res.status(403).json({ error: 'Agency ID not found' });
 
     const { status, client_id, limit = '50', offset = '0' } = req.query;
 
@@ -77,7 +77,11 @@ export const sendMessage = async (req: Request, res: Response) => {
   try {
     const agencyId = req.user?.agency_id;
     const userId = req.user?.id;
-    if (!agencyId) return res.status(403).json({ error: 'Agency ID not found' });
+    if (!agencyId) {
+      return res.status(400).json({
+        error: 'Agency ID required to send messages. Super admin is not tied to an agency.',
+      });
+    }
 
     const { template_id, body: rawBody, recipient_phone, recipient_name, client_id, booking_id } = req.body;
 
@@ -206,7 +210,7 @@ export const sendMessage = async (req: Request, res: Response) => {
 export const listTemplates = async (req: Request, res: Response) => {
   try {
     const agencyId = req.user?.agency_id;
-    if (!agencyId) return res.status(403).json({ error: 'Agency ID not found' });
+    if (!agencyId && req.user?.role !== 'super_admin') return res.status(403).json({ error: 'Agency ID not found' });
 
     const { data, error } = await supabase
       .from('message_templates')
@@ -225,7 +229,7 @@ export const getTemplate = async (req: Request, res: Response) => {
   try {
     const agencyId = req.user?.agency_id;
     const { id } = req.params;
-    if (!agencyId) return res.status(403).json({ error: 'Agency ID not found' });
+    if (!agencyId && req.user?.role !== 'super_admin') return res.status(403).json({ error: 'Agency ID not found' });
 
     const { data, error } = await supabase
       .from('message_templates')
@@ -245,7 +249,7 @@ export const createTemplate = async (req: Request, res: Response) => {
   try {
     const agencyId = req.user?.agency_id;
     const { name, name_ar, body, channel = 'sms' } = req.body;
-    if (!agencyId) return res.status(403).json({ error: 'Agency ID not found' });
+    if (!agencyId && req.user?.role !== 'super_admin') return res.status(403).json({ error: 'Agency ID not found' });
     if (!name || !body) return res.status(400).json({ error: 'name and body are required' });
 
     const { data, error } = await supabase
@@ -272,7 +276,7 @@ export const updateTemplate = async (req: Request, res: Response) => {
     const agencyId = req.user?.agency_id;
     const { id } = req.params;
     const { name, name_ar, body, channel } = req.body;
-    if (!agencyId) return res.status(403).json({ error: 'Agency ID not found' });
+    if (!agencyId && req.user?.role !== 'super_admin') return res.status(403).json({ error: 'Agency ID not found' });
 
     const updates: any = { updated_at: new Date().toISOString() };
     if (name !== undefined) updates.name = name;
@@ -300,7 +304,7 @@ export const deleteTemplate = async (req: Request, res: Response) => {
   try {
     const agencyId = req.user?.agency_id;
     const { id } = req.params;
-    if (!agencyId) return res.status(403).json({ error: 'Agency ID not found' });
+    if (!agencyId && req.user?.role !== 'super_admin') return res.status(403).json({ error: 'Agency ID not found' });
 
     const { error } = await supabase
       .from('message_templates')

@@ -1,8 +1,8 @@
-# Ashamel - Complete Demo Data Scenario
+# Hujjaj - Complete Demo Data Scenario
 
 ## Overview
 
-This document provides a comprehensive demo data scenario for the Ashamel Hajj & Omra SaaS platform. It covers all major entities, relationships, and business calculations to demonstrate the full functionality of the system.
+This document provides a comprehensive demo data scenario for the Hujjaj Hajj & Omra SaaS platform. It covers all major entities, relationships, and business calculations to demonstrate the full functionality of the system.
 
 ---
 

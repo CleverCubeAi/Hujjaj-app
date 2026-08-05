@@ -5,7 +5,7 @@ export const listFlights = async (req: Request, res: Response) => {
   const agencyId = req.agencyId;
   const { season_id } = req.query;
   
-  if (!agencyId) {
+  if (!agencyId && req.user?.role !== 'super_admin') {
     return res.status(403).json({ error: 'Agency ID not found' });
   }
 
@@ -37,7 +37,7 @@ export const getFlight = async (req: Request, res: Response) => {
   const agencyId = req.agencyId;
   const { id } = req.params;
   
-  if (!agencyId) {
+  if (!agencyId && req.user?.role !== 'super_admin') {
     return res.status(403).json({ error: 'Agency ID not found' });
   }
 
@@ -60,7 +60,7 @@ export const createFlight = async (req: Request, res: Response) => {
   const agencyId = req.agencyId;
   const { season_id, code, departure_city, arrival_city, departure_date, return_date, carrier, is_direct, total_duration_minutes, airline_logo_url, transits } = req.body;
   
-  if (!agencyId) {
+  if (!agencyId && req.user?.role !== 'super_admin') {
     return res.status(403).json({ error: 'Agency ID not found' });
   }
 
@@ -128,7 +128,7 @@ export const updateFlight = async (req: Request, res: Response) => {
   const { id } = req.params;
   const { season_id, code, departure_city, arrival_city, departure_date, return_date, carrier, is_direct, total_duration_minutes, airline_logo_url, transits } = req.body;
   
-  if (!agencyId) {
+  if (!agencyId && req.user?.role !== 'super_admin') {
     return res.status(403).json({ error: 'Agency ID not found' });
   }
 
@@ -203,7 +203,7 @@ export const deleteFlight = async (req: Request, res: Response) => {
   const agencyId = req.agencyId;
   const { id } = req.params;
   
-  if (!agencyId) {
+  if (!agencyId && req.user?.role !== 'super_admin') {
     return res.status(403).json({ error: 'Agency ID not found' });
   }
 

@@ -6,9 +6,9 @@ export const getCategories = async (req: Request, res: Response) => {
   try {
     const agencyId = req.user?.agency_id;
     
-    if (!agencyId) {
-      return res.status(403).json({ error: 'Agency ID not found' });
-    }
+    if (!agencyId && req.user?.role !== 'super_admin') {
+    return res.status(403).json({ error: 'Agency ID not found' });
+  }
 
     // Get all categories (default + custom, all stored in DB)
     const { data: categories, error } = await supabase
@@ -39,9 +39,9 @@ export const createCategory = async (req: Request, res: Response) => {
     const role = req.user?.role;
     const { name, name_ar, description, is_default } = req.body;
 
-    if (!agencyId) {
-      return res.status(403).json({ error: 'Agency ID not found' });
-    }
+    if (!agencyId && req.user?.role !== 'super_admin') {
+    return res.status(403).json({ error: 'Agency ID not found' });
+  }
 
     // Only agency_admin and super_admin can create categories
     if (role !== 'agency_admin' && role !== 'super_admin') {
@@ -92,9 +92,9 @@ export const updateCategory = async (req: Request, res: Response) => {
     const role = req.user?.role;
     const { name, name_ar, description, is_active } = req.body;
 
-    if (!agencyId) {
-      return res.status(403).json({ error: 'Agency ID not found' });
-    }
+    if (!agencyId && req.user?.role !== 'super_admin') {
+    return res.status(403).json({ error: 'Agency ID not found' });
+  }
 
     // Only agency_admin and super_admin can update categories
     if (role !== 'agency_admin' && role !== 'super_admin') {
@@ -155,9 +155,9 @@ export const deleteCategory = async (req: Request, res: Response) => {
     const agencyId = req.user?.agency_id;
     const role = req.user?.role;
 
-    if (!agencyId) {
-      return res.status(403).json({ error: 'Agency ID not found' });
-    }
+    if (!agencyId && req.user?.role !== 'super_admin') {
+    return res.status(403).json({ error: 'Agency ID not found' });
+  }
 
     // Only agency_admin and super_admin can delete categories
     if (role !== 'agency_admin' && role !== 'super_admin') {

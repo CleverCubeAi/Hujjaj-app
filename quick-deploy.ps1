@@ -1,8 +1,8 @@
 # Quick Deployment Script for Remote Server (PowerShell)
-# This script helps deploy the Ashamel platform to a remote server
+# This script helps deploy the Hujjaj platform to a remote server
 
 Write-Host "========================================" -ForegroundColor Blue
-Write-Host "  Ashamel Platform - Remote Deployment" -ForegroundColor Blue
+Write-Host "  Hujjaj Platform - Remote Deployment" -ForegroundColor Blue
 Write-Host "========================================" -ForegroundColor Blue
 Write-Host ""
 

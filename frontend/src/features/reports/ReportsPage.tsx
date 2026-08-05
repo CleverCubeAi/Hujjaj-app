@@ -282,12 +282,13 @@ export function ReportsPage() {
     }
   };
 
-  const formatCurrency = (amount: number) => {
+  const formatCurrency = (amount: number | null | undefined) => {
+    const n = Number(amount);
     return new Intl.NumberFormat('fr-MA', {
       style: 'currency',
       currency: 'MAD',
       minimumFractionDigits: 0
-    }).format(amount);
+    }).format(Number.isFinite(n) ? n : 0);
   };
 
   const formatDate = (dateStr: string) => {

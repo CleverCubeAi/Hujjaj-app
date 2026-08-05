@@ -193,8 +193,8 @@ docker-compose exec backend sh
 docker-compose exec frontend sh
 
 # View container logs
-docker logs ashamel-backend
-docker logs ashamel-frontend
+docker logs hujjaj-backend
+docker logs hujjaj-frontend
 ```
 
 ## Development Mode
@@ -312,13 +312,13 @@ Since we're using Supabase (external database), run migrations directly in Supab
 Backup uploaded files:
 
 ```bash
-docker cp ashamel-backend:/app/uploads ./backup-uploads
+docker cp hujjaj-backend:/app/uploads ./backup-uploads
 ```
 
 Restore:
 
 ```bash
-docker cp ./backup-uploads ashamel-backend:/app/uploads
+docker cp ./backup-uploads hujjaj-backend:/app/uploads
 ```
 
 ## Security Best Practices

@@ -1,10 +1,10 @@
-import { supabase } from './supabase';
+import { getAccessToken } from '../providers/AuthProvider';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
 async function getAuthHeader() {
-  const { data: { session } } = await supabase.auth.getSession();
-  return session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {};
+  const token = getAccessToken();
+  return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
 async function request(endpoint: string, options: RequestInit = {}) {

@@ -1,13 +1,12 @@
 # Deployment Guide - Server IP: 3.139.234.93
 
-This guide will help you deploy your Ashamel platform to your server.
+This guide will help you deploy your Hujjaj platform to your server.
 
 ## Prerequisites
 
 - ✅ Server access (SSH key or password)
 - ✅ Server IP: `3.139.234.93`
-- ✅ Supabase project set up
-- ✅ Domain name (optional, but recommended)
+- ✅ Domain name (optional, but recommended) — e.g. hujjaj.app
 
 ## Step 1: Connect to Your Server
 
@@ -181,22 +180,16 @@ nano .env
 **Important:** Update these values in `.env`:
 
 ```env
-# Supabase Configuration
-SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
-SUPABASE_ANON_KEY=your-anon-key
-
-# Backend Configuration
+POSTGRES_USER=hujjaj
+POSTGRES_PASSWORD=change-me
+POSTGRES_DB=hujjaj
+DATABASE_URL=postgres://hujjaj:change-me@postgres:5432/hujjaj
+JWT_SECRET=replace-with-a-long-random-secret
+JWT_EXPIRES_IN=7d
 PORT=3001
 NODE_ENV=production
-
-# Frontend Configuration
-VITE_SUPABASE_URL=https://your-project.supabase.co
-VITE_SUPABASE_ANON_KEY=your-anon-key
-VITE_API_URL=http://3.139.234.93:3001/api
-
-# For production with domain (if you have one)
-# VITE_API_URL=https://yourdomain.com/api
+PUBLIC_URL=https://hujjaj.app
+VITE_API_URL=/api
 ```
 
 **Save and exit:** Press `Ctrl+X`, then `Y`, then `Enter`
@@ -225,8 +218,8 @@ docker-compose ps
 ```
 
 You should see both containers running:
-- `ashamel-backend` (port 3001)
-- `ashamel-frontend` (port 80)
+- `hujjaj-backend` (port 3001)
+- `hujjaj-frontend` (port 80)
 
 ### Test the Application
 

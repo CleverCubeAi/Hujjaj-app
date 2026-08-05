@@ -15,7 +15,6 @@
     "@mantine/dates": "^8.3.13",
     "@mantine/hooks": "^8.3.13",
     "@mantine/notifications": "^8.3.13",
-    "@supabase/supabase-js": "^2.91.0",
     "dayjs": "^1.11.19",
     "i18next": "^25.8.0",
     "i18next-browser-languagedetector": "^8.2.0",

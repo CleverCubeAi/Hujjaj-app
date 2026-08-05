@@ -204,7 +204,7 @@ export function ServicesPage() {
                     </Text>
                   </Table.Td>
                   <Table.Td>
-                    <Text fw={600}>{service.price.toLocaleString('en')} MAD</Text>
+                    <Text fw={600}>{Number(service.price || 0).toLocaleString('en')} MAD</Text>
                   </Table.Td>
                   <Table.Td>
                     <Switch

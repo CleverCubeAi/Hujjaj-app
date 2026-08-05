@@ -1,74 +1,62 @@
 import { Request, Response } from 'express';
-import { supabaseAdmin } from '../services/supabase';
+import db from '../services/db';
+import { resolveAgencyId, requireAgencyId } from '../utils/tenant';
 
 export const listSeasons = async (req: Request, res: Response) => {
-  const agencyId = req.agencyId;
-  
-  if (!agencyId) {
-    return res.status(403).json({ error: 'Agency ID not found' });
-  }
+  const agencyId = resolveAgencyId(req, res);
+  if (agencyId === undefined) return;
 
-  const { data, error } = await supabaseAdmin
-    .from('seasons')
-    .select('*')
-    .eq('agency_id', agencyId)
-    .order('created_at', { ascending: false });
-  
-  if (error) return res.status(400).json({ error: error.message });
-  res.json(data);
+  try {
+    let q = db('seasons').orderBy('created_at', 'desc');
+    if (agencyId) q = q.where({ agency_id: agencyId });
+    res.json(await q);
+  } catch (err: any) {
+    res.status(400).json({ error: err.message });
+  }
 };
 
 export const getSeason = async (req: Request, res: Response) => {
-  const agencyId = req.agencyId;
+  const agencyId = resolveAgencyId(req, res);
+  if (agencyId === undefined) return;
   const { id } = req.params;
-  
-  if (!agencyId) {
-    return res.status(403).json({ error: 'Agency ID not found' });
-  }
 
-  const { data, error } = await supabaseAdmin
-    .from('seasons')
-    .select('*')
-    .eq('id', id)
-    .eq('agency_id', agencyId)
-    .single();
-  
-  if (error) return res.status(400).json({ error: error.message });
-  res.json(data);
+  try {
+    let q = db('seasons').where({ id });
+    if (agencyId) q = q.andWhere({ agency_id: agencyId });
+    const data = await q.first();
+    if (!data) return res.status(404).json({ error: 'Season not found' });
+    res.json(data);
+  } catch (err: any) {
+    res.status(400).json({ error: err.message });
+  }
 };
 
 export const createSeason = async (req: Request, res: Response) => {
-  const agencyId = req.agencyId;
+  const agencyId = requireAgencyId(req, res);
+  if (agencyId === undefined) return;
   const { name, type, start_date, end_date } = req.body;
-  
-  if (!agencyId) {
-    return res.status(403).json({ error: 'Agency ID not found' });
+
+  try {
+    const [data] = await db('seasons')
+      .insert({
+        name,
+        type,
+        start_date,
+        end_date,
+        agency_id: agencyId,
+      })
+      .returning('*');
+    res.json(data);
+  } catch (err: any) {
+    res.status(400).json({ error: err.message });
   }
-
-  const { data, error } = await supabaseAdmin
-    .from('seasons')
-    .insert({
-      name,
-      type,
-      start_date,
-      end_date,
-      agency_id: agencyId
-    })
-    .select()
-    .single();
-
-  if (error) return res.status(400).json({ error: error.message });
-  res.json(data);
 };
 
 export const updateSeason = async (req: Request, res: Response) => {
-  const agencyId = req.agencyId;
+  const agencyId = resolveAgencyId(req, res);
+  if (agencyId === undefined) return;
   const { id } = req.params;
   const { name, type, start_date, end_date, status } = req.body;
-  
-  if (!agencyId) {
-    return res.status(403).json({ error: 'Agency ID not found' });
-  }
 
   const updates: any = {};
   if (name !== undefined) updates.name = name;
@@ -77,32 +65,29 @@ export const updateSeason = async (req: Request, res: Response) => {
   if (end_date !== undefined) updates.end_date = end_date;
   if (status !== undefined) updates.status = status;
 
-  const { data, error } = await supabaseAdmin
-    .from('seasons')
-    .update(updates)
-    .eq('id', id)
-    .eq('agency_id', agencyId)
-    .select()
-    .single();
-
-  if (error) return res.status(400).json({ error: error.message });
-  res.json(data);
+  try {
+    let q = db('seasons').where({ id });
+    if (agencyId) q = q.andWhere({ agency_id: agencyId });
+    const [data] = await q.update(updates).returning('*');
+    if (!data) return res.status(404).json({ error: 'Season not found' });
+    res.json(data);
+  } catch (err: any) {
+    res.status(400).json({ error: err.message });
+  }
 };
 
 export const deleteSeason = async (req: Request, res: Response) => {
-  const agencyId = req.agencyId;
+  const agencyId = resolveAgencyId(req, res);
+  if (agencyId === undefined) return;
   const { id } = req.params;
-  
-  if (!agencyId) {
-    return res.status(403).json({ error: 'Agency ID not found' });
+
+  try {
+    let q = db('seasons').where({ id });
+    if (agencyId) q = q.andWhere({ agency_id: agencyId });
+    const deleted = await q.del();
+    if (!deleted) return res.status(404).json({ error: 'Season not found' });
+    res.json({ message: 'Season deleted successfully' });
+  } catch (err: any) {
+    res.status(400).json({ error: err.message });
   }
-
-  const { error } = await supabaseAdmin
-    .from('seasons')
-    .delete()
-    .eq('id', id)
-    .eq('agency_id', agencyId);
-
-  if (error) return res.status(400).json({ error: error.message });
-  res.json({ message: 'Season deleted successfully' });
 };

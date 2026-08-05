@@ -18,9 +18,9 @@ export const getDashboardStats = async (req: Request, res: Response) => {
     const role = req.user?.role;
     const userBranchId = req.user?.branch_id;
 
-    if (!agencyId) {
-      return res.status(403).json({ error: 'Agency ID not found' });
-    }
+    if (!agencyId && req.user?.role !== 'super_admin') {
+    return res.status(403).json({ error: 'Agency ID not found' });
+  }
 
     // Determine user IDs for filtering based on role
     let userIdsFilter: string[] | null = null;
@@ -94,9 +94,13 @@ export const getDashboardStats = async (req: Request, res: Response) => {
       cancelled: bookings?.filter((b: any) => b.status === 'cancelled').length || 0
     };
 
-    // Calculate financial stats
-    const totalAgreed = bookings?.reduce((sum: number, b: any) => sum + (b.total_amount || 0), 0) || 0;
-    const totalPaid = bookings?.reduce((sum: number, b: any) => sum + (b.paid_amount || 0), 0) || 0;
+    // Calculate financial stats (pg returns NUMERIC as strings — coerce before summing)
+    const num = (v: unknown) => {
+      const n = Number(v);
+      return Number.isFinite(n) ? n : 0;
+    };
+    const totalAgreed = bookings?.reduce((sum: number, b: any) => sum + num(b.total_amount), 0) || 0;
+    const totalPaid = bookings?.reduce((sum: number, b: any) => sum + num(b.paid_amount), 0) || 0;
     const totalRemaining = totalAgreed - totalPaid;
 
     // Get recent bookings (last 5)
@@ -107,8 +111,8 @@ export const getDashboardStats = async (req: Request, res: Response) => {
         id: b.id,
         booking_number: b.booking_number,
         client_name: b.clients?.full_name_ar || b.clients?.full_name || '-',
-        total_amount: b.total_amount,
-        paid_amount: b.paid_amount,
+        total_amount: num(b.total_amount),
+        paid_amount: num(b.paid_amount),
         status: b.status,
         pilgrims_count: b.pilgrims?.length || 0,
         created_at: b.created_at
@@ -146,14 +150,14 @@ export const getDashboardStats = async (req: Request, res: Response) => {
 
     const inventoryStats = {
       hotel: {
-        totalBeds: hotelInventory?.reduce((sum: number, i: any) => sum + (i.beds_purchased || 0), 0) || 0,
-        soldBeds: hotelInventory?.reduce((sum: number, i: any) => sum + (i.beds_sold || 0), 0) || 0,
-        availableBeds: hotelInventory?.reduce((sum: number, i: any) => sum + (i.beds_available || 0), 0) || 0
+        totalBeds: hotelInventory?.reduce((sum: number, i: any) => sum + num(i.beds_purchased), 0) || 0,
+        soldBeds: hotelInventory?.reduce((sum: number, i: any) => sum + num(i.beds_sold), 0) || 0,
+        availableBeds: hotelInventory?.reduce((sum: number, i: any) => sum + num(i.beds_available), 0) || 0
       },
       flight: {
-        totalSeats: flightInventory?.reduce((sum: number, i: any) => sum + (i.seats_purchased || 0), 0) || 0,
-        soldSeats: flightInventory?.reduce((sum: number, i: any) => sum + (i.seats_sold || 0), 0) || 0,
-        availableSeats: flightInventory?.reduce((sum: number, i: any) => sum + (i.seats_available || 0), 0) || 0
+        totalSeats: flightInventory?.reduce((sum: number, i: any) => sum + num(i.seats_purchased), 0) || 0,
+        soldSeats: flightInventory?.reduce((sum: number, i: any) => sum + num(i.seats_sold), 0) || 0,
+        availableSeats: flightInventory?.reduce((sum: number, i: any) => sum + num(i.seats_available), 0) || 0
       }
     };
 

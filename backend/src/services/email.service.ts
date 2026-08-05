@@ -124,7 +124,7 @@ export async function testConnection(config: EmailConfig, testEmail: string): Pr
     await sendEmail(
       config,
       testEmail,
-      'Test Email from Ashamel',
+      'Test Email from Hujjaj',
       '<p>This is a test email to verify your SMTP configuration.</p>',
       'This is a test email to verify your SMTP configuration.'
     );

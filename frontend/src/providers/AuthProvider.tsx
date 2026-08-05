@@ -1,50 +1,117 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import type { User, Session } from '@supabase/supabase-js';
-import { supabase } from '../lib/supabase';
+
+const TOKEN_KEY = 'hujjaj_token';
+const USER_KEY = 'hujjaj_user';
+
+export interface AuthUser {
+  id: string;
+  email?: string;
+  user_metadata?: {
+    agency_id?: string | null;
+    role?: string | null;
+    branch_id?: string | null;
+    full_name?: string | null;
+    avatar_url?: string | null;
+  };
+}
+
+export interface AuthSession {
+  access_token: string;
+  user: AuthUser;
+}
 
 interface AuthContextType {
-  user: User | null;
-  session: Session | null;
+  user: AuthUser | null;
+  session: AuthSession | null;
   agencyId: string | null;
   role: string | null;
   loading: boolean;
-  signIn: (email: string, pass: string) => Promise<any>;
+  signIn: (email: string, pass: string) => Promise<{ data?: any; error?: Error | null }>;
   signOut: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({} as AuthContextType);
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+
+function loadStoredSession(): AuthSession | null {
+  try {
+    const token = localStorage.getItem(TOKEN_KEY);
+    const userRaw = localStorage.getItem(USER_KEY);
+    if (!token || !userRaw) return null;
+    return { access_token: token, user: JSON.parse(userRaw) };
+  } catch {
+    return null;
+  }
+}
+
+function persistSession(session: AuthSession | null) {
+  if (!session) {
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(USER_KEY);
+    return;
+  }
+  localStorage.setItem(TOKEN_KEY, session.access_token);
+  localStorage.setItem(USER_KEY, JSON.stringify(session.user));
+}
+
+export function getAccessToken(): string | null {
+  return localStorage.getItem(TOKEN_KEY);
+}
+
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
+  const [user, setUser] = useState<AuthUser | null>(null);
+  const [session, setSession] = useState<AuthSession | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check active sessions and sets the user
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
-
-    // Listen for changes on auth state (logged in, signed out, etc.)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
-
-    return () => subscription.unsubscribe();
+    const stored = loadStoredSession();
+    if (stored) {
+      setSession(stored);
+      setUser(stored.user);
+    }
+    setLoading(false);
   }, []);
 
-  const value = {
+  const signIn = async (email: string, pass: string) => {
+    try {
+      const res = await fetch(`${API_URL}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password: pass }),
+      });
+      const body = await res.json();
+      if (!res.ok) {
+        return { error: new Error(body.error || 'Login failed') };
+      }
+
+      const next: AuthSession = {
+        access_token: body.access_token || body.token,
+        user: body.user,
+      };
+      persistSession(next);
+      setSession(next);
+      setUser(next.user);
+      return { data: body, error: null };
+    } catch (err: any) {
+      return { error: err instanceof Error ? err : new Error('Login failed') };
+    }
+  };
+
+  const signOut = async () => {
+    persistSession(null);
+    setSession(null);
+    setUser(null);
+  };
+
+  const value: AuthContextType = {
     user,
     session,
     agencyId: user?.user_metadata?.agency_id || null,
     role: user?.user_metadata?.role || null,
     loading,
-    signIn: (email: string, pass: string) => supabase.auth.signInWithPassword({ email, password: pass }),
-    signOut: async () => { await supabase.auth.signOut(); },
+    signIn,
+    signOut,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

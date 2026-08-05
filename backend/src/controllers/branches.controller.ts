@@ -7,9 +7,9 @@ export const getBranches = async (req: Request, res: Response) => {
     const agencyId = req.user?.agency_id;
     const { search, active_only } = req.query;
 
-    if (!agencyId) {
-      return res.status(403).json({ error: 'Agency ID not found' });
-    }
+    if (!agencyId && req.user?.role !== 'super_admin') {
+    return res.status(403).json({ error: 'Agency ID not found' });
+  }
 
     let query = supabase
       .from('branches')
@@ -41,9 +41,9 @@ export const getBranchById = async (req: Request, res: Response) => {
     const { id } = req.params;
     const agencyId = req.user?.agency_id;
 
-    if (!agencyId) {
-      return res.status(403).json({ error: 'Agency ID not found' });
-    }
+    if (!agencyId && req.user?.role !== 'super_admin') {
+    return res.status(403).json({ error: 'Agency ID not found' });
+  }
 
     const { data, error } = await supabase
       .from('branches')
@@ -68,9 +68,9 @@ export const getBranchStats = async (req: Request, res: Response) => {
     const { id } = req.params;
     const agencyId = req.user?.agency_id;
 
-    if (!agencyId) {
-      return res.status(403).json({ error: 'Agency ID not found' });
-    }
+    if (!agencyId && req.user?.role !== 'super_admin') {
+    return res.status(403).json({ error: 'Agency ID not found' });
+  }
 
     // Verify branch belongs to agency
     const { data: branch, error: branchError } = await supabase
@@ -118,9 +118,9 @@ export const createBranch = async (req: Request, res: Response) => {
     const agencyId = req.user?.agency_id;
     const role = req.user?.role;
 
-    if (!agencyId) {
-      return res.status(403).json({ error: 'Agency ID not found' });
-    }
+    if (!agencyId && req.user?.role !== 'super_admin') {
+    return res.status(403).json({ error: 'Agency ID not found' });
+  }
 
     // Only agency_admin and super_admin can create branches
     if (role !== 'agency_admin' && role !== 'super_admin') {
@@ -180,9 +180,9 @@ export const updateBranch = async (req: Request, res: Response) => {
     const agencyId = req.user?.agency_id;
     const role = req.user?.role;
 
-    if (!agencyId) {
-      return res.status(403).json({ error: 'Agency ID not found' });
-    }
+    if (!agencyId && req.user?.role !== 'super_admin') {
+    return res.status(403).json({ error: 'Agency ID not found' });
+  }
 
     // Only agency_admin and super_admin can update branches
     if (role !== 'agency_admin' && role !== 'super_admin') {
@@ -246,9 +246,9 @@ export const deleteBranch = async (req: Request, res: Response) => {
     const agencyId = req.user?.agency_id;
     const role = req.user?.role;
 
-    if (!agencyId) {
-      return res.status(403).json({ error: 'Agency ID not found' });
-    }
+    if (!agencyId && req.user?.role !== 'super_admin') {
+    return res.status(403).json({ error: 'Agency ID not found' });
+  }
 
     // Only agency_admin and super_admin can delete branches
     if (role !== 'agency_admin' && role !== 'super_admin') {
@@ -315,9 +315,9 @@ export const getBranchUsers = async (req: Request, res: Response) => {
     const { id } = req.params;
     const agencyId = req.user?.agency_id;
 
-    if (!agencyId) {
-      return res.status(403).json({ error: 'Agency ID not found' });
-    }
+    if (!agencyId && req.user?.role !== 'super_admin') {
+    return res.status(403).json({ error: 'Agency ID not found' });
+  }
 
     // Verify branch belongs to agency
     const { data: branch, error: branchError } = await supabase
@@ -339,18 +339,8 @@ export const getBranchUsers = async (req: Request, res: Response) => {
 
     if (error) throw error;
 
-    // Get email from auth.users for each user
-    const usersWithEmail = await Promise.all(
-      (data || []).map(async (user) => {
-        const { data: authUser } = await supabase.auth.admin.getUserById(user.id);
-        return {
-          ...user,
-          email: authUser?.user?.email || null
-        };
-      })
-    );
-
-    res.json(usersWithEmail);
+    const users = (data || []).map(({ password_hash, ...rest }: any) => rest);
+    res.json(users);
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }

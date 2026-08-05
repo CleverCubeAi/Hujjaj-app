@@ -20,9 +20,9 @@ export const getEmailSettings = async (req: Request, res: Response) => {
     const agencyId = req.user?.agency_id;
     const role = req.user?.role;
 
-    if (!agencyId) {
-      return res.status(403).json({ error: 'Agency ID not found' });
-    }
+    if (!agencyId && req.user?.role !== 'super_admin') {
+    return res.status(403).json({ error: 'Agency ID not found' });
+  }
 
     // Only agency_admin and super_admin can view email settings
     if (role !== 'agency_admin' && role !== 'super_admin') {
@@ -69,9 +69,9 @@ export const updateEmailSettings = async (req: Request, res: Response) => {
       from_name
     } = req.body;
 
-    if (!agencyId) {
-      return res.status(403).json({ error: 'Agency ID not found' });
-    }
+    if (!agencyId && req.user?.role !== 'super_admin') {
+    return res.status(403).json({ error: 'Agency ID not found' });
+  }
 
     // Only agency_admin and super_admin can update email settings
     if (role !== 'agency_admin' && role !== 'super_admin') {
@@ -140,9 +140,9 @@ export const testEmail = async (req: Request, res: Response) => {
     const role = req.user?.role;
     const { test_email } = req.body;
 
-    if (!agencyId) {
-      return res.status(403).json({ error: 'Agency ID not found' });
-    }
+    if (!agencyId && req.user?.role !== 'super_admin') {
+    return res.status(403).json({ error: 'Agency ID not found' });
+  }
 
     // Only agency_admin and super_admin can test email
     if (role !== 'agency_admin' && role !== 'super_admin') {
@@ -219,9 +219,9 @@ export const getSMSSettings = async (req: Request, res: Response) => {
     const agencyId = req.user?.agency_id;
     const role = req.user?.role;
 
-    if (!agencyId) {
-      return res.status(403).json({ error: 'Agency ID not found' });
-    }
+    if (!agencyId && req.user?.role !== 'super_admin') {
+    return res.status(403).json({ error: 'Agency ID not found' });
+  }
 
     // Only agency_admin and super_admin can view SMS settings
     if (role !== 'agency_admin' && role !== 'super_admin') {
@@ -270,9 +270,9 @@ export const updateSMSSettings = async (req: Request, res: Response) => {
       api_secret
     } = req.body;
 
-    if (!agencyId) {
-      return res.status(403).json({ error: 'Agency ID not found' });
-    }
+    if (!agencyId && req.user?.role !== 'super_admin') {
+    return res.status(403).json({ error: 'Agency ID not found' });
+  }
 
     // Only agency_admin and super_admin can update SMS settings
     if (role !== 'agency_admin' && role !== 'super_admin') {
@@ -373,9 +373,9 @@ export const testSMS = async (req: Request, res: Response) => {
     const role = req.user?.role;
     const { test_phone_number } = req.body;
 
-    if (!agencyId) {
-      return res.status(403).json({ error: 'Agency ID not found' });
-    }
+    if (!agencyId && req.user?.role !== 'super_admin') {
+    return res.status(403).json({ error: 'Agency ID not found' });
+  }
 
     // Only agency_admin and super_admin can test SMS
     if (role !== 'agency_admin' && role !== 'super_admin') {

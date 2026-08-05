@@ -17,7 +17,7 @@ export const getHandovers = async (req: Request, res: Response) => {
   const agencyId = req.agencyId;
   const { handover_type, status, season_id, date_from, date_to, created_by, recipient_user_id } = req.query;
 
-  if (!agencyId) {
+  if (!agencyId && req.user?.role !== 'super_admin') {
     return res.status(403).json({ error: 'Agency ID not found' });
   }
 
@@ -58,7 +58,7 @@ export const getHandoverById = async (req: Request, res: Response) => {
   const agencyId = req.agencyId;
   const { id } = req.params;
 
-  if (!agencyId) {
+  if (!agencyId && req.user?.role !== 'super_admin') {
     return res.status(403).json({ error: 'Agency ID not found' });
   }
 
@@ -333,7 +333,7 @@ export const getHandoverStats = async (req: Request, res: Response) => {
   const agencyId = req.agencyId;
   const { season_id } = req.query;
 
-  if (!agencyId) {
+  if (!agencyId && req.user?.role !== 'super_admin') {
     return res.status(403).json({ error: 'Agency ID not found' });
   }
 
@@ -392,12 +392,15 @@ export const getHandoverStats = async (req: Request, res: Response) => {
   }
 };
 
-// Helper function to get user email from auth.users
 async function getUserEmail(userId: string): Promise<string | null> {
   try {
-    const { data, error } = await supabaseAdmin.auth.admin.getUserById(userId);
-    if (error || !data.user) return null;
-    return data.user.email || null;
+    const { data, error } = await supabaseAdmin
+      .from('users')
+      .select('email')
+      .eq('id', userId)
+      .maybeSingle();
+    if (error || !data) return null;
+    return data.email || null;
   } catch {
     return null;
   }

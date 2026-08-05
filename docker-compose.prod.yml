@@ -1,33 +1,58 @@
 version: '3.8'
 
-# Production Docker Compose Configuration
-# This includes a unified Nginx reverse proxy with SSL support
-
 services:
-  # Backend API Service
+  postgres:
+    image: postgres:16-alpine
+    container_name: hujjaj-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-hujjaj}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-hujjaj}
+      POSTGRES_DB: ${POSTGRES_DB:-hujjaj}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - hujjaj-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-hujjaj} -d ${POSTGRES_DB:-hujjaj}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: ashamel-backend
+    container_name: hujjaj-backend
     restart: unless-stopped
+    env_file:
+      - .env
     environment:
       - NODE_ENV=production
       - PORT=3001
-      - SUPABASE_URL=${SUPABASE_URL}
-      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
-      - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
-      - EMAIL_HOST=${EMAIL_HOST}
-      - EMAIL_PORT=${EMAIL_PORT}
-      - EMAIL_USER=${EMAIL_USER}
-      - EMAIL_PASSWORD=${EMAIL_PASSWORD}
-      - TWILIO_ACCOUNT_SID=${TWILIO_ACCOUNT_SID}
-      - TWILIO_AUTH_TOKEN=${TWILIO_AUTH_TOKEN}
-      - TWILIO_PHONE_NUMBER=${TWILIO_PHONE_NUMBER}
+      - DATABASE_URL=${DATABASE_URL:-postgres://hujjaj:hujjaj@postgres:5432/hujjaj}
+      - JWT_SECRET=${JWT_SECRET:?Set JWT_SECRET in .env}
+      - JWT_EXPIRES_IN=${JWT_EXPIRES_IN:-7d}
+      - SUPER_ADMIN_EMAIL=${SUPER_ADMIN_EMAIL:-admin@hujjaj.app}
+      - SUPER_ADMIN_PASSWORD=${SUPER_ADMIN_PASSWORD:-Admin123!}
+      - SUPER_ADMIN_NAME=${SUPER_ADMIN_NAME:-Super Admin}
+      - SEED_DEMO=${SEED_DEMO:-true}
+      - DEMO_PASSWORD=${DEMO_PASSWORD:-Demo123!}
+      - PUBLIC_URL=${PUBLIC_URL:-https://hujjaj.app}
+      - EMAIL_HOST=${EMAIL_HOST:-}
+      - EMAIL_PORT=${EMAIL_PORT:-}
+      - EMAIL_USER=${EMAIL_USER:-}
+      - EMAIL_PASSWORD=${EMAIL_PASSWORD:-}
+      - TWILIO_ACCOUNT_SID=${TWILIO_ACCOUNT_SID:-}
+      - TWILIO_AUTH_TOKEN=${TWILIO_AUTH_TOKEN:-}
+      - TWILIO_PHONE_NUMBER=${TWILIO_PHONE_NUMBER:-}
     volumes:
       - backend-uploads:/app/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
     networks:
-      - ashamel-network
+      - hujjaj-network
     expose:
       - "3001"
     healthcheck:
@@ -35,36 +60,20 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 40s
-    deploy:
-      resources:
-        limits:
-          cpus: '1'
-          memory: 1G
-        reservations:
-          cpus: '0.5'
-          memory: 512M
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
+      start_period: 60s
 
-  # Frontend Service
   frontend:
     build:
-      context: ./frontend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: frontend/Dockerfile
       args:
-        - VITE_SUPABASE_URL=${SUPABASE_URL}
-        - VITE_SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
-        - VITE_API_URL=https://${DOMAIN}/api
-    container_name: ashamel-frontend
+        - VITE_API_URL=/api
+    container_name: hujjaj-frontend
     restart: unless-stopped
     depends_on:
       - backend
     networks:
-      - ashamel-network
+      - hujjaj-network
     expose:
       - "80"
     healthcheck:
@@ -73,24 +82,10 @@ services:
       timeout: 10s
       retries: 3
       start_period: 20s
-    deploy:
-      resources:
-        limits:
-          cpus: '0.5'
-          memory: 512M
-        reservations:
-          cpus: '0.25'
-          memory: 256M
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
 
-  # Nginx Reverse Proxy with SSL
   nginx:
     image: nginx:alpine
-    container_name: ashamel-nginx
+    container_name: hujjaj-nginx
     restart: unless-stopped
     ports:
       - "80:80"
@@ -103,32 +98,23 @@ services:
       - backend
       - frontend
     networks:
-      - ashamel-network
-    healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/api/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
+      - hujjaj-network
 
-  # Certbot for Let's Encrypt SSL (Optional)
   certbot:
     image: certbot/certbot
-    container_name: ashamel-certbot
+    container_name: hujjaj-certbot
     volumes:
       - ./nginx/ssl:/etc/letsencrypt
       - certbot-www:/var/www/certbot
     entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
 
 networks:
-  ashamel-network:
+  hujjaj-network:
     driver: bridge
 
 volumes:
+  postgres-data:
+    driver: local
   backend-uploads:
     driver: local
   certbot-www:

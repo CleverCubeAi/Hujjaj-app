@@ -1,13 +1,12 @@
 # Server Deployment Checklist - IP: 3.139.234.93
 
-Use this checklist to deploy your Ashamel platform step by step.
+Use this checklist to deploy your Hujjaj platform step by step.
 
 ## ☑️ Pre-Deployment Checklist
 
 - [ ] Server access confirmed (SSH working)
-- [ ] Supabase project created
-- [ ] Supabase credentials ready (URL, service role key, anon key)
-- [ ] Domain name ready (optional)
+- [ ] JWT_SECRET and Postgres password chosen
+- [ ] Domain name ready (optional) — e.g. hujjaj.app
 - [ ] SSL certificate plan (Let's Encrypt recommended)
 
 ## 📋 Deployment Steps
@@ -95,10 +94,11 @@ nano .env
 
 **Required values to update:**
 ```env
-SUPABASE_URL=https://xxxxxxxxxx.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=eyJhbGci...
-SUPABASE_ANON_KEY=eyJhbGci...
-VITE_API_URL=http://3.139.234.93:3001/api
+JWT_SECRET=replace-with-a-long-random-secret
+POSTGRES_PASSWORD=change-me
+DATABASE_URL=postgres://hujjaj:change-me@postgres:5432/hujjaj
+VITE_API_URL=/api
+PUBLIC_URL=https://hujjaj.app
 ```
 
 **Status:** ⬜ Not started | ✅ Complete
@@ -107,12 +107,9 @@ VITE_API_URL=http://3.139.234.93:3001/api
 
 ### 6. Run Database Migrations
 
-In Supabase Dashboard:
-- [ ] Go to SQL Editor
-- [ ] Run `001_initial_schema.sql`
-- [ ] Run `002_rls_policies.sql`
-- [ ] Continue with remaining migration files in order
-- [ ] Verify tables are created
+Migrations run automatically on backend container start (`knex migrate:latest` → `backend/db/schema.sql`).
+- [ ] Confirm backend logs show migration success
+- [ ] Verify API health: `curl http://localhost:3001/health`
 
 **Status:** ⬜ Not started | ✅ Complete
 

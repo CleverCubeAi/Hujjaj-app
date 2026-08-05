@@ -6,9 +6,9 @@ export const listExpenses = async (req: Request, res: Response) => {
     const agencyId = req.user?.agency_id;
     const { season_id, category, expense_type } = req.query;
     
-    if (!agencyId) {
-      return res.status(403).json({ error: 'Agency ID not found' });
-    }
+    if (!agencyId && req.user?.role !== 'super_admin') {
+    return res.status(403).json({ error: 'Agency ID not found' });
+  }
 
     let query = supabase
       .from('expenses')
@@ -44,9 +44,9 @@ export const createExpense = async (req: Request, res: Response) => {
       season_id
     } = req.body;
     
-    if (!agencyId) {
-      return res.status(403).json({ error: 'Agency ID not found' });
-    }
+    if (!agencyId && req.user?.role !== 'super_admin') {
+    return res.status(403).json({ error: 'Agency ID not found' });
+  }
 
     if (!amount) {
       return res.status(400).json({ error: 'Amount is required' });
@@ -81,9 +81,9 @@ export const updateExpense = async (req: Request, res: Response) => {
     const role = req.user?.role;
     const updateData = req.body;
 
-    if (!agencyId) {
-      return res.status(403).json({ error: 'Agency ID not found' });
-    }
+    if (!agencyId && req.user?.role !== 'super_admin') {
+    return res.status(403).json({ error: 'Agency ID not found' });
+  }
 
     // Only agency_admin and super_admin can update expenses
     if (role !== 'agency_admin' && role !== 'super_admin') {
@@ -123,9 +123,9 @@ export const deleteExpense = async (req: Request, res: Response) => {
     const agencyId = req.user?.agency_id;
     const role = req.user?.role;
 
-    if (!agencyId) {
-      return res.status(403).json({ error: 'Agency ID not found' });
-    }
+    if (!agencyId && req.user?.role !== 'super_admin') {
+    return res.status(403).json({ error: 'Agency ID not found' });
+  }
 
     // Only agency_admin and super_admin can delete expenses
     if (role !== 'agency_admin' && role !== 'super_admin') {
@@ -161,9 +161,9 @@ export const getExpenseSummary = async (req: Request, res: Response) => {
     const agencyId = req.user?.agency_id;
     const { season_id } = req.query;
     
-    if (!agencyId) {
-      return res.status(403).json({ error: 'Agency ID not found' });
-    }
+    if (!agencyId && req.user?.role !== 'super_admin') {
+    return res.status(403).json({ error: 'Agency ID not found' });
+  }
 
     let query = supabase.from('expense_summary').select('*').eq('agency_id', agencyId);
     if (season_id) query = query.eq('season_id', season_id);

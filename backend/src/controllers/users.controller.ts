@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { supabaseAdmin as supabase } from '../services/supabase';
+import { hashPassword } from '../services/auth.service';
 
-// Get all users in the agency
 export const getUsers = async (req: Request, res: Response) => {
   try {
     const agencyId = req.user?.agency_id;
@@ -9,12 +9,10 @@ export const getUsers = async (req: Request, res: Response) => {
     const userBranchId = req.user?.branch_id;
     const { search, branch_id } = req.query;
 
-    if (!agencyId) {
-      return res.status(403).json({ error: 'Agency ID not found' });
-    }
+    if (!agencyId && req.user?.role !== 'super_admin') {
+    return res.status(403).json({ error: 'Agency ID not found' });
+  }
 
-    // Only agency_admin and super_admin can view all users
-    // manager and agent can only view (read-only)
     if (role !== 'agency_admin' && role !== 'super_admin' && role !== 'manager' && role !== 'agent') {
       return res.status(403).json({ error: 'Unauthorized' });
     }
@@ -33,7 +31,6 @@ export const getUsers = async (req: Request, res: Response) => {
       .eq('agency_id', agencyId)
       .order('created_at', { ascending: false });
 
-    // Filter by branch_id if provided
     if (branch_id) {
       if (branch_id === 'none') {
         query = query.is('branch_id', null);
@@ -42,52 +39,37 @@ export const getUsers = async (req: Request, res: Response) => {
       }
     }
 
-    // Non-admin users can only see users in their own branch (if they have a branch)
     if (role !== 'agency_admin' && role !== 'super_admin' && userBranchId) {
       query = query.eq('branch_id', userBranchId);
     }
 
     if (search) {
-      query = query.or(`full_name.ilike.%${search}%,role.ilike.%${search}%`);
+      query = query.or(`full_name.ilike.%${search}%,email.ilike.%${search}%,role.ilike.%${search}%`);
     }
 
     const { data, error } = await query;
-
     if (error) throw error;
 
-    // Get email from auth.users for each user
-    const usersWithEmail = await Promise.all(
-      (data || []).map(async (user) => {
-        const { data: authUser } = await supabase.auth.admin.getUserById(user.id);
-        return {
-          ...user,
-          email: authUser?.user?.email || null
-        };
-      })
-    );
-
-    res.json(usersWithEmail);
+    // Never expose password hashes
+    const users = (data || []).map(({ password_hash, ...rest }: any) => rest);
+    res.json(users);
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
 };
 
-// Get single user by ID
 export const getUserById = async (req: Request, res: Response) => {
   try {
     const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
     const agencyId = req.user?.agency_id;
     const role = req.user?.role;
 
-    if (!agencyId) {
-      return res.status(403).json({ error: 'Agency ID not found' });
-    }
-
+    if (!agencyId && req.user?.role !== 'super_admin') {
+    return res.status(403).json({ error: 'Agency ID not found' });
+  }
     if (!id) {
       return res.status(400).json({ error: 'User ID is required' });
     }
-
-    // Only agency_admin and super_admin can view user details
     if (role !== 'agency_admin' && role !== 'super_admin') {
       return res.status(403).json({ error: 'Unauthorized' });
     }
@@ -112,45 +94,34 @@ export const getUserById = async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    // Get email from auth.users
-    const { data: authUser } = await supabase.auth.admin.getUserById(id);
-
-    res.json({
-      ...data,
-      email: authUser?.user?.email || null
-    });
+    const { password_hash, ...user } = data as any;
+    res.json(user);
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
 };
 
-// Create new user
 export const createUser = async (req: Request, res: Response) => {
   try {
     const agencyId = req.user?.agency_id;
     const role = req.user?.role;
     const { email, password, full_name, user_role, branch_id, avatar_url } = req.body;
 
-    if (!agencyId) {
-      return res.status(403).json({ error: 'Agency ID not found' });
-    }
-
-    // Only agency_admin and super_admin can create users
+    if (!agencyId && req.user?.role !== 'super_admin') {
+    return res.status(403).json({ error: 'Agency ID not found' });
+  }
     if (role !== 'agency_admin' && role !== 'super_admin') {
       return res.status(403).json({ error: 'Unauthorized' });
     }
-
     if (!email || !password || !full_name || !user_role) {
       return res.status(400).json({ error: 'Email, password, full name, and role are required' });
     }
 
-    // Validate role
     const validRoles = ['agency_admin', 'manager', 'agent'];
     if (!validRoles.includes(user_role)) {
       return res.status(400).json({ error: 'Invalid role' });
     }
 
-    // Validate branch_id if provided
     if (branch_id) {
       const { data: branch, error: branchError } = await supabase
         .from('branches')
@@ -164,31 +135,18 @@ export const createUser = async (req: Request, res: Response) => {
       }
     }
 
-    // Create auth user
-    const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
-      email,
-      password,
-      email_confirm: true,
-      user_metadata: {
-        agency_id: agencyId,
-        role: user_role,
-        full_name,
-        branch_id: branch_id || null
-      }
-    });
+    const password_hash = await hashPassword(password);
 
-    if (authError) throw authError;
-
-    // Create user profile
     const { data: userProfile, error: profileError } = await supabase
       .from('users')
       .insert({
-        id: authUser.user.id,
+        email: String(email).toLowerCase().trim(),
+        password_hash,
         agency_id: agencyId,
         full_name,
         role: user_role,
         branch_id: branch_id || null,
-        avatar_url: avatar_url || null
+        avatar_url: avatar_url || null,
       })
       .select(`
         *,
@@ -201,22 +159,15 @@ export const createUser = async (req: Request, res: Response) => {
       `)
       .single();
 
-    if (profileError) {
-      // Rollback: delete auth user if profile creation fails
-      await supabase.auth.admin.deleteUser(authUser.user.id);
-      throw profileError;
-    }
+    if (profileError) throw profileError;
 
-    res.status(201).json({
-      ...userProfile,
-      email: authUser.user.email
-    });
+    const { password_hash: _, ...user } = userProfile as any;
+    res.status(201).json(user);
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
 };
 
-// Update user
 export const updateUser = async (req: Request, res: Response) => {
   try {
     const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
@@ -224,25 +175,19 @@ export const updateUser = async (req: Request, res: Response) => {
     const role = req.user?.role;
     const { full_name, user_role, email, branch_id, avatar_url } = req.body;
 
-    if (!agencyId) {
-      return res.status(403).json({ error: 'Agency ID not found' });
-    }
-
+    if (!agencyId && req.user?.role !== 'super_admin') {
+    return res.status(403).json({ error: 'Agency ID not found' });
+  }
     if (!id) {
       return res.status(400).json({ error: 'User ID is required' });
     }
-
-    // Only agency_admin and super_admin can update users
     if (role !== 'agency_admin' && role !== 'super_admin') {
       return res.status(403).json({ error: 'Unauthorized' });
     }
-
-    // Prevent updating own account role
     if (id === req.user?.id && user_role && user_role !== role) {
       return res.status(400).json({ error: 'Cannot change your own role' });
     }
 
-    // Check if user exists and belongs to agency
     const { data: existingUser } = await supabase
       .from('users')
       .select('*')
@@ -254,7 +199,6 @@ export const updateUser = async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    // Prevent demoting last agency_admin
     if (user_role && existingUser.role === 'agency_admin' && user_role !== 'agency_admin') {
       const { data: admins } = await supabase
         .from('users')
@@ -267,7 +211,6 @@ export const updateUser = async (req: Request, res: Response) => {
       }
     }
 
-    // Validate branch_id if provided
     if (branch_id !== undefined && branch_id !== null) {
       const { data: branch, error: branchError } = await supabase
         .from('branches')
@@ -281,26 +224,12 @@ export const updateUser = async (req: Request, res: Response) => {
       }
     }
 
-    // Update auth user if email provided
-    if (email) {
-      const { error: emailError } = await supabase.auth.admin.updateUserById(id, {
-        email,
-        user_metadata: {
-          ...existingUser,
-          full_name: full_name || existingUser.full_name,
-          branch_id: branch_id !== undefined ? branch_id : existingUser.branch_id
-        }
-      });
-      if (emailError) throw emailError;
-    }
-
-    // Update user profile
     const updateData: any = {};
     if (full_name !== undefined) updateData.full_name = full_name;
     if (branch_id !== undefined) updateData.branch_id = branch_id;
     if (avatar_url !== undefined) updateData.avatar_url = avatar_url;
+    if (email !== undefined) updateData.email = String(email).toLowerCase().trim();
     if (user_role !== undefined) {
-      // Validate role
       const validRoles = ['agency_admin', 'manager', 'agent'];
       if (!validRoles.includes(user_role)) {
         return res.status(400).json({ error: 'Invalid role' });
@@ -325,55 +254,32 @@ export const updateUser = async (req: Request, res: Response) => {
 
     if (error) throw error;
 
-    // Get updated email
-    const { data: authUser } = await supabase.auth.admin.getUserById(id);
-
-    // Also update auth user metadata with branch_id
-    if (branch_id !== undefined) {
-      await supabase.auth.admin.updateUserById(id, {
-        user_metadata: {
-          ...existingUser,
-          ...updateData,
-          branch_id: branch_id
-        }
-      });
-    }
-
-    res.json({
-      ...data,
-      email: authUser?.user?.email || null
-    });
+    const { password_hash, ...user } = data as any;
+    res.json(user);
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
 };
 
-// Delete user
 export const deleteUser = async (req: Request, res: Response) => {
   try {
     const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
     const agencyId = req.user?.agency_id;
     const role = req.user?.role;
 
-    if (!agencyId) {
-      return res.status(403).json({ error: 'Agency ID not found' });
-    }
-
+    if (!agencyId && req.user?.role !== 'super_admin') {
+    return res.status(403).json({ error: 'Agency ID not found' });
+  }
     if (!id) {
       return res.status(400).json({ error: 'User ID is required' });
     }
-
-    // Only agency_admin and super_admin can delete users
     if (role !== 'agency_admin' && role !== 'super_admin') {
       return res.status(403).json({ error: 'Unauthorized' });
     }
-
-    // Prevent deleting own account
     if (id === req.user?.id) {
       return res.status(400).json({ error: 'Cannot delete your own account' });
     }
 
-    // Check if user exists and belongs to agency
     const { data: existingUser } = await supabase
       .from('users')
       .select('*')
@@ -385,7 +291,6 @@ export const deleteUser = async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    // Prevent deleting last agency_admin
     if (existingUser.role === 'agency_admin') {
       const { data: admins } = await supabase
         .from('users')
@@ -398,17 +303,15 @@ export const deleteUser = async (req: Request, res: Response) => {
       }
     }
 
-    // Delete auth user (this will cascade delete user profile due to ON DELETE CASCADE)
-    const { error } = await supabase.auth.admin.deleteUser(id);
-
+    const { error } = await supabase.from('users').delete().eq('id', id);
     if (error) throw error;
+
     res.json({ message: 'User deleted successfully' });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
 };
 
-// Update user role
 export const updateUserRole = async (req: Request, res: Response) => {
   try {
     const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
@@ -416,31 +319,24 @@ export const updateUserRole = async (req: Request, res: Response) => {
     const role = req.user?.role;
     const { role: newRole } = req.body;
 
-    if (!agencyId) {
-      return res.status(403).json({ error: 'Agency ID not found' });
-    }
-
+    if (!agencyId && req.user?.role !== 'super_admin') {
+    return res.status(403).json({ error: 'Agency ID not found' });
+  }
     if (!id) {
       return res.status(400).json({ error: 'User ID is required' });
     }
-
-    // Only agency_admin and super_admin can update roles
     if (role !== 'agency_admin' && role !== 'super_admin') {
       return res.status(403).json({ error: 'Unauthorized' });
     }
-
-    // Prevent updating own role
     if (id === req.user?.id) {
       return res.status(400).json({ error: 'Cannot change your own role' });
     }
 
-    // Validate role
     const validRoles = ['agency_admin', 'manager', 'agent'];
     if (!validRoles.includes(newRole)) {
       return res.status(400).json({ error: 'Invalid role' });
     }
 
-    // Check if user exists and belongs to agency
     const { data: existingUser } = await supabase
       .from('users')
       .select('*')
@@ -452,7 +348,6 @@ export const updateUserRole = async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    // Prevent demoting last agency_admin
     if (existingUser.role === 'agency_admin' && newRole !== 'agency_admin') {
       const { data: admins } = await supabase
         .from('users')
@@ -465,7 +360,6 @@ export const updateUserRole = async (req: Request, res: Response) => {
       }
     }
 
-    // Update role
     const { data, error } = await supabase
       .from('users')
       .update({ role: newRole })
@@ -475,15 +369,8 @@ export const updateUserRole = async (req: Request, res: Response) => {
 
     if (error) throw error;
 
-    // Update auth user metadata
-    await supabase.auth.admin.updateUserById(id, {
-      user_metadata: {
-        ...existingUser,
-        role: newRole
-      }
-    });
-
-    res.json(data);
+    const { password_hash, ...user } = data as any;
+    res.json(user);
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }

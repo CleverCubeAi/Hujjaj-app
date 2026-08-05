@@ -22,7 +22,11 @@ COPY package.json package-lock.json* ./
 RUN npm ci --omit=dev
 
 COPY --from=builder /app/dist ./dist
+COPY knexfile.js ./
+COPY db ./db
+
+RUN mkdir -p uploads
 
 EXPOSE 3001
 
-CMD ["node", "dist/index.js"]
+CMD ["sh", "-c", "npx knex migrate:latest && node dist/scripts/seedSuperAdmin.js && node dist/scripts/seedDemo.js && node dist/index.js"]
