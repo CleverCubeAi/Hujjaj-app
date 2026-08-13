@@ -1,28 +1,16 @@
 import nodemailer from 'nodemailer';
-import crypto from 'crypto';
+import { encryptSecret, decryptSecret } from '../utils/crypto';
 
-// Encryption key from environment (should be set in production)
-const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || 'default-key-change-in-production';
-const ALGORITHM = 'aes-256-cbc';
-
-// Helper to encrypt sensitive data
-function encrypt(text: string): string {
-  const iv = crypto.randomBytes(16);
-  const cipher = crypto.createCipheriv(ALGORITHM, Buffer.from(ENCRYPTION_KEY.slice(0, 32), 'utf8'), iv);
-  let encrypted = cipher.update(text, 'utf8', 'hex');
-  encrypted += cipher.final('hex');
-  return iv.toString('hex') + ':' + encrypted;
+export function encryptPassword(password: string): string {
+  return encryptSecret(password);
 }
 
-// Helper to decrypt sensitive data
-function decrypt(encryptedText: string): string {
-  const parts = encryptedText.split(':');
-  const iv = Buffer.from(parts.shift()!, 'hex');
-  const encrypted = parts.join(':');
-  const decipher = crypto.createDecipheriv(ALGORITHM, Buffer.from(ENCRYPTION_KEY.slice(0, 32), 'utf8'), iv);
-  let decrypted = decipher.update(encrypted, 'hex', 'utf8');
-  decrypted += decipher.final('utf8');
-  return decrypted;
+export function decryptPassword(encryptedPassword: string): string {
+  try {
+    return decryptSecret(encryptedPassword);
+  } catch {
+    throw new Error('Failed to decrypt email password');
+  }
 }
 
 export interface EmailConfig {
@@ -60,20 +48,6 @@ const PRESET_CONFIGS: Record<string, Partial<EmailConfig>> = {
 // Get preset configuration
 export function getPresetConfig(provider: 'gmail' | 'outlook' | 'yahoo'): Partial<EmailConfig> {
   return PRESET_CONFIGS[provider] || {};
-}
-
-// Encrypt password before storing
-export function encryptPassword(password: string): string {
-  return encrypt(password);
-}
-
-// Decrypt password from storage
-export function decryptPassword(encryptedPassword: string): string {
-  try {
-    return decrypt(encryptedPassword);
-  } catch (error) {
-    throw new Error('Failed to decrypt password');
-  }
 }
 
 // Create transporter from config

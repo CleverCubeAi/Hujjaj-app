@@ -1,5 +1,12 @@
 import { Request, Response } from 'express';
 import { supabaseAdmin as supabase } from '../services/supabase';
+import { pickAllowed } from '../utils/httpError';
+
+const EXPENSE_FIELDS = [
+  'category', 'category_id', 'description', 'amount', 'paid_date', 'season_id',
+  'expense_type', 'linked_resource_type', 'linked_resource_id', 'total_quantity',
+  'used_quantity', 'branch_id', 'notes',
+] as const;
 
 export const listExpenses = async (req: Request, res: Response) => {
   try {
@@ -16,7 +23,7 @@ export const listExpenses = async (req: Request, res: Response) => {
         *,
         expense_categories!left (id, name, name_ar)
       `)
-      .eq('agency_id', agencyId)
+      .forAgency(agencyId)
       .order('created_at', { ascending: false });
 
     if (season_id) query = query.eq('season_id', season_id);
@@ -95,7 +102,7 @@ export const updateExpense = async (req: Request, res: Response) => {
       .from('expenses')
       .select('*')
       .eq('id', id)
-      .eq('agency_id', agencyId)
+      .forAgency(agencyId)
       .single();
 
     if (!existing) {
@@ -105,8 +112,9 @@ export const updateExpense = async (req: Request, res: Response) => {
 
     const { data, error } = await supabase
       .from('expenses')
-      .update(updateData)
+      .update(pickAllowed(updateData, EXPENSE_FIELDS))
       .eq('id', id)
+      .forAgency(agencyId)
       .select()
       .single();
 
@@ -137,7 +145,7 @@ export const deleteExpense = async (req: Request, res: Response) => {
       .from('expenses')
       .select('id')
       .eq('id', id)
-      .eq('agency_id', agencyId)
+      .forAgency(agencyId)
       .single();
 
     if (!existing) {
@@ -147,7 +155,8 @@ export const deleteExpense = async (req: Request, res: Response) => {
     const { error } = await supabase
       .from('expenses')
       .delete()
-      .eq('id', id);
+      .eq('id', id)
+      .forAgency(agencyId);
 
     if (error) throw error;
     res.json({ message: 'Expense deleted successfully' });
@@ -165,7 +174,7 @@ export const getExpenseSummary = async (req: Request, res: Response) => {
     return res.status(403).json({ error: 'Agency ID not found' });
   }
 
-    let query = supabase.from('expense_summary').select('*').eq('agency_id', agencyId);
+    let query = supabase.from('expense_summary').select('*').forAgency(agencyId);
     if (season_id) query = query.eq('season_id', season_id);
     
     const { data, error } = await query;

@@ -13,7 +13,7 @@ export const listFlights = async (req: Request, res: Response) => {
     *,
     seasons (id, name, type),
     flight_transits (id, stop_order, city, airport_code, arrival_time, departure_time, layover_minutes, carrier, flight_number, notes)
-  `).eq('agency_id', agencyId).order('departure_date', { ascending: true });
+  `).forAgency(agencyId).order('departure_date', { ascending: true });
   
   if (season_id) query = query.eq('season_id', season_id);
   
@@ -48,7 +48,7 @@ export const getFlight = async (req: Request, res: Response) => {
       seasons (id, name, type)
     `)
     .eq('id', id)
-    .eq('agency_id', agencyId)
+    .forAgency(agencyId)
     .single();
 
   if (error) return res.status(400).json({ error: error.message });
@@ -148,7 +148,7 @@ export const updateFlight = async (req: Request, res: Response) => {
       airline_logo_url
     })
     .eq('id', id)
-    .eq('agency_id', agencyId)
+    .forAgency(agencyId)
     .select()
     .single();
 
@@ -232,7 +232,7 @@ export const deleteFlight = async (req: Request, res: Response) => {
     .from('flights')
     .delete()
     .eq('id', id)
-    .eq('agency_id', agencyId);
+    .forAgency(agencyId);
 
   if (error) return res.status(400).json({ error: error.message });
   res.json({ message: 'Flight deleted successfully' });

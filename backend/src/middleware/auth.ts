@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { verifyToken } from '../services/auth.service';
+import { verifyToken, AUTH_COOKIE_NAMES } from '../services/auth.service';
 
 declare global {
   namespace Express {
@@ -17,14 +17,20 @@ declare global {
   }
 }
 
-export const authMiddleware = async (req: Request, res: Response, next: NextFunction) => {
+function extractToken(req: Request): string | null {
+  const cookieToken = req.cookies?.[AUTH_COOKIE_NAMES.ACCESS_COOKIE];
+  if (cookieToken) return cookieToken;
   const authHeader = req.headers.authorization;
+  if (authHeader?.startsWith('Bearer ')) return authHeader.slice(7);
+  return null;
+}
 
-  if (!authHeader) {
+export const authMiddleware = async (req: Request, res: Response, next: NextFunction) => {
+  const token = extractToken(req);
+
+  if (!token) {
     return res.status(401).json({ error: 'Missing authorization header' });
   }
-
-  const token = authHeader.replace('Bearer ', '');
 
   try {
     const payload = verifyToken(token);
@@ -48,4 +54,23 @@ export const authMiddleware = async (req: Request, res: Response, next: NextFunc
   } catch {
     return res.status(401).json({ error: 'Invalid token' });
   }
+};
+
+export const optionalAuth = async (req: Request, _res: Response, next: NextFunction) => {
+  const token = extractToken(req);
+  if (!token) return next();
+  try {
+    const payload = verifyToken(token);
+    req.user = {
+      id: payload.sub,
+      email: payload.email,
+      agency_id: payload.agency_id || undefined,
+      role: payload.role || undefined,
+      branch_id: payload.branch_id || undefined,
+    };
+    req.agencyId = payload.agency_id || undefined;
+  } catch {
+    // ignore invalid optional auth
+  }
+  next();
 };

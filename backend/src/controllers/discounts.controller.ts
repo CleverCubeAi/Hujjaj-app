@@ -20,7 +20,7 @@ export const listDiscountSettings = async (req: Request, res: Response) => {
     let query = supabaseAdmin
       .from('discount_settings')
       .select('*, created_by_user:users!discount_settings_created_by_fkey(full_name)')
-      .eq('agency_id', agencyId)
+      .forAgency(agencyId)
       .order('sort_order', { ascending: true })
       .order('created_at', { ascending: false });
 
@@ -54,7 +54,7 @@ export const getDiscountSetting = async (req: Request, res: Response) => {
       .from('discount_settings')
       .select('*')
       .eq('id', id)
-      .eq('agency_id', agencyId)
+      .forAgency(agencyId)
       .single();
 
     if (error) throw error;
@@ -154,7 +154,7 @@ export const updateDiscountSetting = async (req: Request, res: Response) => {
       .from('discount_settings')
       .update(updates)
       .eq('id', id)
-      .eq('agency_id', agencyId)
+      .forAgency(agencyId)
       .select()
       .single();
 
@@ -187,7 +187,7 @@ export const deleteDiscountSetting = async (req: Request, res: Response) => {
       .from('discount_settings')
       .delete()
       .eq('id', id)
-      .eq('agency_id', agencyId);
+      .forAgency(agencyId);
 
     if (error) throw error;
     res.json({ message: 'Discount setting deleted successfully' });
@@ -220,7 +220,7 @@ export const getAvailableDiscounts = async (req: Request, res: Response) => {
     const { data: defaultDiscounts, error: defaultError } = await supabaseAdmin
       .from('discount_settings')
       .select('*')
-      .eq('agency_id', agencyId)
+      .forAgency(agencyId)
       .eq('is_active', true)
       .eq('is_default', true)
       .order('sort_order', { ascending: true });
@@ -384,7 +384,7 @@ export const listUserPermissions = async (req: Request, res: Response) => {
         const { data: agencyDiscounts } = await supabaseAdmin
           .from('discount_settings')
           .select('id')
-          .eq('agency_id', agencyId);
+          .forAgency(agencyId);
 
         const discountIds = (agencyDiscounts || []).map(d => d.id);
         
@@ -517,7 +517,7 @@ export const createUserPermission = async (req: Request, res: Response) => {
       .from('discount_settings')
       .select('id')
       .eq('id', discount_setting_id)
-      .eq('agency_id', agencyId)
+      .forAgency(agencyId)
       .single();
 
     if (!discount) {
@@ -737,6 +737,7 @@ export const logDiscountUsage = async (req: Request, res: Response) => {
       .from('discount_settings')
       .select('*')
       .eq('id', discount_setting_id)
+      .forAgency(agencyId)
       .single();
 
     if (!discount) {
@@ -850,7 +851,7 @@ export const getUsageStats = async (req: Request, res: Response) => {
     let query = supabaseAdmin
       .from('discount_usage_log')
       .select('discount_amount, discount_setting_id, user_id')
-      .eq('agency_id', agencyId);
+      .forAgency(agencyId);
 
     if (date_from) {
       query = query.gte('created_at', date_from);

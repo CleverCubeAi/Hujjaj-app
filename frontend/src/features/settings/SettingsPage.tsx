@@ -9,6 +9,7 @@ import { EmailSettings } from './EmailSettings';
 import { SMSSettings } from './SMSSettings';
 import { SecuritySettings } from './SecuritySettings';
 import { DiscountSettings } from './DiscountSettings';
+import { RoleGuard } from '../../components/common/RoleGuard';
 import { useTranslation } from 'react-i18next';
 
 export function SettingsPage() {
@@ -88,7 +89,9 @@ export function SettingsPage() {
 
         {isAgencyAdmin && (
           <Tabs.Panel value="team" pt="xl">
-            <TeamManagement />
+            <RoleGuard allowed={['agency_admin', 'super_admin']}>
+              <TeamManagement />
+            </RoleGuard>
           </Tabs.Panel>
         )}
 

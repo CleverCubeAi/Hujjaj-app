@@ -369,9 +369,24 @@ class QueryBuilder {
   }
 
   eq(column: string, value: unknown) {
-    // Skip null/undefined filters so platform super_admin (no agency) can list across tenants
+    if (column === 'agency_id' && (value === null || value === undefined)) {
+      // Never silently list all tenants. Use forAgency() for platform-scope reads.
+      this.filters.push({
+        type: 'eq',
+        column: 'agency_id',
+        value: '00000000-0000-0000-0000-000000000000',
+      });
+      return this;
+    }
     if (value === null || value === undefined) return this;
     this.filters.push({ type: 'eq', column, value });
+    return this;
+  }
+  /** Tenant scope: a string filters to that agency; null/undefined omits the filter (super_admin platform reads). */
+  forAgency(agencyId: string | null | undefined) {
+    if (typeof agencyId === 'string' && agencyId.length > 0) {
+      this.filters.push({ type: 'eq', column: 'agency_id', value: agencyId });
+    }
     return this;
   }
   neq(column: string, value: unknown) {
@@ -567,16 +582,37 @@ QueryBuilder.prototype.update = function (data: any) {
   return builder;
 };
 
+const ALLOWED_RPC = new Set([
+  'check_bed_availability_with_locks',
+  'cleanup_expired_booking_locks',
+  'expire_booking_holds',
+  'create_booking_hold_lock',
+  'release_booking_hold_locks',
+  'extend_booking_hold',
+  'get_active_bed_locks',
+  'get_active_flight_locks',
+  'can_user_use_discount',
+  'calculate_discount_amount',
+  'increment_discount_usage',
+  'reset_discount_usage_counts',
+  'get_user_discount_permissions',
+  'get_discount_usage_log',
+  'get_branch_stats',
+  'generate_booking_number',
+  'generate_handover_number',
+]);
+
 async function rpc(fnName: string, params: Record<string, unknown> = {}) {
   try {
     if (fnName === 'exec_sql') {
-      // Not supported — return empty for fallback paths in discounts controller
       return { data: null, error: { message: 'exec_sql is not available on self-hosted Postgres' } };
+    }
+    if (!ALLOWED_RPC.has(fnName) || !/^[a-z_][a-z0-9_]*$/i.test(fnName)) {
+      return { data: null, error: { message: `RPC ${fnName} is not allowed` } };
     }
 
     const keys = Object.keys(params);
     const values = keys.map((k) => params[k]);
-    // Prefer named args: SELECT * FROM fn(p_a := ?, p_b := ?)
     const named = keys.map((k) => `${k} := ?`).join(', ');
     const sql = keys.length
       ? `SELECT * FROM ${fnName}(${named})`

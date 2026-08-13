@@ -7,7 +7,7 @@ async function getSMSConfig(agencyId: string): Promise<SMSConfig | null> {
   const { data: settings, error } = await supabase
     .from('sms_settings')
     .select('*')
-    .eq('agency_id', agencyId)
+    .forAgency(agencyId)
     .single();
 
   if (error || !settings || !settings.enabled) return null;
@@ -58,7 +58,7 @@ export const listSentMessages = async (req: Request, res: Response) => {
         clients (id, full_name, full_name_ar),
         bookings (id, booking_number)
       `)
-      .eq('agency_id', agencyId)
+      .forAgency(agencyId)
       .order('created_at', { ascending: false })
       .range(parseInt(offset as string), parseInt(offset as string) + parseInt(limit as string) - 1);
 
@@ -97,7 +97,7 @@ export const sendMessage = async (req: Request, res: Response) => {
         .from('message_templates')
         .select('body')
         .eq('id', template_id)
-        .eq('agency_id', agencyId)
+        .forAgency(agencyId)
         .single();
 
       if (templateError || !template) {
@@ -118,7 +118,7 @@ export const sendMessage = async (req: Request, res: Response) => {
           .from('clients')
           .select('full_name, full_name_ar')
           .eq('id', client_id)
-          .eq('agency_id', agencyId)
+          .forAgency(agencyId)
           .single();
         if (client) {
           vars.client_name = client.full_name_ar || client.full_name || '';
@@ -134,7 +134,7 @@ export const sendMessage = async (req: Request, res: Response) => {
             pilgrims (full_name, full_name_ar)
           `)
           .eq('id', booking_id)
-          .eq('agency_id', agencyId)
+          .forAgency(agencyId)
           .single();
 
         if (booking) {
@@ -215,7 +215,7 @@ export const listTemplates = async (req: Request, res: Response) => {
     const { data, error } = await supabase
       .from('message_templates')
       .select('*')
-      .eq('agency_id', agencyId)
+      .forAgency(agencyId)
       .order('created_at', { ascending: false });
 
     if (error) throw error;
@@ -235,7 +235,7 @@ export const getTemplate = async (req: Request, res: Response) => {
       .from('message_templates')
       .select('*')
       .eq('id', id)
-      .eq('agency_id', agencyId)
+      .forAgency(agencyId)
       .single();
 
     if (error || !data) return res.status(404).json({ error: 'Template not found' });
@@ -288,7 +288,7 @@ export const updateTemplate = async (req: Request, res: Response) => {
       .from('message_templates')
       .update(updates)
       .eq('id', id)
-      .eq('agency_id', agencyId)
+      .forAgency(agencyId)
       .select()
       .single();
 
@@ -310,7 +310,7 @@ export const deleteTemplate = async (req: Request, res: Response) => {
       .from('message_templates')
       .delete()
       .eq('id', id)
-      .eq('agency_id', agencyId);
+      .forAgency(agencyId);
 
     if (error) throw error;
     res.json({ message: 'Template deleted' });

@@ -1,29 +1,5 @@
 import twilio from 'twilio';
-import crypto from 'crypto';
-
-// Encryption key from environment (should be set in production)
-const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || 'default-key-change-in-production';
-const ALGORITHM = 'aes-256-cbc';
-
-// Helper to encrypt sensitive data
-function encrypt(text: string): string {
-  const iv = crypto.randomBytes(16);
-  const cipher = crypto.createCipheriv(ALGORITHM, Buffer.from(ENCRYPTION_KEY.slice(0, 32), 'utf8'), iv);
-  let encrypted = cipher.update(text, 'utf8', 'hex');
-  encrypted += cipher.final('hex');
-  return iv.toString('hex') + ':' + encrypted;
-}
-
-// Helper to decrypt sensitive data
-function decrypt(encryptedText: string): string {
-  const parts = encryptedText.split(':');
-  const iv = Buffer.from(parts.shift()!, 'hex');
-  const encrypted = parts.join(':');
-  const decipher = crypto.createDecipheriv(ALGORITHM, Buffer.from(ENCRYPTION_KEY.slice(0, 32), 'utf8'), iv);
-  let decrypted = decipher.update(encrypted, 'hex', 'utf8');
-  decrypted += decipher.final('utf8');
-  return decrypted;
-}
+import { encryptSecret, decryptSecret } from '../utils/crypto';
 
 export interface SMSConfig {
   provider: 'twilio' | 'custom';
@@ -39,13 +15,13 @@ export interface SMSConfig {
 
 // Encrypt sensitive data before storing
 export function encryptSMSData(data: string): string {
-  return encrypt(data);
+  return encryptSecret(data);
 }
 
 // Decrypt sensitive data from storage
 export function decryptSMSData(encryptedData: string): string {
   try {
-    return decrypt(encryptedData);
+    return decryptSecret(encryptedData);
   } catch (error) {
     throw new Error('Failed to decrypt SMS data');
   }

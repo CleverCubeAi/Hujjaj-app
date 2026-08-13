@@ -15,7 +15,7 @@ export const getClients = async (req: Request, res: Response) => {
     let query = supabase
       .from('clients')
       .select('*')
-      .eq('agency_id', agencyId)
+      .forAgency(agencyId)
       .order('created_at', { ascending: false });
 
     if (search) {
@@ -53,7 +53,7 @@ export const getClientById = async (req: Request, res: Response) => {
         )
       `)
       .eq('id', id)
-      .eq('agency_id', agencyId)
+      .forAgency(agencyId)
       .single();
 
     if (error) throw error;
@@ -122,7 +122,7 @@ export const updateClient = async (req: Request, res: Response) => {
       .from('clients')
       .update(updates)
       .eq('id', id)
-      .eq('agency_id', agencyId)
+      .forAgency(agencyId)
       .select()
       .single();
 
@@ -157,7 +157,7 @@ export const deleteClient = async (req: Request, res: Response) => {
       .from('clients')
       .delete()
       .eq('id', id)
-      .eq('agency_id', agencyId);
+      .forAgency(agencyId);
 
     if (error) throw error;
     res.json({ message: 'Client deleted successfully' });

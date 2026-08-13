@@ -1,5 +1,15 @@
 import { Request, Response } from 'express';
 import { supabaseAdmin } from '../services/supabase';
+import { pickAllowed } from '../utils/httpError';
+
+const PILGRIM_FIELDS = [
+  'full_name', 'full_name_ar', 'passport_number', 'phone', 'gender', 'date_of_birth',
+  'relationship_type', 'is_mahram', 'photo_url', 'passport_scan_url', 'season_id',
+  'flight_id', 'accommodation_id', 'room_type_id', 'package_id', 'booking_id',
+  'client_id', 'mahram_group_id', 'spouse_id', 'parent_id', 'flight_seat_inventory_id',
+  'hotel_inventory_ids', 'agreed_price', 'advance_payment', 'visa_included',
+  'transport_included', 'status', 'notes',
+] as const;
 
 export const listPilgrims = async (req: Request, res: Response) => {
   const agencyId = req.agencyId;
@@ -17,7 +27,7 @@ export const listPilgrims = async (req: Request, res: Response) => {
     seasons (name, type),
     clients (id, full_name, full_name_ar, phone),
     bookings (id, booking_number)
-  `).eq('agency_id', agencyId)
+  `).forAgency(agencyId)
     .order('created_at', { ascending: false });
   
   if (season_id) query = query.eq('season_id', season_id);
@@ -50,7 +60,7 @@ export const getPilgrim = async (req: Request, res: Response) => {
       bookings (id, booking_number, status)
     `)
     .eq('id', id)
-    .eq('agency_id', agencyId)
+    .forAgency(agencyId)
     .single();
 
   if (error) return res.status(400).json({ error: error.message });
@@ -74,7 +84,8 @@ export const createPilgrim = async (req: Request, res: Response) => {
   const { data, error } = await supabaseAdmin
     .from('pilgrims')
     .insert({
-      ...body,
+      ...pickAllowed(body, PILGRIM_FIELDS),
+      passport_number: passportNumber,
       agency_id: agencyId
     })
     .select()
@@ -102,9 +113,9 @@ export const updatePilgrim = async (req: Request, res: Response) => {
 
   const { data, error } = await supabaseAdmin
     .from('pilgrims')
-    .update(updates)
+    .update(pickAllowed(updates, PILGRIM_FIELDS))
     .eq('id', id)
-    .eq('agency_id', agencyId) // Ensure user can only update their agency's pilgrims
+    .forAgency(agencyId) // Ensure user can only update their agency's pilgrims
     .select()
     .single();
 
@@ -135,7 +146,7 @@ export const deletePilgrim = async (req: Request, res: Response) => {
     .from('pilgrims')
     .delete()
     .eq('id', id)
-    .eq('agency_id', agencyId);
+    .forAgency(agencyId);
 
   if (error) return res.status(400).json({ error: error.message });
   res.json({ message: 'Pilgrim deleted successfully' });
@@ -160,7 +171,8 @@ export const importPilgrims = async (req: Request, res: Response) => {
   
   // Add agency_id to all
   const toInsert = pilgrims.map((p: any) => ({
-    ...p,
+    ...pickAllowed(p, PILGRIM_FIELDS),
+    passport_number: (p.passport_number || '').toString().trim(),
     agency_id: agencyId
   }));
   

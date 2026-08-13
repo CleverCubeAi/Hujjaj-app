@@ -19,7 +19,7 @@ export const allocateRooms = async (req: Request, res: Response) => {
       .from('bookings')
       .select('id, status, accommodation_id, room_type_id, hotel_inventory_ids, same_selection_for_all')
       .eq('id', bookingId)
-      .eq('agency_id', agencyId)
+      .forAgency(agencyId)
       .single();
 
     if (!booking) {
@@ -59,7 +59,7 @@ export const getBookingRoomAssignments = async (req: Request, res: Response) => 
       .from('bookings')
       .select('id')
       .eq('id', bookingId)
-      .eq('agency_id', agencyId)
+      .forAgency(agencyId)
       .single();
 
     if (!booking) {
@@ -128,7 +128,7 @@ export const createRoomAssignment = async (req: Request, res: Response) => {
       .from('bookings')
       .select('id, accommodation_id, room_type_id')
       .eq('id', booking_id)
-      .eq('agency_id', agencyId)
+      .forAgency(agencyId)
       .single();
 
     console.log('Booking check:', { booking, error: bookingError });

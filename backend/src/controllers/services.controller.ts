@@ -10,7 +10,7 @@ export const getServices = async (req: Request, res: Response) => {
     let query = supabase
       .from('extra_services')
       .select('*')
-      .eq('agency_id', agencyId)
+      .forAgency(agencyId)
       .order('category', { ascending: true })
       .order('name', { ascending: true });
 
@@ -40,7 +40,7 @@ export const getServiceById = async (req: Request, res: Response) => {
       .from('extra_services')
       .select('*')
       .eq('id', id)
-      .eq('agency_id', agencyId)
+      .forAgency(agencyId)
       .single();
 
     if (error) throw error;
@@ -102,7 +102,7 @@ export const updateService = async (req: Request, res: Response) => {
         is_active
       })
       .eq('id', id)
-      .eq('agency_id', agencyId)
+      .forAgency(agencyId)
       .select()
       .single();
 
@@ -135,7 +135,7 @@ export const deleteService = async (req: Request, res: Response) => {
         .from('extra_services')
         .update({ is_active: false })
         .eq('id', id)
-        .eq('agency_id', agencyId)
+        .forAgency(agencyId)
         .select()
         .single();
 
@@ -147,7 +147,7 @@ export const deleteService = async (req: Request, res: Response) => {
       .from('extra_services')
       .delete()
       .eq('id', id)
-      .eq('agency_id', agencyId);
+      .forAgency(agencyId);
 
     if (error) throw error;
     res.json({ message: 'Service deleted successfully' });

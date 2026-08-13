@@ -32,7 +32,7 @@ export const getEmailSettings = async (req: Request, res: Response) => {
     const { data, error } = await supabase
       .from('email_settings')
       .select('*')
-      .eq('agency_id', agencyId)
+      .forAgency(agencyId)
       .single();
 
     if (error && error.code !== 'PGRST116') throw error;
@@ -86,7 +86,7 @@ export const updateEmailSettings = async (req: Request, res: Response) => {
     const { data: existingSettings } = await supabase
       .from('email_settings')
       .select('password_encrypted')
-      .eq('agency_id', agencyId)
+      .forAgency(agencyId)
       .single();
 
     // If password is provided, encrypt it. Otherwise, keep existing password
@@ -157,7 +157,7 @@ export const testEmail = async (req: Request, res: Response) => {
     const { data: settings, error } = await supabase
       .from('email_settings')
       .select('*')
-      .eq('agency_id', agencyId)
+      .forAgency(agencyId)
       .single();
 
     if (error || !settings) {
@@ -190,7 +190,7 @@ export const testEmail = async (req: Request, res: Response) => {
         last_tested_at: new Date().toISOString(),
         test_status: 'success'
       })
-      .eq('agency_id', agencyId);
+      .forAgency(agencyId);
 
     res.json({ message: 'Test email sent successfully' });
   } catch (error: any) {
@@ -203,7 +203,7 @@ export const testEmail = async (req: Request, res: Response) => {
             last_tested_at: new Date().toISOString(),
             test_status: 'failed'
           })
-          .eq('agency_id', agencyId);
+          .forAgency(agencyId);
       } catch (updateError) {
         // Ignore update errors
       }
@@ -231,7 +231,7 @@ export const getSMSSettings = async (req: Request, res: Response) => {
     const { data, error } = await supabase
       .from('sms_settings')
       .select('*')
-      .eq('agency_id', agencyId)
+      .forAgency(agencyId)
       .single();
 
     if (error && error.code !== 'PGRST116') throw error;
@@ -294,7 +294,7 @@ export const updateSMSSettings = async (req: Request, res: Response) => {
     const { data: existingSettings } = await supabase
       .from('sms_settings')
       .select('*')
-      .eq('agency_id', agencyId)
+      .forAgency(agencyId)
       .single();
 
     if (provider === 'twilio') {
@@ -390,7 +390,7 @@ export const testSMS = async (req: Request, res: Response) => {
     const { data: settings, error } = await supabase
       .from('sms_settings')
       .select('*')
-      .eq('agency_id', agencyId)
+      .forAgency(agencyId)
       .single();
 
     if (error || !settings) {
@@ -431,7 +431,7 @@ export const testSMS = async (req: Request, res: Response) => {
         last_tested_at: new Date().toISOString(),
         test_status: 'success'
       })
-      .eq('agency_id', agencyId);
+      .forAgency(agencyId);
 
     res.json({ message: 'Test SMS sent successfully' });
   } catch (error: any) {
@@ -444,7 +444,7 @@ export const testSMS = async (req: Request, res: Response) => {
             last_tested_at: new Date().toISOString(),
             test_status: 'failed'
           })
-          .eq('agency_id', agencyId);
+          .forAgency(agencyId);
       } catch (updateError) {
         // Ignore update errors
       }

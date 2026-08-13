@@ -55,8 +55,11 @@ async function seedSuperAdmin() {
       .returning(['id', 'email', 'role']);
 
     console.log(`[seed] Super admin created: ${user.email} (id=${user.id})`);
-    console.log(`[seed] Default login — email: ${email} / password: ${password}`);
-    console.log('[seed] Change SUPER_ADMIN_PASSWORD in .env for production');
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(`[seed] Default login — email: ${email} / password: ${password}`);
+    } else {
+      console.log('[seed] Super admin password is set from SUPER_ADMIN_PASSWORD (not logged in production)');
+    }
   } finally {
     await db.destroy();
   }

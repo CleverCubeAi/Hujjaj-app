@@ -14,7 +14,7 @@ export const getBranches = async (req: Request, res: Response) => {
     let query = supabase
       .from('branches')
       .select('*')
-      .eq('agency_id', agencyId)
+      .forAgency(agencyId)
       .order('is_headquarters', { ascending: false })
       .order('name', { ascending: true });
 
@@ -49,7 +49,7 @@ export const getBranchById = async (req: Request, res: Response) => {
       .from('branches')
       .select('*')
       .eq('id', id)
-      .eq('agency_id', agencyId)
+      .forAgency(agencyId)
       .single();
 
     if (error) throw error;
@@ -77,7 +77,7 @@ export const getBranchStats = async (req: Request, res: Response) => {
       .from('branches')
       .select('id')
       .eq('id', id)
-      .eq('agency_id', agencyId)
+      .forAgency(agencyId)
       .single();
 
     if (branchError || !branch) {
@@ -225,7 +225,7 @@ export const updateBranch = async (req: Request, res: Response) => {
       .from('branches')
       .update(updateData)
       .eq('id', id)
-      .eq('agency_id', agencyId)
+      .forAgency(agencyId)
       .select()
       .single();
 
@@ -260,7 +260,7 @@ export const deleteBranch = async (req: Request, res: Response) => {
       .from('branches')
       .select('*, users:users(count)')
       .eq('id', id)
-      .eq('agency_id', agencyId)
+      .forAgency(agencyId)
       .single();
 
     if (branchError || !branch) {
@@ -300,7 +300,7 @@ export const deleteBranch = async (req: Request, res: Response) => {
       .from('branches')
       .delete()
       .eq('id', id)
-      .eq('agency_id', agencyId);
+      .forAgency(agencyId);
 
     if (error) throw error;
     res.json({ message: 'Branch deleted successfully', deleted: true });
@@ -324,7 +324,7 @@ export const getBranchUsers = async (req: Request, res: Response) => {
       .from('branches')
       .select('id')
       .eq('id', id)
-      .eq('agency_id', agencyId)
+      .forAgency(agencyId)
       .single();
 
     if (branchError || !branch) {
