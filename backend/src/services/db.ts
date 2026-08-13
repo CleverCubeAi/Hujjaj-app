@@ -20,23 +20,41 @@ const db: Knex = knex({
   pool: { min: 0, max: 10 },
 });
 
+const FAIL_CLOSED_GUC = `SELECT set_config('app.agency_id', '', false), set_config('app.is_super_admin', 'false', false), set_config('app.user_id', '', false)`;
+
 const client = db.client as any;
 const origAcquire = client.acquireConnection.bind(client);
+const origRelease = client.releaseConnection.bind(client);
+
 client.acquireConnection = async function acquireConnection() {
   const conn = await origAcquire();
   const ctx = tenantAls.getStore();
   try {
-    const isSuper = ctx ? (ctx.isSuperAdmin ? 'true' : 'false') : 'true';
-    await conn.query('SELECT set_config($1, $2, false), set_config($3, $4, false)', [
+    // Missing ALS = fail-closed (not super-admin). Login/cron/seeds must call runAsPlatform().
+    await conn.query('SELECT set_config($1, $2, false), set_config($3, $4, false), set_config($5, $6, false)', [
       'app.agency_id',
       ctx?.agencyId || '',
       'app.is_super_admin',
-      isSuper,
+      ctx?.isSuperAdmin ? 'true' : 'false',
+      'app.user_id',
+      ctx?.userId || '',
     ]);
-  } catch {
-    // GUCs / RLS role may not exist until security migrations run
+  } catch (err) {
+    try {
+      await origRelease(conn);
+    } catch {
+      /* ignore */
+    }
+    throw err;
   }
   return conn;
+};
+
+client.releaseConnection = function releaseConnection(conn: any) {
+  const reset = conn.query(FAIL_CLOSED_GUC);
+  return Promise.resolve(reset)
+    .catch(() => undefined)
+    .then(() => origRelease(conn));
 };
 
 export default db;

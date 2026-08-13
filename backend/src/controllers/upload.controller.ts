@@ -6,6 +6,7 @@ import {
   signUploadToken,
   verifyUploadToken,
   UPLOAD_TOKEN_TTL_SECONDS,
+  PILGRIM_UPLOAD_TTL_SECONDS,
 } from '../utils/crypto';
 import { sendError } from '../utils/httpError';
 
@@ -22,8 +23,12 @@ function publicBaseUrl() {
   return (process.env.PUBLIC_URL || `http://localhost:${process.env.PORT || 3001}`).replace(/\/$/, '');
 }
 
+function ttlForFolder(folder: string) {
+  return folder === 'pilgrims' ? PILGRIM_UPLOAD_TTL_SECONDS : UPLOAD_TOKEN_TTL_SECONDS;
+}
+
 function signedUrl(folder: string, relativePath: string) {
-  const exp = Math.floor(Date.now() / 1000) + UPLOAD_TOKEN_TTL_SECONDS;
+  const exp = Math.floor(Date.now() / 1000) + ttlForFolder(folder);
   const tokenPath = `${folder}/${relativePath}`;
   const sig = signUploadToken(tokenPath, exp);
   return `${publicBaseUrl()}/uploads/${tokenPath}?exp=${exp}&sig=${sig}`;
@@ -151,11 +156,16 @@ export const serveUpload = async (req: Request, res: Response) => {
     const agencyId = req.user?.agency_id || req.agencyId;
     const authedOk = !!req.user && (!agencyId || agencyIdParam === agencyId || req.user.role === 'super_admin');
 
-    if (!signedOk && !authedOk) {
+    // Passport scans require a logged-in session; a leaked signed URL is not enough.
+    if (folder === 'pilgrims') {
+      if (!authedOk) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+    } else if (!signedOk && !authedOk) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    const fullPath = safeResolve(folder, rest, signedOk ? undefined : agencyId || undefined);
+    const fullPath = safeResolve(folder, rest, authedOk ? (agencyId || undefined) : undefined);
     if (!fullPath || !fs.existsSync(fullPath)) {
       return res.status(404).json({ error: 'Not found' });
     }

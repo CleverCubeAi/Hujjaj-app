@@ -52,7 +52,7 @@ export const createLock = async (req: Request, res: Response) => {
 
     const lock = await db.transaction(async (trx) => {
       await trx('booking_locks')
-        .where({ session_id, resource_type, agency_id: agencyId })
+        .where({ session_id, resource_type, agency_id: agencyId, user_id: userId })
         .delete();
 
       if (resource_type === 'bed') {
@@ -166,6 +166,7 @@ export const releaseLock = async (req: Request, res: Response) => {
       .from('booking_locks')
       .delete()
       .eq('session_id', session_id)
+      .eq('user_id', userId)
       .forAgency(agencyId);
 
     if (resource_type) {
@@ -200,6 +201,7 @@ export const releaseAllLocks = async (req: Request, res: Response) => {
       .from('booking_locks')
       .delete()
       .eq('session_id', session_id)
+      .eq('user_id', userId)
       .forAgency(agencyId);
 
     if (error) throw error;

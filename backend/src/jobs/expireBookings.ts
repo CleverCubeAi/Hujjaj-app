@@ -1,5 +1,6 @@
 import cron from 'node-cron';
 import { supabaseAdmin } from '../services/supabase';
+import { runAsPlatform } from '../middleware/rlsContext';
 
 // Check interval in minutes (from environment or default to 5)
 const CHECK_INTERVAL_MINUTES = parseInt(process.env.HOLD_EXPIRY_CHECK_INTERVAL_MINUTES || '5');
@@ -10,7 +11,8 @@ const CHECK_INTERVAL_MINUTES = parseInt(process.env.HOLD_EXPIRY_CHECK_INTERVAL_M
  */
 export async function expireBookingHoldsJob() {
   console.log(`[ExpireBookings Job] Running at ${new Date().toISOString()}`);
-  
+
+  return runAsPlatform(async () => {
   try {
     // Find all draft bookings with expired holds
     const { data: expiredBookings, error: fetchError } = await supabaseAdmin
@@ -79,6 +81,7 @@ export async function expireBookingHoldsJob() {
   } catch (error) {
     console.error('[ExpireBookings Job] Unexpected error:', error);
   }
+  });
 }
 
 /**

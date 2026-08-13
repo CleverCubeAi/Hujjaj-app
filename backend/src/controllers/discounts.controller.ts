@@ -1,5 +1,12 @@
 import { Request, Response } from 'express';
 import { supabaseAdmin } from '../services/supabase';
+import { pickAllowed } from '../utils/httpError';
+
+const DISCOUNT_FIELDS = [
+  'name', 'name_ar', 'discount_type', 'discount_value',
+  'max_discount_amount', 'min_booking_amount', 'is_default',
+  'is_active', 'sort_order',
+] as const;
 
 // ============================================
 // Discount Settings CRUD
@@ -142,12 +149,10 @@ export const updateDiscountSetting = async (req: Request, res: Response) => {
     return res.status(403).json({ error: 'Only admins can update discount settings' });
   }
 
-  const updates = req.body;
-  delete updates.id;
-  delete updates.agency_id;
-  delete updates.created_by;
-  delete updates.created_at;
-  updates.updated_at = new Date().toISOString();
+  const updates = {
+    ...pickAllowed(req.body, DISCOUNT_FIELDS),
+    updated_at: new Date().toISOString(),
+  };
 
   try {
     const { data, error } = await supabaseAdmin

@@ -19,7 +19,7 @@ export const getClients = async (req: Request, res: Response) => {
       .order('created_at', { ascending: false });
 
     if (search) {
-      query = query.or(`full_name.ilike.%${search}%,full_name_ar.ilike.%${search}%,phone.ilike.%${search}%`);
+      query = query.orIlike(['full_name', 'full_name_ar', 'phone'], search);
     }
 
     const { data, error } = await query;

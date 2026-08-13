@@ -6,6 +6,7 @@ import dotenv from 'dotenv';
 import path from 'path';
 import db from '../services/db';
 import { hashPassword } from '../services/auth.service';
+import { runAsPlatform } from '../middleware/rlsContext';
 
 dotenv.config({ path: path.resolve(process.cwd(), '../.env') });
 dotenv.config();
@@ -16,6 +17,7 @@ async function seedSuperAdmin() {
   const fullName = process.env.SUPER_ADMIN_NAME || 'Super Admin';
 
   try {
+    await runAsPlatform(async () => {
     const existingSuper = await db('users').where({ role: 'super_admin' }).first();
     if (existingSuper) {
       // Ensure platform super admin is never tied to an agency
@@ -60,6 +62,7 @@ async function seedSuperAdmin() {
     } else {
       console.log('[seed] Super admin password is set from SUPER_ADMIN_PASSWORD (not logged in production)');
     }
+    });
   } finally {
     await db.destroy();
   }

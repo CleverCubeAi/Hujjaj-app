@@ -23,7 +23,7 @@ export const getBranches = async (req: Request, res: Response) => {
     }
 
     if (search) {
-      query = query.or(`name.ilike.%${search}%,city.ilike.%${search}%,contact_person.ilike.%${search}%`);
+      query = query.orIlike(['name', 'city', 'contact_person'], search);
     }
 
     const { data, error } = await query;

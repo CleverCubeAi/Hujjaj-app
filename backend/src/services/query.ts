@@ -18,6 +18,7 @@ type Filter =
   | { type: 'ilike'; column: string; value: string }
   | { type: 'not'; column: string; operator: string; value: unknown }
   | { type: 'or'; expression: string }
+  | { type: 'orIlike'; columns: string[]; value: string }
   | { type: 'contains'; column: string; value: unknown };
 
 interface Embed {
@@ -244,6 +245,14 @@ function applyFilters(qb: Knex.QueryBuilder, filters: Filter[]) {
         });
         break;
       }
+      case 'orIlike': {
+        qb.andWhere((builder) => {
+          for (const col of f.columns) {
+            builder.orWhere(col, 'ilike', f.value);
+          }
+        });
+        break;
+      }
     }
   }
 }
@@ -431,6 +440,14 @@ class QueryBuilder {
   }
   or(expression: string) {
     this.filters.push({ type: 'or', expression });
+    return this;
+  }
+  /** Parameterized OR ilike across columns. Strips LIKE metacharacters from user input. */
+  orIlike(columns: string[], search: unknown) {
+    if (typeof search !== 'string') return this;
+    const q = search.replace(/[%_\\,]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 80);
+    if (!q || columns.length === 0) return this;
+    this.filters.push({ type: 'orIlike', columns, value: `%${q}%` });
     return this;
   }
   contains(column: string, value: unknown) {

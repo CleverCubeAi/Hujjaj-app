@@ -194,7 +194,7 @@ exports.up = async function up(knex) {
     DO $$
     BEGIN
       IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'hujjaj_app') THEN
-        CREATE ROLE hujjaj_app LOGIN PASSWORD 'hujjaj_app' NOSUPERUSER NOCREATEDB NOCREATEROLE;
+        CREATE ROLE hujjaj_app NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE;
       END IF;
     END $$;
   `);
@@ -229,8 +229,14 @@ exports.up = async function up(knex) {
   await knex.raw(`
     CREATE POLICY refresh_sessions_own ON refresh_sessions
     FOR ALL
-    USING (true)
-    WITH CHECK (true)
+    USING (
+      current_setting('app.is_super_admin', true) = 'true'
+      OR user_id::text = NULLIF(current_setting('app.user_id', true), '')
+    )
+    WITH CHECK (
+      current_setting('app.is_super_admin', true) = 'true'
+      OR user_id::text = NULLIF(current_setting('app.user_id', true), '')
+    )
   `);
 };
 

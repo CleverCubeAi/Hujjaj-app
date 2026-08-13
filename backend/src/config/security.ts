@@ -22,8 +22,12 @@ export function assertProductionSecrets() {
     );
   }
 
-  if (isProd && process.env.SEED_DEMO === 'true') {
-    console.warn('[security] SEED_DEMO=true in production — demo users will be seeded. Set SEED_DEMO=false.');
+  if (isProd && (process.env.SEED_DEMO === 'true' || process.env.SEED_DEMO === '1')) {
+    if (process.env.ALLOW_DEMO_IN_PRODUCTION === 'true') {
+      console.warn('[security] SEED_DEMO=true with ALLOW_DEMO_IN_PRODUCTION — demo users will be seeded.');
+    } else {
+      throw new Error('SEED_DEMO must be false in production. Set SEED_DEMO=false on Railway.');
+    }
   }
 }
 

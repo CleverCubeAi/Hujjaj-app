@@ -45,7 +45,7 @@ export const getUsers = async (req: Request, res: Response) => {
     }
 
     if (search) {
-      query = query.or(`full_name.ilike.%${search}%,email.ilike.%${search}%,role.ilike.%${search}%`);
+      query = query.orIlike(['full_name', 'email', 'role'], search);
     }
 
     const { data, error } = await query;

@@ -36,9 +36,14 @@ export function decryptSecret(encryptedText: string): string {
   return decrypted;
 }
 
+function uploadHmacKey(): Buffer {
+  const raw = process.env.UPLOAD_SIGNING_KEY || getEncryptionKey();
+  return Buffer.from(raw.padEnd(32, '0').slice(0, 32), 'utf8');
+}
+
 export function signUploadToken(relativePath: string, expiresAtUnix: number): string {
   const payload = `${relativePath}:${expiresAtUnix}`;
-  return crypto.createHmac('sha256', keyBuffer()).update(payload).digest('hex');
+  return crypto.createHmac('sha256', uploadHmacKey()).update(payload).digest('hex');
 }
 
 export function verifyUploadToken(relativePath: string, expiresAtUnix: number, sig: string): boolean {
@@ -51,4 +56,7 @@ export function verifyUploadToken(relativePath: string, expiresAtUnix: number, s
   }
 }
 
-export const UPLOAD_TOKEN_TTL_SECONDS = 60 * 60 * 24 * 7;
+/** Default signed-URL lifetime (hotels, avatars, logos). */
+export const UPLOAD_TOKEN_TTL_SECONDS = 60 * 60 * 2;
+/** Passport / pilgrim scans — shorter window; serveUpload still requires a session. */
+export const PILGRIM_UPLOAD_TTL_SECONDS = 60 * 60;
