@@ -78,16 +78,22 @@ services:
       args:
         - VITE_API_URL=${VITE_API_URL:-/api}
     restart: unless-stopped
+    # Ignore Coolify's global PORT=3001; nginx always listens on 80.
+    environment:
+      - PORT=80
+      - BACKEND_UPSTREAM=http://backend:3001
     # "80" (not "80:80") = random host port. Avoids conflict with Coolify proxy on :80
     # while still letting Traefik detect the container port (expose-only causes 404).
     ports:
       - "80"
     labels:
+      - traefik.docker.network=coolify
       - traefik.http.services.frontend.loadbalancer.server.port=80
     depends_on:
       - backend
     networks:
       - hujjaj-network
+      - coolify
     healthcheck:
       test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1/health || exit 1"]
       interval: 30s
@@ -98,6 +104,9 @@ services:
 networks:
   hujjaj-network:
     driver: bridge
+  coolify:
+    name: coolify
+    external: true
 
 volumes:
   postgres-data:

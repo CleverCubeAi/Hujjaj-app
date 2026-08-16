@@ -28,7 +28,6 @@ COPY --from=builder /app/dist /usr/share/nginx/html
 
 RUN chmod +x /docker-entrypoint-hujjaj.sh
 
-ENV PORT=80
 ENV BACKEND_UPSTREAM=http://backend:3001
 
 EXPOSE 80
