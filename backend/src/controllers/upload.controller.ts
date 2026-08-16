@@ -49,6 +49,27 @@ function safeResolve(folder: string, filePath: string, agencyId?: string) {
       return null;
     }
   }
+
+  try {
+    const realFolderRoot = fs.realpathSync.native(folderRoot);
+    const parentDir = path.dirname(fullPath);
+    const realParentDir = fs.realpathSync.native(parentDir);
+    const realFullPath = path.join(realParentDir, path.basename(fullPath));
+
+    if (!realFullPath.startsWith(realFolderRoot + path.sep) && realFullPath !== realFolderRoot) {
+      return null;
+    }
+
+    if (agencyId) {
+      const realAgencyRoot = fs.realpathSync.native(path.resolve(folderRoot, agencyId));
+      if (!realFullPath.startsWith(realAgencyRoot + path.sep) && realFullPath !== realAgencyRoot) {
+        return null;
+      }
+    }
+  } catch {
+    return null;
+  }
+
   return fullPath;
 }
 
