@@ -22,7 +22,6 @@ const PORT = Number(process.env.PORT) || 3001;
 app.set('trust proxy', 1);
 app.use(helmet({
   crossOriginResourcePolicy: { policy: 'cross-origin' },
-  contentSecurityPolicy: false,
 }));
 app.use(cors({
   origin: corsOrigins(),
