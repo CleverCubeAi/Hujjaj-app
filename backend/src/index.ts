@@ -7,9 +7,11 @@ import path from 'path';
 import rateLimit from 'express-rate-limit';
 import routes from './routes';
 import { scheduleExpireBookingsJob } from './jobs/expireBookings';
+import { scheduleSubscriptionGraceJob } from './jobs/subscriptionGrace';
 import { trimBodyMiddleware } from './middleware/trimBody';
 import { optionalAuth } from './middleware/auth';
 import { serveUpload } from './controllers/upload.controller';
+import { stripeWebhook } from './controllers/billing.controller';
 import { assertProductionSecrets, corsOrigins } from './config/security';
 
 dotenv.config({ path: path.resolve(process.cwd(), '../.env') });
@@ -29,7 +31,13 @@ app.use(cors({
   credentials: true,
 }));
 app.use(cookieParser());
+app.post(
+  '/api/billing/webhooks/stripe',
+  express.raw({ type: 'application/json' }),
+  stripeWebhook
+);
 app.use(express.json({ limit: '2mb' }));
+app.use(express.urlencoded({ extended: true }));
 app.use(trimBodyMiddleware);
 
 const uploadRateLimiter = rateLimit({
@@ -58,4 +66,5 @@ app.use((err: any, _req: express.Request, res: express.Response, _next: express.
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on port ${PORT}`);
   scheduleExpireBookingsJob();
+  scheduleSubscriptionGraceJob();
 });

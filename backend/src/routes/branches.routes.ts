@@ -8,6 +8,7 @@ import {
   deleteBranch,
   getBranchUsers
 } from '../controllers/branches.controller';
+import { requireLimit } from '../middleware/entitlements';
 
 const router = Router();
 
@@ -15,7 +16,7 @@ router.get('/', getBranches);
 router.get('/:id', getBranchById);
 router.get('/:id/stats', getBranchStats);
 router.get('/:id/users', getBranchUsers);
-router.post('/', createBranch);
+router.post('/', requireLimit('max_branches'), createBranch);
 router.put('/:id', updateBranch);
 router.delete('/:id', deleteBranch);
 

@@ -17,13 +17,19 @@ import {
   PackagePlus,
   ChevronDown,
   ChevronRight,
-  BedDouble
+  BedDouble,
+  Building2,
+  Boxes,
+  Wallet
 } from 'lucide-react';
+import { useAuth } from '../../providers/AuthProvider';
 
 export function Sidebar({ closeMobile }: { closeMobile: () => void }) {
   const { t } = useTranslation();
   const location = useLocation();
+  const { role } = useAuth();
   const path = location.pathname;
+  const isSuperAdmin = role === 'super_admin';
 
   // State for expanded menu groups
   const [bookingsExpanded, setBookingsExpanded] = useState(false);
@@ -76,6 +82,60 @@ export function Sidebar({ closeMobile }: { closeMobile: () => void }) {
       fontSize: '13px',
     }
   };
+
+  if (isSuperAdmin) {
+    return (
+      <Stack gap={4} h="100%">
+        <NavLink
+          component={Link}
+          to="/"
+          label={t('dashboard')}
+          rightSection={<LayoutDashboard size="1rem" strokeWidth={1.5} />}
+          active={path === '/'}
+          onClick={closeMobile}
+          styles={navLinkStyles}
+        />
+        <NavLink
+          component={Link}
+          to="/agencies"
+          label={t('agencies') || 'الوكالات'}
+          rightSection={<Building2 size="1rem" strokeWidth={1.5} />}
+          active={path === '/agencies' || path.startsWith('/agencies/')}
+          onClick={closeMobile}
+          styles={navLinkStyles}
+        />
+        <NavLink
+          component={Link}
+          to="/packages"
+          label={t('packages') || 'الباقات'}
+          rightSection={<Boxes size="1rem" strokeWidth={1.5} />}
+          active={path === '/packages'}
+          onClick={closeMobile}
+          styles={navLinkStyles}
+        />
+        <NavLink
+          component={Link}
+          to="/payments"
+          label={t('payments') || 'المدفوعات'}
+          rightSection={<Wallet size="1rem" strokeWidth={1.5} />}
+          active={path === '/payments'}
+          onClick={closeMobile}
+          styles={navLinkStyles}
+        />
+        <Box style={{ flex: 1 }} />
+        <Divider my="xs" />
+        <NavLink
+          component={Link}
+          to="/settings"
+          label={t('settings') || 'الإعدادات'}
+          rightSection={<Settings size="1rem" strokeWidth={1.5} />}
+          active={path === '/settings'}
+          onClick={closeMobile}
+          styles={navLinkStyles}
+        />
+      </Stack>
+    );
+  }
 
   return (
     <Stack gap={4} h="100%">

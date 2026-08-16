@@ -26,7 +26,7 @@ router.get('/availability', getAvailabilityWithLocks);
 router.post('/cleanup', cleanupExpiredLocks);
 
 // Delete all locks (admin only)
-router.delete('/all', requireRoles('agency_admin', 'super_admin'), deleteAllLocks);
+router.delete('/all', requireRoles('agency_admin'), deleteAllLocks);
 
 // Extend locks for a session
 router.put('/extend/:session_id', extendLock);

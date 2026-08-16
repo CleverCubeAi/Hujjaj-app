@@ -1,5 +1,24 @@
 import { Response } from 'express';
 
+export class ApiError extends Error {
+  status: number;
+  code?: string;
+
+  constructor(status: number, message: string, code?: string) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+    this.code = code;
+  }
+}
+
+export function sendApiError(res: Response, err: unknown) {
+  if (err instanceof ApiError) {
+    return res.status(err.status).json({ error: err.message, code: err.code });
+  }
+  return sendError(res, err);
+}
+
 export function sendError(res: Response, err: unknown, status = 500) {
   const message = err instanceof Error ? err.message : String(err || 'Internal server error');
   if (status >= 500) {
