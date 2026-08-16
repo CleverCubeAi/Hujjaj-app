@@ -14,6 +14,8 @@ export const VALID_FOLDERS = ['agencies', 'avatars', 'airlines', 'hotels', 'room
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
 const ALLOWED_EXT = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+const SAFE_SEGMENT_RE = /^[A-Za-z0-9_-]+$/;
+const SAFE_FILENAME_RE = /^[A-Za-z0-9_-]+\.[A-Za-z0-9]+$/;
 
 function uploadsRoot() {
   return path.resolve(process.cwd(), 'uploads');
@@ -145,6 +147,15 @@ export const serveUpload = async (req: Request, res: Response) => {
     const agencyIdParam = Array.isArray(req.params.agencyId) ? req.params.agencyId[0] : req.params.agencyId;
     const filename = Array.isArray(req.params.filename) ? req.params.filename[0] : req.params.filename;
     if (!VALID_FOLDERS.includes(folder) || !agencyIdParam || !filename) {
+      return res.status(400).json({ error: 'Invalid path' });
+    }
+    if (
+      !SAFE_SEGMENT_RE.test(agencyIdParam) ||
+      !SAFE_FILENAME_RE.test(filename) ||
+      filename.includes('/') ||
+      filename.includes('\\') ||
+      filename.startsWith('.')
+    ) {
       return res.status(400).json({ error: 'Invalid path' });
     }
 
