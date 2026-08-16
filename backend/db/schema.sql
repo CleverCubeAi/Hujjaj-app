@@ -1383,6 +1383,7 @@ BEGIN
     AND bl.accommodation_id = p_accommodation_id
     AND bl.room_type_id = p_room_type_id
     AND bl.season_id = p_season_id
+    AND bl.agency_id = p_agency_id
     AND bl.expires_at > now()
     AND (p_exclude_session_id IS NULL OR bl.session_id != p_exclude_session_id);
 
@@ -1564,7 +1565,15 @@ BEGIN
     udp.granted_by,
     udp.granted_at,
     udp.updated_at,
-    row_to_json(u.*)::JSON as user_data,
+    json_build_object(
+      'id', u.id,
+      'email', u.email,
+      'full_name', u.full_name,
+      'role', u.role,
+      'agency_id', u.agency_id,
+      'branch_id', u.branch_id,
+      'avatar_url', u.avatar_url
+    ) as user_data,
     row_to_json(ds.*)::JSON as discount_setting
   FROM user_discount_permissions udp
   LEFT JOIN users u ON u.id = udp.user_id
@@ -1618,7 +1627,15 @@ BEGIN
     dul.booking_total_before,
     dul.booking_total_after,
     dul.created_at,
-    row_to_json(u.*)::JSON as user_data,
+    json_build_object(
+      'id', u.id,
+      'email', u.email,
+      'full_name', u.full_name,
+      'role', u.role,
+      'agency_id', u.agency_id,
+      'branch_id', u.branch_id,
+      'avatar_url', u.avatar_url
+    ) as user_data,
     row_to_json(ds.*)::JSON as discount_setting,
     row_to_json(b.*)::JSON as booking
   FROM discount_usage_log dul

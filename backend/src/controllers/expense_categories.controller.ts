@@ -14,7 +14,7 @@ export const getCategories = async (req: Request, res: Response) => {
     const { data: categories, error } = await supabase
       .from('expense_categories')
       .select('*')
-      .eq('agency_id', agencyId)
+      .forAgency(agencyId)
       .order('is_default', { ascending: false })
       .order('name', { ascending: true });
 
@@ -56,7 +56,7 @@ export const createCategory = async (req: Request, res: Response) => {
     const { data: existing } = await supabase
       .from('expense_categories')
       .select('id')
-      .eq('agency_id', agencyId)
+      .forAgency(agencyId)
       .eq('name', name)
       .single();
 
@@ -106,7 +106,7 @@ export const updateCategory = async (req: Request, res: Response) => {
       .from('expense_categories')
       .select('*')
       .eq('id', id)
-      .eq('agency_id', agencyId)
+      .forAgency(agencyId)
       .single();
 
     if (!existing) {
@@ -118,7 +118,7 @@ export const updateCategory = async (req: Request, res: Response) => {
       const { data: duplicate } = await supabase
         .from('expense_categories')
         .select('id')
-        .eq('agency_id', agencyId)
+        .forAgency(agencyId)
         .eq('name', name)
         .neq('id', id)
         .single();
@@ -169,7 +169,7 @@ export const deleteCategory = async (req: Request, res: Response) => {
       .from('expense_categories')
       .select('*')
       .eq('id', id)
-      .eq('agency_id', agencyId)
+      .forAgency(agencyId)
       .single();
 
     if (!existing) {

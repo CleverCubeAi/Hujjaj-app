@@ -9,6 +9,7 @@ import {
   cleanupExpiredLocks,
   deleteAllLocks
 } from '../controllers/bookingLocks.controller';
+import { requireRoles } from '../middleware/roles';
 
 const router = Router();
 
@@ -24,8 +25,8 @@ router.get('/availability', getAvailabilityWithLocks);
 // Clean up expired locks
 router.post('/cleanup', cleanupExpiredLocks);
 
-// Delete all locks (admin/testing)
-router.delete('/all', deleteAllLocks);
+// Delete all locks (admin only)
+router.delete('/all', requireRoles('agency_admin', 'super_admin'), deleteAllLocks);
 
 // Extend locks for a session
 router.put('/extend/:session_id', extendLock);

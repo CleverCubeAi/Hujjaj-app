@@ -62,7 +62,7 @@ export function SecuritySettings() {
       return;
     }
 
-    if (form.password.length < 4) {
+    if (form.password.length < 8) {
       notifications.show({
         title: t('error') || 'خطأ',
         message: t('deletion_password_min_length') || 'كلمة مرور الحذف يجب أن تكون 4 أحرف على الأقل',

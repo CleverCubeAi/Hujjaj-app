@@ -1,5 +1,12 @@
 import { Request, Response } from 'express';
 import { supabaseAdmin as supabase } from '../services/supabase';
+import { pickAllowed } from '../utils/httpError';
+
+const HOTEL_INV_FIELDS = [
+  'season_id', 'accommodation_id', 'room_type_id', 'beds_purchased', 'check_in_date',
+  'check_out_date', 'purchase_price_per_bed', 'sell_price_per_bed', 'supplier_name',
+  'supplier_contact', 'notes', 'room_labels',
+] as const;
 
 // Use the new bed-based table name
 const TABLE_NAME = 'hotel_bed_inventory';
@@ -21,7 +28,7 @@ export const listHotelInventory = async (req: Request, res: Response) => {
         room_types (id, type, total_beds),
         seasons (id, name, type)
       `)
-      .eq('agency_id', agencyId)
+      .forAgency(agencyId)
       .order('created_at', { ascending: false });
 
     if (season_id) query = query.eq('season_id', season_id);
@@ -55,7 +62,7 @@ export const getHotelInventory = async (req: Request, res: Response) => {
         seasons (id, name, type)
       `)
       .eq('id', id)
-      .eq('agency_id', agencyId)
+      .forAgency(agencyId)
       .single();
 
     if (error) throw error;
@@ -123,7 +130,7 @@ export const createHotelInventory = async (req: Request, res: Response) => {
       .from('accommodations')
       .select('id')
       .eq('id', accommodation_id)
-      .eq('agency_id', agencyId)
+      .forAgency(agencyId)
       .single();
 
     if (!accommodation) {
@@ -193,7 +200,7 @@ export const updateHotelInventory = async (req: Request, res: Response) => {
       .from(TABLE_NAME)
       .select('id, beds_sold, beds_purchased')
       .eq('id', id)
-      .eq('agency_id', agencyId)
+      .forAgency(agencyId)
       .single();
 
     if (!existing) {
@@ -233,10 +240,11 @@ export const updateHotelInventory = async (req: Request, res: Response) => {
     const { data, error } = await supabase
       .from(TABLE_NAME)
       .update({
-        ...updateData,
+        ...pickAllowed(updateData, HOTEL_INV_FIELDS),
         updated_at: new Date().toISOString()
       })
       .eq('id', id)
+      .forAgency(agencyId)
       .select(`
         *,
         accommodations (id, name, name_ar, city, country),
@@ -272,7 +280,7 @@ export const deleteHotelInventory = async (req: Request, res: Response) => {
       .from(TABLE_NAME)
       .select('id, beds_sold')
       .eq('id', id)
-      .eq('agency_id', agencyId)
+      .forAgency(agencyId)
       .single();
 
     if (!existing) {
@@ -319,7 +327,7 @@ export const getAvailableBeds = async (req: Request, res: Response) => {
         room_types (id, type, total_beds),
         seasons (id, name, type)
       `)
-      .eq('agency_id', agencyId)
+      .forAgency(agencyId)
       .eq('season_id', season_id)
       .gt('beds_available', 0)
       .order('check_in_date', { ascending: true });
@@ -390,7 +398,7 @@ export const getBedMap = async (req: Request, res: Response) => {
         room_types (id, type, total_beds)
       `)
       .eq('id', id)
-      .eq('agency_id', agencyId)
+      .forAgency(agencyId)
       .single();
 
     if (invError || !inventory) {
@@ -415,7 +423,7 @@ export const getBedMap = async (req: Request, res: Response) => {
     const { data: bookingsWithInv } = await supabase
       .from('bookings')
       .select('id')
-      .eq('agency_id', agencyId)
+      .forAgency(agencyId)
       .contains('hotel_inventory_ids', [id]);
 
     const bookingIdsFromHotelIds = (bookingsWithInv || []).map((b: any) => b.id);

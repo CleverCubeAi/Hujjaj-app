@@ -49,7 +49,7 @@ export const getDashboardStats = async (req: Request, res: Response) => {
         clients (full_name, full_name_ar),
         pilgrims (id, gender)
       `)
-      .eq('agency_id', agencyId)
+      .forAgency(agencyId)
       .is('deleted_at', null);
 
     if (userIdsFilter !== null) {
@@ -128,25 +128,25 @@ export const getDashboardStats = async (req: Request, res: Response) => {
         city,
         room_types (id, type, total_beds, total_rooms)
       `)
-      .eq('agency_id', agencyId)
+      .forAgency(agencyId)
       .limit(10);
 
     // 3. Get flights count (agency-wide)
     const { data: flights } = await supabase
       .from('flights')
       .select('id')
-      .eq('agency_id', agencyId);
+      .forAgency(agencyId);
 
     // 4. Get inventory stats (agency-wide)
     const { data: hotelInventory } = await supabase
       .from('hotel_bed_inventory')
       .select('beds_purchased, beds_sold, beds_available')
-      .eq('agency_id', agencyId);
+      .forAgency(agencyId);
 
     const { data: flightInventory } = await supabase
       .from('flight_seat_inventory')
       .select('seats_purchased, seats_sold, seats_available')
-      .eq('agency_id', agencyId);
+      .forAgency(agencyId);
 
     const inventoryStats = {
       hotel: {

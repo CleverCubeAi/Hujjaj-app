@@ -15,7 +15,6 @@ import {
   deleteInvoiceItem,
   softDeleteBooking,
   permanentDeleteBooking,
-  expireBookingHolds,
   extendBookingHold,
   getBookingHoldStatus
 } from '../controllers/bookings.controller';
@@ -48,8 +47,7 @@ router.get('/:id/invoice/pdf', exportInvoicePDF);
 router.post('/:id/invoice-items', addInvoiceItem);
 router.delete('/:id/invoice-items/:itemId', deleteInvoiceItem);
 
-// Booking holds (24-hour reservation)
-router.post('/expire-holds', expireBookingHolds);  // Called by cron job
+// Booking holds (24-hour reservation) — expiry is handled by the server cron job
 router.get('/:id/hold-status', getBookingHoldStatus);
 router.post('/:id/extend-hold', extendBookingHold);
 

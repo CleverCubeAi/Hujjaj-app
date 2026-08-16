@@ -1,5 +1,7 @@
 import { Router } from 'express';
 import { authMiddleware } from '../middleware/auth';
+import { tenantGuard, requireAgencyOnMutate } from '../utils/tenant';
+import { rlsContextMiddleware } from '../middleware/rlsContext';
 
 import authRoutes from './auth.routes';
 import seasonsRoutes from './seasons.routes';
@@ -29,37 +31,39 @@ import messagesRoutes from './messages.routes';
 
 const router = Router();
 
+const protect = [authMiddleware, tenantGuard, rlsContextMiddleware, requireAgencyOnMutate];
+
 // Public Routes
 router.use('/auth', authRoutes);
 
 // Protected Routes
-router.use('/seasons', authMiddleware, seasonsRoutes);
-router.use('/flights', authMiddleware, flightsRoutes);
-router.use('/accommodations', authMiddleware, accommodationsRoutes);
-router.use('/pilgrims', authMiddleware, pilgrimsRoutes);
-router.use('/expenses', authMiddleware, expensesRoutes);
+router.use('/seasons', ...protect, seasonsRoutes);
+router.use('/flights', ...protect, flightsRoutes);
+router.use('/accommodations', ...protect, accommodationsRoutes);
+router.use('/pilgrims', ...protect, pilgrimsRoutes);
+router.use('/expenses', ...protect, expensesRoutes);
 
 // New booking workflow routes
-router.use('/clients', authMiddleware, clientsRoutes);
-router.use('/bookings', authMiddleware, bookingsRoutes);
-router.use('/services', authMiddleware, servicesRoutes);
-router.use('/payments', authMiddleware, paymentsRoutes);
-router.use('/rooms', authMiddleware, roomsRoutes);
-router.use('/reports', authMiddleware, reportsRoutes);
+router.use('/clients', ...protect, clientsRoutes);
+router.use('/bookings', ...protect, bookingsRoutes);
+router.use('/services', ...protect, servicesRoutes);
+router.use('/payments', ...protect, paymentsRoutes);
+router.use('/rooms', ...protect, roomsRoutes);
+router.use('/reports', ...protect, reportsRoutes);
 
 // Settings and notifications routes
-router.use('/settings', authMiddleware, settingsRoutes);
-router.use('/users', authMiddleware, usersRoutes);
-router.use('/branches', authMiddleware, branchesRoutes);
-router.use('/notifications', authMiddleware, notificationsRoutes);
-router.use('/expense-categories', authMiddleware, expenseCategoriesRoutes);
-router.use('/hotel-inventory', authMiddleware, hotelInventoryRoutes);
-router.use('/flight-inventory', authMiddleware, flightInventoryRoutes);
-router.use('/handovers', authMiddleware, handoversRoutes);
-router.use('/dashboard', authMiddleware, dashboardRoutes);
-router.use('/upload', authMiddleware, uploadRoutes);
-router.use('/booking-locks', authMiddleware, bookingLocksRoutes);
-router.use('/discounts', authMiddleware, discountsRoutes);
-router.use('/messages', authMiddleware, messagesRoutes);
+router.use('/settings', ...protect, settingsRoutes);
+router.use('/users', ...protect, usersRoutes);
+router.use('/branches', ...protect, branchesRoutes);
+router.use('/notifications', ...protect, notificationsRoutes);
+router.use('/expense-categories', ...protect, expenseCategoriesRoutes);
+router.use('/hotel-inventory', ...protect, hotelInventoryRoutes);
+router.use('/flight-inventory', ...protect, flightInventoryRoutes);
+router.use('/handovers', ...protect, handoversRoutes);
+router.use('/dashboard', ...protect, dashboardRoutes);
+router.use('/upload', ...protect, uploadRoutes);
+router.use('/booking-locks', ...protect, bookingLocksRoutes);
+router.use('/discounts', ...protect, discountsRoutes);
+router.use('/messages', ...protect, messagesRoutes);
 
 export default router;

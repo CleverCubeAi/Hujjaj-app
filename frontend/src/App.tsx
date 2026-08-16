@@ -26,6 +26,7 @@ import { HotelInventoryPage } from './features/inventory/HotelInventoryPage';
 import { BedMapPage } from './features/inventory/BedMapPage';
 import { SeatMapPage } from './features/inventory/SeatMapPage';
 import FlightInventoryPage from './features/inventory/FlightInventoryPage';
+import { RoleGuard } from './components/common/RoleGuard';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -163,7 +164,9 @@ function App() {
       } />
       <Route path="/inventory/hotel-rooms" element={
         <ProtectedRoute>
-          <HotelInventoryPage />
+          <RoleGuard allowed={['agency_admin', 'super_admin', 'manager', 'agent']}>
+            <HotelInventoryPage />
+          </RoleGuard>
         </ProtectedRoute>
       } />
       <Route path="/inventory/hotel-rooms/:inventoryId/bed-map" element={
@@ -173,7 +176,9 @@ function App() {
       } />
       <Route path="/inventory/flight-seats" element={
         <ProtectedRoute>
-          <FlightInventoryPage />
+          <RoleGuard allowed={['agency_admin', 'super_admin', 'manager', 'agent']}>
+            <FlightInventoryPage />
+          </RoleGuard>
         </ProtectedRoute>
       } />
       <Route path="/inventory/flight-seats/:inventoryId/seat-map" element={

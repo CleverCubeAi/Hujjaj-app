@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { supabaseAdmin as supabase } from '../services/supabase';
 import { hashPassword } from '../services/auth.service';
+import { assertPasswordPolicy } from '../utils/httpError';
 
 export const getUsers = async (req: Request, res: Response) => {
   try {
@@ -28,7 +29,7 @@ export const getUsers = async (req: Request, res: Response) => {
           is_headquarters
         )
       `)
-      .eq('agency_id', agencyId)
+      .forAgency(agencyId)
       .order('created_at', { ascending: false });
 
     if (branch_id) {
@@ -44,7 +45,7 @@ export const getUsers = async (req: Request, res: Response) => {
     }
 
     if (search) {
-      query = query.or(`full_name.ilike.%${search}%,email.ilike.%${search}%,role.ilike.%${search}%`);
+      query = query.orIlike(['full_name', 'email', 'role'], search);
     }
 
     const { data, error } = await query;
@@ -86,7 +87,7 @@ export const getUserById = async (req: Request, res: Response) => {
         )
       `)
       .eq('id', id)
-      .eq('agency_id', agencyId)
+      .forAgency(agencyId)
       .single();
 
     if (error) throw error;
@@ -116,6 +117,10 @@ export const createUser = async (req: Request, res: Response) => {
     if (!email || !password || !full_name || !user_role) {
       return res.status(400).json({ error: 'Email, password, full name, and role are required' });
     }
+    const passwordError = assertPasswordPolicy(password);
+    if (passwordError) {
+      return res.status(400).json({ error: passwordError });
+    }
 
     const validRoles = ['agency_admin', 'manager', 'agent'];
     if (!validRoles.includes(user_role)) {
@@ -127,7 +132,7 @@ export const createUser = async (req: Request, res: Response) => {
         .from('branches')
         .select('id')
         .eq('id', branch_id)
-        .eq('agency_id', agencyId)
+        .forAgency(agencyId)
         .single();
 
       if (branchError || !branch) {
@@ -192,7 +197,7 @@ export const updateUser = async (req: Request, res: Response) => {
       .from('users')
       .select('*')
       .eq('id', id)
-      .eq('agency_id', agencyId)
+      .forAgency(agencyId)
       .single();
 
     if (!existingUser) {
@@ -203,7 +208,7 @@ export const updateUser = async (req: Request, res: Response) => {
       const { data: admins } = await supabase
         .from('users')
         .select('id')
-        .eq('agency_id', agencyId)
+        .forAgency(agencyId)
         .eq('role', 'agency_admin');
 
       if (admins && admins.length === 1) {
@@ -216,7 +221,7 @@ export const updateUser = async (req: Request, res: Response) => {
         .from('branches')
         .select('id')
         .eq('id', branch_id)
-        .eq('agency_id', agencyId)
+        .forAgency(agencyId)
         .single();
 
       if (branchError || !branch) {
@@ -241,6 +246,7 @@ export const updateUser = async (req: Request, res: Response) => {
       .from('users')
       .update(updateData)
       .eq('id', id)
+      .forAgency(agencyId)
       .select(`
         *,
         branch:branches (
@@ -284,7 +290,7 @@ export const deleteUser = async (req: Request, res: Response) => {
       .from('users')
       .select('*')
       .eq('id', id)
-      .eq('agency_id', agencyId)
+      .forAgency(agencyId)
       .single();
 
     if (!existingUser) {
@@ -295,7 +301,7 @@ export const deleteUser = async (req: Request, res: Response) => {
       const { data: admins } = await supabase
         .from('users')
         .select('id')
-        .eq('agency_id', agencyId)
+        .forAgency(agencyId)
         .eq('role', 'agency_admin');
 
       if (admins && admins.length === 1) {
@@ -303,7 +309,7 @@ export const deleteUser = async (req: Request, res: Response) => {
       }
     }
 
-    const { error } = await supabase.from('users').delete().eq('id', id);
+    const { error } = await supabase.from('users').delete().eq('id', id).forAgency(agencyId);
     if (error) throw error;
 
     res.json({ message: 'User deleted successfully' });
@@ -341,7 +347,7 @@ export const updateUserRole = async (req: Request, res: Response) => {
       .from('users')
       .select('*')
       .eq('id', id)
-      .eq('agency_id', agencyId)
+      .forAgency(agencyId)
       .single();
 
     if (!existingUser) {
@@ -352,7 +358,7 @@ export const updateUserRole = async (req: Request, res: Response) => {
       const { data: admins } = await supabase
         .from('users')
         .select('id')
-        .eq('agency_id', agencyId)
+        .forAgency(agencyId)
         .eq('role', 'agency_admin');
 
       if (admins && admins.length === 1) {
@@ -364,6 +370,7 @@ export const updateUserRole = async (req: Request, res: Response) => {
       .from('users')
       .update({ role: newRole })
       .eq('id', id)
+      .forAgency(agencyId)
       .select()
       .single();
 
