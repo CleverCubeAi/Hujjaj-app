@@ -1805,3 +1805,6 @@ COMMENT ON FUNCTION expire_booking_holds() IS 'Expires draft bookings whose hold
 COMMENT ON FUNCTION create_booking_hold_lock IS 'Creates a 24-hour lock on beds/flights for a draft booking';
 COMMENT ON FUNCTION release_booking_hold_locks IS 'Releases all locks for a booking (called on confirm)';
 COMMENT ON FUNCTION extend_booking_hold IS 'Extends the hold period for a draft booking';
+
+-- Platform branding, packages, email, LLM, and billing are applied from
+-- db/app_management.sql (init migration + 20260816000000_app_management).

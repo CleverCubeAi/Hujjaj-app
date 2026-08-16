@@ -2,6 +2,10 @@ import { Request, Response } from 'express';
 import { supabaseAdmin as supabase } from '../services/supabase';
 import { hashPassword, verifyPassword } from '../services/auth.service';
 import bcrypt from 'bcryptjs';
+import db from '../services/db';
+import { getAgencyEntitlements } from '../services/packages.service';
+import { getBrandingRow } from './branding.controller';
+import { ApiError, sendApiError } from '../utils/httpError';
 
 // Get agency settings
 export const getAgency = async (req: Request, res: Response) => {
@@ -47,28 +51,45 @@ export const updateAgency = async (req: Request, res: Response) => {
   try {
     const agencyId = req.user?.agency_id;
     const role = req.user?.role;
-    const { name, country, status, subscription_plan, logo_url } = req.body;
+
+    if (role === 'super_admin') {
+      return res.status(403).json({
+        error: 'Super admin manages agencies from the platform console, not agency settings.',
+      });
+    }
 
     if (!agencyId) {
-      if (role === 'super_admin') {
-        return res.status(400).json({
-          error: 'Super admin is not tied to an agency. Agency settings are per-agency.',
-        });
-      }
       return res.status(403).json({ error: 'Agency ID not found' });
     }
 
-    // Only agency_admin and super_admin can update agency settings
-    if (role !== 'agency_admin' && role !== 'super_admin') {
+    if (role !== 'agency_admin') {
       return res.status(403).json({ error: 'Unauthorized' });
     }
 
+    const ent = await getAgencyEntitlements(agencyId);
     const updateData: any = {};
-    if (name !== undefined) updateData.name = name;
-    if (country !== undefined) updateData.country = country;
-    if (status !== undefined) updateData.status = status;
-    if (subscription_plan !== undefined) updateData.subscription_plan = subscription_plan;
-    if (logo_url !== undefined) updateData.logo_url = logo_url;
+    const allowed = [
+      'name', 'name_ar', 'country', 'legal_name', 'phone', 'email', 'address',
+      'website', 'logo_url', 'invoice_logo_url', 'billing_email',
+    ];
+    for (const key of allowed) {
+      if (req.body[key] !== undefined) updateData[key] = req.body[key] === '' ? null : req.body[key];
+    }
+
+    if (ent.features.white_label) {
+      if (req.body.primary_color !== undefined) updateData.primary_color = req.body.primary_color || null;
+      if (req.body.invoice_footer !== undefined) updateData.invoice_footer = req.body.invoice_footer || null;
+      if (req.body.hide_platform_mark !== undefined) updateData.hide_platform_mark = !!req.body.hide_platform_mark;
+    } else if (
+      req.body.primary_color ||
+      req.body.invoice_footer ||
+      req.body.hide_platform_mark
+    ) {
+      return res.status(403).json({
+        error: 'White-label options are not included in the current package',
+        code: 'package_feature_disabled',
+      });
+    }
 
     const { data, error } = await supabase
       .from('agencies')
@@ -286,9 +307,9 @@ export const getDeletionPasswordStatus = async (req: Request, res: Response) => 
       return res.status(403).json({ error: 'User ID not found' });
     }
 
-    // Only admins can have deletion password
-    if (role !== 'agency_admin' && role !== 'super_admin') {
-      return res.status(403).json({ error: 'Only admins can set deletion password' });
+    // Only agency admins can have a deletion password
+    if (role !== 'agency_admin') {
+      return res.status(403).json({ error: 'Only agency admins can set deletion password' });
     }
 
     const { data, error } = await supabase
@@ -319,9 +340,8 @@ export const setDeletionPassword = async (req: Request, res: Response) => {
       return res.status(403).json({ error: 'User ID not found' });
     }
 
-    // Only admins can set deletion password
-    if (role !== 'agency_admin' && role !== 'super_admin') {
-      return res.status(403).json({ error: 'Only admins can set deletion password' });
+    if (role !== 'agency_admin') {
+      return res.status(403).json({ error: 'Only agency admins can set deletion password' });
     }
 
     if (!password) {
@@ -395,3 +415,42 @@ export const verifyDeletionPassword = async (userId: string, password: string): 
     return false;
   }
 };
+
+export const getSessionBranding = async (req: Request, res: Response) => {
+  try {
+    const role = req.user?.role;
+    const agencyId = req.user?.agency_id;
+    if (role === 'super_admin' || !agencyId) {
+      const row = await getBrandingRow();
+      return res.json({
+        kind: 'platform',
+        name: row?.app_name || 'Hujjaj',
+        name_ar: row?.app_name_ar || 'حجاج',
+        name_fr: row?.app_name_fr || 'Hujjaj',
+        logo_url: row?.logo_url || null,
+        primary_color: row?.primary_color || '#8B7355',
+        accent_color: row?.accent_color || '#6F5C45',
+      });
+    }
+
+    const agency = await db('agencies').where({ id: agencyId }).first();
+    if (!agency) throw new ApiError(404, 'Agency not found');
+    const ent = await getAgencyEntitlements(agencyId);
+    res.json({
+      kind: 'agency',
+      name: agency.name,
+      name_ar: agency.name_ar || agency.name,
+      logo_url: agency.logo_url || null,
+      invoice_logo_url: agency.invoice_logo_url || agency.logo_url || null,
+      primary_color: ent.features.white_label ? agency.primary_color : null,
+      hide_platform_mark: ent.features.white_label && !!agency.hide_platform_mark,
+      white_label: ent.features.white_label,
+      subscription_status: ent.subscription_status,
+      package_name_ar: ent.package?.name_ar,
+      package_name_fr: ent.package?.name_fr,
+    });
+  } catch (err) {
+    return sendApiError(res, err);
+  }
+};
+

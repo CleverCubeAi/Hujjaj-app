@@ -18,11 +18,20 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Lock, User } from 'lucide-react';
 import bgImage from '../../assets/img/bg.jpg';
+import { useBranding } from '../../providers/BrandingProvider';
 
 export function Login() {
   const { signIn } = useAuth();
   const navigate = useNavigate();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const branding = useBranding();
+  const primary = branding.primary_color || '#8B7355';
+  const accent = branding.accent_color || '#6F5C45';
+  const bg = branding.login_background_url || bgImage;
+  const appName = i18n.language === 'fr' ? branding.app_name_fr : branding.app_name_ar;
+  const tagline = i18n.language === 'fr' ? branding.tagline_fr : branding.tagline_ar;
+  const year = new Date().getFullYear();
+  const copyright = (branding.copyright || `© {year} ${appName}`).replace('{year}', String(year));
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -47,7 +56,7 @@ export function Login() {
     <Box 
       style={{ 
         minHeight: '100vh',
-        backgroundImage: `url(${bgImage})`,
+        backgroundImage: `url(${bg})`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat',
@@ -79,15 +88,20 @@ export function Login() {
           style={{ 
             backgroundColor: 'rgba(45, 45, 45, 0.6)',
             backdropFilter: 'blur(10px)',
-            border: '1px solid rgba(139, 115, 85, 0.3)',
+            border: `1px solid ${primary}4D`,
             borderRadius: '10px',
             boxShadow: '0 8px 32px rgba(0,0,0,0.3)'
           }}
         >
           <Stack align="center" gap="lg" mb="xl">
+            {branding.logo_url && (
+              <img src={branding.logo_url} alt={appName} style={{ height: 48 }} />
+            )}
             <Title order={2} fw={700} c="white" ta="center">
-              {t('sign_in') || 'تسجيل الدخول'}
+              {appName || t('sign_in') || 'تسجيل الدخول'}
             </Title>
+            {tagline && <Text c="white" size="sm" ta="center">{tagline}</Text>}
+            <Text c="white" size="sm" ta="center">{t('sign_in') || 'تسجيل الدخول'}</Text>
           </Stack>
 
           <form onSubmit={handleLogin}>
@@ -101,13 +115,13 @@ export function Login() {
                   <Box
                     style={{
                       width: 4,
-                      backgroundColor: '#8B7355'
+                      backgroundColor: primary
                     }}
                   />
                   <Box
                     style={{
                       width: 40,
-                      backgroundColor: '#8B7355',
+                      backgroundColor: primary,
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center'
@@ -128,7 +142,7 @@ export function Login() {
                         border: 'none',
                         borderRadius: '0',
                         '&:focus': {
-                          borderColor: '#8B7355',
+                          borderColor: primary,
                           outline: 'none'
                         }
                       },
@@ -149,13 +163,13 @@ export function Login() {
                   <Box
                     style={{
                       width: 4,
-                      backgroundColor: '#8B7355'
+                      backgroundColor: primary
                     }}
                   />
                   <Box
                     style={{
                       width: 40,
-                      backgroundColor: '#8B7355',
+                      backgroundColor: primary,
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center'
@@ -177,7 +191,7 @@ export function Login() {
                         borderRadius: '0',
                         flex: 1,
                         '&:focus': {
-                          borderColor: '#8B7355',
+                          borderColor: primary,
                           outline: 'none'
                         }
                       },
@@ -197,8 +211,8 @@ export function Login() {
                     backgroundColor: 'transparent',
                     borderColor: 'rgba(255, 255, 255, 0.5)',
                     '&:checked': {
-                      backgroundColor: '#8B7355',
-                      borderColor: '#8B7355'
+                      backgroundColor: primary,
+                      borderColor: primary
                     }
                   }
                 }}
@@ -218,12 +232,12 @@ export function Login() {
                   loading={loading}
                   styles={{
                     root: {
-                      backgroundColor: '#8B7355',
+                      backgroundColor: primary,
                       color: '#2D2D2D',
                       fontWeight: 600,
                       width: '100%',
                       '&:hover': {
-                        backgroundColor: '#6F5C45'
+                        backgroundColor: accent
                       }
                     }
                   }}
@@ -237,7 +251,7 @@ export function Login() {
 
         <Center mt="xl">
           <Text size="xs" c="rgba(255, 255, 255, 0.7)">
-            © 2024 حجاج - جميع الحقوق محفوظة
+            {copyright}
           </Text>
         </Center>
       </Container>

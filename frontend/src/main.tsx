@@ -7,6 +7,7 @@ import { I18nextProvider } from 'react-i18next';
 import App from './App';
 import i18n from './i18n';
 import { AuthProvider } from './providers/AuthProvider';
+import { BrandingProvider } from './providers/BrandingProvider';
 import '@mantine/core/styles.css';
 import '@mantine/dates/styles.css';
 import '@mantine/notifications/styles.css';
@@ -72,9 +73,11 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     <I18nextProvider i18n={i18n}>
       <BrowserRouter>
         <AuthProvider>
-          <AppProvider>
-            <App />
-          </AppProvider>
+          <BrandingProvider>
+            <AppProvider>
+              <App />
+            </AppProvider>
+          </BrandingProvider>
         </AuthProvider>
       </BrowserRouter>
     </I18nextProvider>

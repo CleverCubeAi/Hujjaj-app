@@ -27,10 +27,7 @@ Defaults for Postgres user/password/db (`hujjaj`) work out of the box with Compo
 ## Step 2: Deploy with Docker
 
 ```bash
-chmod +x deploy.sh
-./deploy.sh
-# or:
-docker compose up -d --build
+docker compose -f docker-compose.local.yml up -d --build
 ```
 
 Migrations run automatically when the backend container starts.

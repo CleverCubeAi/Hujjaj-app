@@ -7,10 +7,13 @@ import { LanguageSwitcher } from '../common/LanguageSwitcher';
 import { useTranslation } from 'react-i18next';
 import { LogOut, Bell } from 'lucide-react';
 import { api } from '../../lib/api';
+import { useBranding } from '../../providers/BrandingProvider';
 
 interface AgencyInfo {
   name: string;
   logo_url?: string;
+  primary_color?: string | null;
+  subscription_status?: string;
 }
 
 interface UserProfile {
@@ -22,32 +25,38 @@ interface UserProfile {
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [opened, { toggle }] = useDisclosure();
   const { signOut, user, role } = useAuth();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const branding = useBranding();
   const [agency, setAgency] = useState<AgencyInfo | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
-  const isPlatformSuperAdmin = role === 'super_admin' && !user?.user_metadata?.agency_id;
+  const isPlatformSuperAdmin = role === 'super_admin';
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [agencyData, profileData] = await Promise.all([
-          api.getAgency().catch(() => null),
-          api.getProfile().catch(() => null)
-        ]);
-        if (agencyData) setAgency(agencyData);
+        const profileData = await api.getProfile().catch(() => null);
         if (profileData) setProfile(profileData);
+        if (!isPlatformSuperAdmin) {
+          const agencyData = await api.getSessionBranding().catch(() => null);
+          if (agencyData) setAgency(agencyData);
+        }
       } catch (error) {
         console.error('Error fetching header data:', error);
       }
     };
     fetchData();
-  }, []);
+  }, [isPlatformSuperAdmin]);
+
+  const platformName = i18n.language === 'fr' ? branding.app_name_fr : branding.app_name_ar;
+  const headerColor = isPlatformSuperAdmin
+    ? (branding.primary_color || '#8B7355')
+    : (agency?.primary_color || branding.primary_color || '#8B7355');
 
   const getRoleLabel = () => {
-    const role = profile?.role;
-    if (role === 'super_admin') return t('super_admin') || 'مدير عام';
-    if (role === 'agency_admin') return t('agency_admin') || 'مدير الوكالة';
-    if (role === 'manager') return t('manager') || 'مدير';
+    const userRole = profile?.role;
+    if (userRole === 'super_admin') return t('super_admin') || 'مدير المنصة';
+    if (userRole === 'agency_admin') return t('agency_admin') || 'مدير الوكالة';
+    if (userRole === 'manager') return t('manager') || 'مدير';
     return t('agent') || 'وكيل';
   };
 
@@ -78,7 +87,9 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
       <AppShell.Header>
         <Group h="100%" px="md" justify="space-between">
           <Group gap="sm">
-            {agency?.logo_url ? (
+            {isPlatformSuperAdmin && branding.logo_url ? (
+              <Image src={branding.logo_url} h={36} w="auto" fit="contain" style={{ maxWidth: 120 }} />
+            ) : agency?.logo_url ? (
               <Image
                 src={agency.logo_url}
                 h={36}
@@ -87,9 +98,9 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                 style={{ maxWidth: 120 }}
               />
             ) : (
-              <Text size="lg" fw={700} c="#8B7355">
+              <Text size="lg" fw={700} c={headerColor}>
                 {isPlatformSuperAdmin
-                  ? (agency?.name || 'Hujjaj')
+                  ? platformName
                   : (agency?.name || t('app_name'))}
               </Text>
             )}
@@ -144,6 +155,9 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
 
       <AppShell.Main>
         <Box style={{ maxWidth: 1400, margin: '0 auto' }}>
+          {!isPlatformSuperAdmin && agency?.subscription_status === 'past_due' && (
+            <Text mb="md" c="red" fw={600}>{t('subscription_past_due') || 'الاشتراك متأخر عن الدفع'}</Text>
+          )}
           {children}
         </Box>
       </AppShell.Main>
