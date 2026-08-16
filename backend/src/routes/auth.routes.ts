@@ -20,6 +20,6 @@ router.post('/login', authLimiter, validateBody(loginSchema), authController.log
 router.post('/register', authLimiter, validateBody(registerSchema), authController.register);
 router.post('/refresh', authLimiter, authController.refresh);
 router.post('/logout', authController.logout);
-router.get('/me', authMiddleware, rlsContextMiddleware, authController.me);
+router.get('/me', authLimiter, authMiddleware, rlsContextMiddleware, authController.me);
 
 export default router;
