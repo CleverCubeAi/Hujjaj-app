@@ -5,7 +5,7 @@
 import dotenv from 'dotenv';
 import path from 'path';
 import db from '../services/db';
-import { hashPassword } from '../services/auth.service';
+import { hashPassword, verifyPassword } from '../services/auth.service';
 import { runAsPlatform } from '../middleware/rlsContext';
 
 dotenv.config({ path: path.resolve(process.cwd(), '../.env') });
@@ -20,13 +20,21 @@ async function seedSuperAdmin() {
     await runAsPlatform(async () => {
     const existingSuper = await db('users').where({ role: 'super_admin' }).first();
     if (existingSuper) {
-      // Ensure platform super admin is never tied to an agency
+      const updates: Record<string, unknown> = {};
       if (existingSuper.agency_id || existingSuper.branch_id) {
-        await db('users').where({ id: existingSuper.id }).update({
-          agency_id: null,
-          branch_id: null,
-        });
-        console.log(`[seed] Cleared agency/branch from super admin (${existingSuper.email})`);
+        updates.agency_id = null;
+        updates.branch_id = null;
+      }
+      if (existingSuper.email !== email) {
+        updates.email = email;
+      }
+      const passwordMatches = await verifyPassword(password, existingSuper.password_hash);
+      if (!passwordMatches) {
+        updates.password_hash = await hashPassword(password);
+      }
+      if (Object.keys(updates).length > 0) {
+        await db('users').where({ id: existingSuper.id }).update(updates);
+        console.log(`[seed] Updated existing super admin (${email}) from SUPER_ADMIN_* env`);
       } else {
         console.log(`[seed] Super admin already exists (${existingSuper.email}) — skipping`);
       }
@@ -39,6 +47,7 @@ async function seedSuperAdmin() {
         role: 'super_admin',
         agency_id: null,
         branch_id: null,
+        password_hash: await hashPassword(password),
       });
       console.log(`[seed] Promoted existing user to platform super_admin (no agency): ${email}`);
       return;
