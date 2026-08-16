@@ -1,7 +1,6 @@
 services:
   postgres:
     image: postgres:16-alpine
-    container_name: hujjaj-postgres
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-hujjaj}
@@ -9,8 +8,6 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-hujjaj}
     volumes:
       - postgres-data:/var/lib/postgresql/data
-    # No host ports — Coolify (and other reverse proxies) already bind 80/443.
-    # Postgres stays on the internal compose network only.
     expose:
       - "5432"
     networks:
@@ -25,9 +22,9 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: hujjaj-backend
     restart: unless-stopped
-    expose:
+    # Publish container port without binding host :3001 (Coolify/Traefik needs a published port to detect it)
+    ports:
       - "3001"
     env_file:
       - .env
@@ -58,7 +55,13 @@ services:
     networks:
       - hujjaj-network
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3001/health"]
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3001/health').then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -70,17 +73,19 @@ services:
       dockerfile: frontend/Dockerfile
       args:
         - VITE_API_URL=${VITE_API_URL:-/api}
-    container_name: hujjaj-frontend
     restart: unless-stopped
-    # Coolify proxy routes to this service — do not bind host :80
-    expose:
+    # "80" (not "80:80") = random host port. Avoids conflict with Coolify proxy on :80
+    # while still letting Traefik detect the container port (expose-only causes 404).
+    ports:
       - "80"
+    labels:
+      - traefik.http.services.frontend.loadbalancer.server.port=80
     depends_on:
       - backend
     networks:
       - hujjaj-network
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1/health || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
