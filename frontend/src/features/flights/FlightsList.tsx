@@ -382,7 +382,7 @@ export function FlightsList() {
                       <Table.Td>{formatDate(flight.departure_date)}</Table.Td>
                       <Table.Td>
                         {flight.seasons ? (
-                          <Badge variant="light" color="brown">
+                          <Badge variant="light" color="teal">
                             {flight.seasons.name}
                           </Badge>
                         ) : '-'}
@@ -620,7 +620,7 @@ export function FlightsList() {
               {form.transits.map((transit, index) => (
                 <Card key={index} withBorder p="md" radius="md">
                   <Group justify="space-between" mb="sm">
-                    <Badge variant="filled" color="brown">
+                    <Badge variant="filled" color="teal">
                       {t('stop') || 'توقف'} {index + 1}
                     </Badge>
                     <ActionIcon 

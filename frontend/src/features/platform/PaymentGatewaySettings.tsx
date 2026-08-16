@@ -128,7 +128,7 @@ export function PaymentGatewaySettings() {
                     {g.webhook_url && <Text size="xs" c="dimmed">{g.webhook_url}</Text>}
                   </>
                 )}
-                <Button color="brown" onClick={() => save(g.provider)}>{t('save')}</Button>
+                <Button color="teal" onClick={() => save(g.provider)}>{t('save')}</Button>
                 <Button variant="light" onClick={() => test(g.provider)}>{t('test_connection') || 'Test'}</Button>
               </Stack>
             </Paper>

@@ -1,13 +1,16 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { AppShell, Burger, Group, Text, ActionIcon, Avatar, Box, Image } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { useAuth } from '../../providers/AuthProvider';
 import { Sidebar } from './Sidebar';
 import { LanguageSwitcher } from '../common/LanguageSwitcher';
+import { BrandLogo } from '../brand/BrandLogo';
 import { useTranslation } from 'react-i18next';
 import { LogOut, Bell } from 'lucide-react';
 import { api } from '../../lib/api';
 import { useBranding } from '../../providers/BrandingProvider';
+import { brand } from '../../theme/brand';
+import kaabaDay from '../../assets/img/kaaba-day.png';
 
 interface AgencyInfo {
   name: string;
@@ -48,9 +51,6 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   }, [isPlatformSuperAdmin]);
 
   const platformName = i18n.language === 'fr' ? branding.app_name_fr : branding.app_name_ar;
-  const headerColor = isPlatformSuperAdmin
-    ? (branding.primary_color || '#8B7355')
-    : (agency?.primary_color || branding.primary_color || '#8B7355');
 
   const getRoleLabel = () => {
     const userRole = profile?.role;
@@ -62,94 +62,111 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <AppShell
-      header={{ height: 56 }}
+      header={{ height: 64 }}
       navbar={{
-        width: 220,
+        width: 248,
         breakpoint: 'sm',
         collapsed: { mobile: !opened },
       }}
-      padding="lg"
+      padding="md"
       styles={{
         main: {
-          backgroundColor: '#F5EFE6',
+          backgroundColor: brand.sand,
           minHeight: '100vh',
         },
         header: {
-          backgroundColor: '#FEFBF6',
-          borderBottom: '1px solid #E8DFD0',
+          backgroundColor: brand.ivory,
+          borderBottom: `1px solid ${brand.border}`,
+          overflow: 'hidden',
+          position: 'relative',
         },
         navbar: {
-          backgroundColor: '#FEFBF6',
-          borderLeft: '1px solid #E8DFD0',
-        }
+          backgroundColor: brand.navy,
+          borderInlineEnd: 'none',
+          borderInlineStart: 'none',
+        },
       }}
     >
       <AppShell.Header>
-        <Group h="100%" px="md" justify="space-between">
+        <Box
+          aria-hidden
+          style={{
+            position: 'absolute',
+            inset: 0,
+            backgroundImage: `url(${kaabaDay})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center 42%',
+            opacity: 0.14,
+            pointerEvents: 'none',
+          }}
+        />
+        <Group h="100%" px="md" justify="space-between" style={{ position: 'relative', zIndex: 1 }}>
           <Group gap="sm">
-            {isPlatformSuperAdmin && branding.logo_url ? (
-              <Image src={branding.logo_url} h={36} w="auto" fit="contain" style={{ maxWidth: 120 }} />
+            {isPlatformSuperAdmin ? (
+              branding.logo_url ? (
+                <Image src={branding.logo_url} h={40} w="auto" fit="contain" style={{ maxWidth: 180 }} />
+              ) : (
+                <BrandLogo variant="horizontal" height={40} alt={platformName} />
+              )
             ) : agency?.logo_url ? (
               <Image
                 src={agency.logo_url}
-                h={36}
+                h={40}
                 w="auto"
                 fit="contain"
-                style={{ maxWidth: 120 }}
+                style={{ maxWidth: 160 }}
               />
             ) : (
-              <Text size="lg" fw={700} c={headerColor}>
-                {isPlatformSuperAdmin
-                  ? platformName
-                  : (agency?.name || t('app_name'))}
+              <Text size="lg" fw={700} c={brand.navy}>
+                {agency?.name || t('app_name')}
               </Text>
             )}
           </Group>
           <Group gap="sm">
-            <LanguageSwitcher />
-            <ActionIcon 
-              variant="subtle" 
-              color="brown" 
+            <LanguageSwitcher variant="on-ivory" />
+            <ActionIcon
+              variant="subtle"
+              color="teal"
               size="md"
-              title="الإشعارات"
+              title={t('notifications') || 'الإشعارات'}
             >
-              <Bell size={18} />
+              <Bell size={18} color={brand.navy} />
             </ActionIcon>
             <Group gap="xs">
-              <Avatar 
-                src={profile?.avatar_url} 
-                color="brown" 
-                radius="xl" 
+              <Avatar
+                src={profile?.avatar_url}
+                color="teal"
+                radius="xl"
                 size="sm"
               >
                 {profile?.full_name?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase()}
               </Avatar>
               <Box visibleFrom="md">
-                <Text size="xs" fw={500}>{profile?.full_name || user?.email}</Text>
-                <Text size="xs" c="dimmed">{getRoleLabel()}</Text>
+                <Text size="xs" fw={600} c={brand.navy}>{profile?.full_name || user?.email}</Text>
+                <Text size="xs" c={brand.muted}>{getRoleLabel()}</Text>
               </Box>
             </Group>
-            <ActionIcon 
-              onClick={() => signOut()} 
+            <ActionIcon
+              onClick={() => signOut()}
               title={t('logout')}
               variant="subtle"
-              color="brown"
+              color="teal"
               size="md"
             >
-              <LogOut size={18} />
+              <LogOut size={18} color={brand.navy} />
             </ActionIcon>
-            <Burger 
-              opened={opened} 
-              onClick={toggle} 
-              hiddenFrom="sm" 
-              size="sm" 
-              color="#8B7355"
+            <Burger
+              opened={opened}
+              onClick={toggle}
+              hiddenFrom="sm"
+              size="sm"
+              color={brand.navy}
             />
           </Group>
         </Group>
       </AppShell.Header>
 
-      <AppShell.Navbar p="xs">
+      <AppShell.Navbar p="sm">
         <Sidebar closeMobile={toggle} />
       </AppShell.Navbar>
 

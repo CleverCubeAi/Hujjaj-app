@@ -322,7 +322,7 @@ export function BookingDetailsPage() {
             <Text fw={600}>{t('trip_info') || 'معلومات الرحلة'}</Text>
           </Group>
           <Stack gap="xs">
-            <Badge variant="light" color="brown">{booking.seasons?.name} ({booking.seasons?.type})</Badge>
+            <Badge variant="light" color="teal">{booking.seasons?.name} ({booking.seasons?.type})</Badge>
             {booking.flights && (
               <>
                 <Text size="sm">{booking.flights.code}</Text>

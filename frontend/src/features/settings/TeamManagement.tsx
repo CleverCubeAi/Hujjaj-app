@@ -388,7 +388,7 @@ export function TeamManagement() {
             <Table.Tr key={user.id}>
               <Table.Td>
                 <Group gap="xs">
-                  <Avatar src={user.avatar_url} size="sm" radius="xl" color="brown">
+                  <Avatar src={user.avatar_url} size="sm" radius="xl" color="teal">
                     {user.full_name?.[0]?.toUpperCase()}
                   </Avatar>
                   {user.full_name}

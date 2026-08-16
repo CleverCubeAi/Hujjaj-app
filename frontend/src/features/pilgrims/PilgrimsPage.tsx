@@ -317,7 +317,7 @@ export function PilgrimsPage() {
       <SimpleGrid cols={{ base: 2, sm: 4 }}>
         <Card withBorder p="md">
           <Group>
-            <Users size={24} color="#8B7355" />
+            <Users size={24} color="#0C7774" />
             <div>
               <Text size="xs" c="dimmed">{t('total_pilgrims') || 'إجمالي المعتمرين'}</Text>
               <Text fw={700} size="xl">{totalCount}</Text>
@@ -446,7 +446,7 @@ export function PilgrimsPage() {
                     {bookingNumbers.length > 0 ? (
                       <Group gap={4} wrap="wrap">
                         {bookingNumbers.map((bn) => (
-                          <Badge key={bn} variant="light" color="brown" size="sm">
+                          <Badge key={bn} variant="light" color="teal" size="sm">
                             {bn}
                           </Badge>
                         ))}
@@ -779,7 +779,7 @@ export function PilgrimsPage() {
             {viewPilgrim.bookings && (
               <Card withBorder p="md">
                 <Text fw={600} mb="sm">{t('booking') || 'الحجز'}</Text>
-                <Badge color="brown" size="lg">{viewPilgrim.bookings.booking_number}</Badge>
+                <Badge color="teal" size="lg">{viewPilgrim.bookings.booking_number}</Badge>
               </Card>
             )}
 

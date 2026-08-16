@@ -7,7 +7,7 @@ import { notifications } from '@mantine/notifications';
 import { api } from '../../lib/api';
 import { useBranding } from '../../providers/BrandingProvider';
 
-const DEFAULTS = { primary_color: '#8B7355', accent_color: '#6F5C45' };
+const DEFAULTS = { primary_color: '#063F46', accent_color: '#C99A3D' };
 
 export function BrandingSettings() {
   const { t, i18n } = useTranslation();
@@ -120,7 +120,7 @@ export function BrandingSettings() {
               }} />
             </Box>
           ))}
-          <Button color="brown" loading={saving} onClick={save}>{t('save')}</Button>
+          <Button color="teal" loading={saving} onClick={save}>{t('save')}</Button>
         </Stack>
       </SimpleGrid>
     </Paper>

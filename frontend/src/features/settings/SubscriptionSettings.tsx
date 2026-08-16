@@ -60,7 +60,7 @@ export function SubscriptionSettings() {
             <Title order={4}>{i18n.language === 'fr' ? pkg.name_fr : pkg.name_ar}</Title>
             <Text fw={700} my="sm">{Number(pkg.price_amount).toLocaleString()} {pkg.currency} / {pkg.billing_period}</Text>
             <Button
-              color="brown"
+              color="teal"
               fullWidth
               disabled={sub?.package?.id === pkg.id}
               onClick={() => pay(pkg.id)}

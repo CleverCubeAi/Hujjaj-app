@@ -221,7 +221,7 @@ export function RoomMap({
       <Paper p="md" withBorder>
         <Group justify="space-between" mb="sm">
           <Group>
-            <ThemeIcon size="lg" color="brown" variant="light">
+            <ThemeIcon size="lg" color="teal" variant="light">
               <Home size={20} />
             </ThemeIcon>
             <div>

@@ -163,7 +163,7 @@ export function BookingPaymentPage() {
             {t('back') || 'رجوع'}
           </Button>
           <Title order={2}>{t('payment_history') || 'سجل الدفعات'}</Title>
-          <Badge color="brown">{booking.booking_number}</Badge>
+          <Badge color="teal">{booking.booking_number}</Badge>
         </Group>
         <Button leftSection={<Plus size={18} />} onClick={() => {
           setPaymentForm(prev => ({ ...prev, amount: booking.remaining_balance }));
@@ -215,7 +215,7 @@ export function BookingPaymentPage() {
       </Card>
 
       {/* Payments List */}
-      <Paper p="md" radius="lg" style={{ backgroundColor: '#FFFFFF', border: '1px solid #E8DFD0' }}>
+      <Paper p="md" radius="lg" style={{ backgroundColor: '#F8F6F0', border: '1px solid #E2D9C8' }}>
         <Text fw={600} mb="md">{t('payments') || 'الدفعات'} ({payments.length})</Text>
         
         {payments.length === 0 ? (

@@ -165,7 +165,7 @@ export function ImageUpload({
         {!value && !disabled && (
           <ActionIcon
             size="xs"
-            color="brown"
+            color="teal"
             variant="filled"
             radius="xl"
             style={{
@@ -194,8 +194,8 @@ export function ImageUpload({
         style={{
           overflow: 'hidden',
           cursor: disabled ? 'default' : 'pointer',
-          border: dragActive ? '2px dashed #8B7355' : '1px solid #E8DFD0',
-          backgroundColor: dragActive ? '#F5EFE6' : '#FEFBF6'
+          border: dragActive ? '2px dashed #0C7774' : '1px solid #E2D9C8',
+          backgroundColor: dragActive ? '#E7F3F2' : '#F8F6F0'
         }}
         onDragEnter={handleDrag}
         onDragLeave={handleDrag}
@@ -243,7 +243,7 @@ export function ImageUpload({
         ) : (
           <Center h="100%">
             <Stack align="center" gap={4}>
-              <ImageIcon size={24} color="#8B7355" />
+              <ImageIcon size={24} color="#0C7774" />
               <Text size="xs" c="dimmed">
                 {placeholder || t('click_to_upload') || 'Click to upload'}
               </Text>
@@ -264,8 +264,8 @@ export function ImageUpload({
       style={{
         overflow: 'hidden',
         cursor: disabled ? 'default' : 'pointer',
-        border: dragActive ? '2px dashed #8B7355' : '1px solid #E8DFD0',
-        backgroundColor: dragActive ? '#F5EFE6' : '#FEFBF6'
+        border: dragActive ? '2px dashed #0C7774' : '1px solid #E2D9C8',
+        backgroundColor: dragActive ? '#E7F3F2' : '#F8F6F0'
       }}
       onDragEnter={handleDrag}
       onDragLeave={handleDrag}
@@ -314,7 +314,7 @@ export function ImageUpload({
       ) : (
         <Center h="100%">
           <Stack align="center" gap={4}>
-            <Upload size={24} color="#8B7355" />
+            <Upload size={24} color="#0C7774" />
             <Text size="xs" c="dimmed" ta="center" px="xs">
               {placeholder || t('click_or_drag') || 'Click or drag image'}
             </Text>

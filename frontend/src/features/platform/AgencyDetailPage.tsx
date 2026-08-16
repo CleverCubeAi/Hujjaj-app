@@ -232,7 +232,7 @@ export function AgencyDetailPage() {
     <Stack gap="lg" pos="relative">
       <LoadingOverlay visible={loading} />
       <Group>
-        <Button variant="subtle" color="brown" leftSection={<ArrowRight size={16} />} onClick={() => navigate('/agencies')}>
+        <Button variant="subtle" color="teal" leftSection={<ArrowRight size={16} />} onClick={() => navigate('/agencies')}>
           {t('agencies') || 'الوكالات'}
         </Button>
       </Group>
@@ -240,7 +240,7 @@ export function AgencyDetailPage() {
       <Title order={2}>{agency?.name || t('agency') || 'الوكالة'}</Title>
 
       <SimpleGrid cols={{ base: 1, md: 2 }} spacing="lg">
-        <Paper p="lg" radius="lg" style={{ backgroundColor: '#FFFFFF', border: '1px solid #E8DFD0' }}>
+        <Paper p="lg" radius="lg" style={{ backgroundColor: '#F8F6F0', border: '1px solid #E2D9C8' }}>
           <Title order={4} mb="md">{t('subscription_and_account') || 'الاشتراك والحساب'}</Title>
           <Stack>
             <TextInput
@@ -289,13 +289,13 @@ export function AgencyDetailPage() {
                 { value: 'suspended', label: t('suspended') || 'معلق' },
               ]}
             />
-            <Button color="brown" loading={saving} onClick={handleSaveAgency}>
+            <Button color="teal" loading={saving} onClick={handleSaveAgency}>
               {t('save') || 'حفظ'}
             </Button>
           </Stack>
         </Paper>
 
-        <Paper p="lg" radius="lg" style={{ backgroundColor: '#FFFFFF', border: '1px solid #E8DFD0' }}>
+        <Paper p="lg" radius="lg" style={{ backgroundColor: '#F8F6F0', border: '1px solid #E2D9C8' }}>
           <Title order={4} mb="sm">{t('account_summary') || 'ملخص الحساب'}</Title>
           <Stack gap="xs">
             <Group justify="space-between">
@@ -314,10 +314,10 @@ export function AgencyDetailPage() {
         </Paper>
       </SimpleGrid>
 
-      <Paper p="lg" radius="lg" style={{ backgroundColor: '#FFFFFF', border: '1px solid #E8DFD0' }}>
+      <Paper p="lg" radius="lg" style={{ backgroundColor: '#F8F6F0', border: '1px solid #E2D9C8' }}>
         <Group justify="space-between" mb="md">
           <Title order={4}>{t('agency_accounts') || 'حسابات الوكالة'}</Title>
-          <Button leftSection={<Plus size={16} />} color="brown" onClick={openCreateUser}>
+          <Button leftSection={<Plus size={16} />} color="teal" onClick={openCreateUser}>
             {t('add_user') || 'إضافة مستخدم'}
           </Button>
         </Group>
@@ -344,12 +344,12 @@ export function AgencyDetailPage() {
                   <Table.Td>{user.full_name}</Table.Td>
                   <Table.Td>{user.email}</Table.Td>
                   <Table.Td>
-                    <Badge variant="light" color="brown">{roleLabel(user.role)}</Badge>
+                    <Badge variant="light" color="teal">{roleLabel(user.role)}</Badge>
                   </Table.Td>
                   <Table.Td>{formatLocalDate(user.created_at)}</Table.Td>
                   <Table.Td>
                     <Group gap={4} justify="flex-end">
-                      <ActionIcon variant="subtle" color="brown" onClick={() => openEditUser(user)}>
+                      <ActionIcon variant="subtle" color="teal" onClick={() => openEditUser(user)}>
                         <Edit size={16} />
                       </ActionIcon>
                       <ActionIcon variant="subtle" color="red" onClick={() => setDeleteUser(user)}>
@@ -403,7 +403,7 @@ export function AgencyDetailPage() {
             <Button variant="default" onClick={() => setUserModalOpen(false)}>
               {t('cancel') || 'إلغاء'}
             </Button>
-            <Button color="brown" loading={savingUser} onClick={handleSaveUser}>
+            <Button color="teal" loading={savingUser} onClick={handleSaveUser}>
               {t('save') || 'حفظ'}
             </Button>
           </Group>

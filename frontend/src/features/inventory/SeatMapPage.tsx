@@ -112,7 +112,7 @@ export function SeatMapPage() {
 
       <Card withBorder p="md">
         <Group>
-          <Plane size={24} color="#8B7355" />
+          <Plane size={24} color="#0C7774" />
           <div>
             <Text fw={600}>{flight?.code} — {flight?.carrier}</Text>
             <Text size="xs" c="dimmed">

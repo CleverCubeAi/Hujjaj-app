@@ -100,13 +100,13 @@ export function LlmSettings() {
         <NumberInput label={t('monthly_budget_usd') || 'ميزانية شهرية USD'} value={form.monthly_budget_usd as number} onChange={(v) => setForm({ ...form, monthly_budget_usd: v === '' ? '' : Number(v) })} />
         <TextInput label={t('budget_alert_email') || 'بريد التنبيه'} value={form.budget_alert_email} onChange={(e) => setForm({ ...form, budget_alert_email: e.currentTarget.value })} />
         <Group>
-          <Button color="brown" loading={saving} onClick={save}>{t('save')}</Button>
+          <Button color="teal" loading={saving} onClick={save}>{t('save')}</Button>
           <Button variant="light" loading={testing} onClick={test}>{t('test_connection') || 'Test'}</Button>
         </Group>
         {budget > 0 && (
           <div>
             <Text size="sm">{spent.toFixed(4)} / {budget} USD</Text>
-            <Progress value={Math.min(100, (spent / budget) * 100)} color="brown" />
+            <Progress value={Math.min(100, (spent / budget) * 100)} color="teal" />
           </div>
         )}
       </Stack>

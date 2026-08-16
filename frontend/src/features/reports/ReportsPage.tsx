@@ -424,7 +424,7 @@ export function ReportsPage() {
                       {t('avg_booking_value') || 'متوسط قيمة الحجز'}: {formatCurrency(reportData.financial.average_booking_value)}
                     </Text>
                   </div>
-                  <Calendar size={32} color="#8B7355" />
+                  <Calendar size={32} color="#0C7774" />
                 </Group>
               </Card>
             </SimpleGrid>

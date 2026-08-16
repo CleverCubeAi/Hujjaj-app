@@ -1132,7 +1132,7 @@ export function BookingWizard() {
         </Button>
       </Group>
 
-      <Paper p="xl" radius="lg" style={{ backgroundColor: '#FFFFFF', border: '1px solid #E8DFD0' }} pos="relative">
+      <Paper p="xl" radius="lg" style={{ backgroundColor: '#F8F6F0', border: '1px solid #E2D9C8' }} pos="relative">
         <LoadingOverlay visible={loading} />
         
         <Stepper active={active} onStepClick={setActive} allowNextStepsSelect={false} size="sm" mb="xl">
@@ -1207,8 +1207,8 @@ export function BookingWizard() {
                         withBorder
                         style={{
                           cursor: 'pointer',
-                          borderColor: selectedClient?.id === client.id ? '#8B7355' : undefined,
-                          backgroundColor: selectedClient?.id === client.id ? '#F5EFE6' : undefined
+                          borderColor: selectedClient?.id === client.id ? '#0C7774' : undefined,
+                          backgroundColor: selectedClient?.id === client.id ? '#E7F3F2' : undefined
                         }}
                         onClick={() => setSelectedClient(client)}
                       >
@@ -1230,7 +1230,7 @@ export function BookingWizard() {
 
                 {/* Show selected client info and their pilgrims */}
                 {selectedClient && (
-                  <Card withBorder p="md" mt="md" style={{ backgroundColor: '#F5EFE6' }}>
+                  <Card withBorder p="md" mt="md" style={{ backgroundColor: '#E7F3F2' }}>
                     <Stack gap="sm">
                       <Group justify="space-between">
                         <div>
@@ -1644,8 +1644,8 @@ export function BookingWizard() {
                             withBorder
                             style={{
                               cursor: 'pointer',
-                              borderColor: selectedFlightInventory === inv.id ? '#8B7355' : undefined,
-                              backgroundColor: selectedFlightInventory === inv.id ? '#F5EFE6' : undefined
+                              borderColor: selectedFlightInventory === inv.id ? '#0C7774' : undefined,
+                              backgroundColor: selectedFlightInventory === inv.id ? '#E7F3F2' : undefined
                             }}
                             onClick={() => setSelectedFlightInventory(inv.id)}
                           >
@@ -1662,7 +1662,7 @@ export function BookingWizard() {
                               <Divider />
                               <Group justify="space-between">
                                 <Text size="xs" c="dimmed">{t('sell_price') || 'سعر البيع'}</Text>
-                                <Text fw={600} c="brown">{Number(inv.sell_price || 0).toLocaleString('en')} د.م</Text>
+                                <Text fw={600} c="#C99A3D">{Number(inv.sell_price || 0).toLocaleString('en')} د.م</Text>
                               </Group>
                             </Stack>
                           </Card>
@@ -1697,8 +1697,8 @@ export function BookingWizard() {
                                       withBorder
                                       style={{
                                         cursor: 'pointer',
-                                        borderColor: isSelected ? '#8B7355' : undefined,
-                                        backgroundColor: isSelected ? '#F5EFE6' : undefined
+                                        borderColor: isSelected ? '#0C7774' : undefined,
+                                        backgroundColor: isSelected ? '#E7F3F2' : undefined
                                       }}
                                       onClick={() => setPilgrimFlightSelections(prev => ({ ...prev, [idx]: inv.id }))}
                                     >
@@ -1707,7 +1707,7 @@ export function BookingWizard() {
                                         {isSelected && <ThemeIcon color="green" size="xs"><CheckCircle size={12} /></ThemeIcon>}
                                       </Group>
                                       <Text size="xs">{inv.available_seats} {t('seats_available') || 'مقاعد متاحة'}</Text>
-                                      <Text size="xs" fw={500} c="brown">{Number(inv.sell_price || 0).toLocaleString('en')} د.م {t('sell_price') || 'سعر البيع'}</Text>
+                                      <Text size="xs" fw={500} c="#C99A3D">{Number(inv.sell_price || 0).toLocaleString('en')} د.م {t('sell_price') || 'سعر البيع'}</Text>
                                     </Card>
                                   );
                                 })}
@@ -1864,7 +1864,7 @@ export function BookingWizard() {
                             <Badge size="xs" variant="outline">{t('batch')} {pos + 1}</Badge>
                             <Text size="xs">{inv.accommodations?.name_ar || inv.accommodations?.name || '-'}</Text>
                             <Badge size="xs" variant="light">{formatLocalDate(inv.check_in_date)} — {formatLocalDate(inv.check_out_date)}</Badge>
-                            <Text size="xs" c="brown">{Number(inv.sell_price_per_bed ?? inv.sell_price ?? 0).toLocaleString('en')} د.م/{t('bed') || 'سرير'}</Text>
+                            <Text size="xs" c="#C99A3D">{Number(inv.sell_price_per_bed ?? inv.sell_price ?? 0).toLocaleString('en')} د.م/{t('bed') || 'سرير'}</Text>
                           </Group>
                           <ActionIcon size="sm" color="red" variant="subtle" onClick={() => setSelectedRoomInventories(prev => prev.filter(x => x.id !== inv.id))}>
                             <Trash2 size={14} />
@@ -1883,7 +1883,7 @@ export function BookingWizard() {
                         {getUniqueHotels().map((h) => {
                           const isSelected = selectedAccommodationId === h.id;
                           return (
-                            <Card key={h.id} p="xs" radius="sm" withBorder style={{ cursor: 'pointer', borderColor: isSelected ? '#8B7355' : undefined, backgroundColor: isSelected ? '#F5EFE6' : undefined }}
+                            <Card key={h.id} p="xs" radius="sm" withBorder style={{ cursor: 'pointer', borderColor: isSelected ? '#0C7774' : undefined, backgroundColor: isSelected ? '#E7F3F2' : undefined }}
                               onClick={() => { setSelectedAccommodationId(h.id); setSelectedRoomType(null); }}>
                               <Text size="sm" fw={isSelected ? 600 : 500}>{h.name_ar || h.name}</Text>
                               {h.city && <Text size="xs" c="dimmed">{h.city}</Text>}
@@ -1902,11 +1902,11 @@ export function BookingWizard() {
                           const isSelected = selectedRoomType === rt.id;
                           const canSelect = rt.bedsAvailable >= pilgrims.length;
                           return (
-                            <Card key={rt.id} p="xs" radius="sm" withBorder style={{ cursor: canSelect ? 'pointer' : 'not-allowed', borderColor: isSelected ? '#8B7355' : undefined, backgroundColor: isSelected ? '#F5EFE6' : undefined, opacity: canSelect ? 1 : 0.6 }}
+                            <Card key={rt.id} p="xs" radius="sm" withBorder style={{ cursor: canSelect ? 'pointer' : 'not-allowed', borderColor: isSelected ? '#0C7774' : undefined, backgroundColor: isSelected ? '#E7F3F2' : undefined, opacity: canSelect ? 1 : 0.6 }}
                               onClick={() => canSelect && setSelectedRoomType(rt.id)}>
                               <Text size="sm" fw={isSelected ? 600 : 500}>{t(rt.type) || rt.type}</Text>
                               <Text size="xs" c="dimmed">{rt.bedsAvailable} {t('beds_available') || 'أسرة'}</Text>
-                              <Text size="xs" fw={500} c="brown">{Number(rt.pricePerBed).toLocaleString('en')} د.م/{t('bed') || 'سرير'}</Text>
+                              <Text size="xs" fw={500} c="#C99A3D">{Number(rt.pricePerBed).toLocaleString('en')} د.م/{t('bed') || 'سرير'}</Text>
                             </Card>
                           );
                         })}
@@ -1935,7 +1935,7 @@ export function BookingWizard() {
                                 {alreadyAdded && <ThemeIcon color="green" size="xs"><CheckCircle size={12} /></ThemeIcon>}
                               </Group>
                               <Text size="xs" c="dimmed">{formatLocalDate(inv.check_in_date)} — {formatLocalDate(inv.check_out_date)}</Text>
-                              <Text size="xs" fw={500} c="brown">{Number(inv.sell_price_per_bed || inv.sell_price || 0).toLocaleString('en')} د.م/{t('bed') || 'سرير'}</Text>
+                              <Text size="xs" fw={500} c="#C99A3D">{Number(inv.sell_price_per_bed || inv.sell_price || 0).toLocaleString('en')} د.م/{t('bed') || 'سرير'}</Text>
                             </Card>
                           );
                         })}
@@ -1990,7 +1990,7 @@ export function BookingWizard() {
                                 {getUniqueHotels().map((h) => {
                                   const isSelected = col1Hotel === h.id;
                                   return (
-                                    <Card key={h.id} p="xs" radius="sm" withBorder style={{ cursor: 'pointer', borderColor: isSelected ? '#8B7355' : undefined, backgroundColor: isSelected ? '#F5EFE6' : undefined }}
+                                    <Card key={h.id} p="xs" radius="sm" withBorder style={{ cursor: 'pointer', borderColor: isSelected ? '#0C7774' : undefined, backgroundColor: isSelected ? '#E7F3F2' : undefined }}
                                       onClick={() => { col1HotelSet(h.id); col2TypeSet(null); }}>
                                       <Text size="xs" fw={isSelected ? 600 : 500}>{h.name_ar || h.name}</Text>
                                     </Card>
@@ -2008,11 +2008,11 @@ export function BookingWizard() {
                                   const isSelected = col2Type === rt.id;
                                   const canSelect = rt.bedsAvailable >= 1;
                                   return (
-                                    <Card key={rt.id} p="xs" radius="sm" withBorder style={{ cursor: canSelect ? 'pointer' : 'not-allowed', borderColor: isSelected ? '#8B7355' : undefined, backgroundColor: isSelected ? '#F5EFE6' : undefined, opacity: canSelect ? 1 : 0.6 }}
+                                    <Card key={rt.id} p="xs" radius="sm" withBorder style={{ cursor: canSelect ? 'pointer' : 'not-allowed', borderColor: isSelected ? '#0C7774' : undefined, backgroundColor: isSelected ? '#E7F3F2' : undefined, opacity: canSelect ? 1 : 0.6 }}
                                       onClick={() => canSelect && col2TypeSet(rt.id)}>
                                       <Text size="xs" fw={isSelected ? 600 : 500}>{t(rt.type) || rt.type}</Text>
                                       <Text size="xs" c="dimmed">{rt.bedsAvailable} {t('beds') || 'أسرة'}</Text>
-                                      <Text size="xs" fw={500} c="brown">{Number(rt.pricePerBed).toLocaleString('en')} د.م/{t('bed') || 'سرير'}</Text>
+                                      <Text size="xs" fw={500} c="#C99A3D">{Number(rt.pricePerBed).toLocaleString('en')} د.م/{t('bed') || 'سرير'}</Text>
                                     </Card>
                                   );
                                 })}
@@ -2048,7 +2048,7 @@ export function BookingWizard() {
                                         {alreadyAdded && <ThemeIcon color="green" size="xs"><CheckCircle size={10} /></ThemeIcon>}
                                       </Group>
                                       <Text size="xs" c="dimmed">{formatLocalDate(inv.check_in_date)} — {formatLocalDate(inv.check_out_date)}</Text>
-                                      <Text size="xs" fw={500} c="brown">{Number(inv.sell_price_per_bed || inv.sell_price || 0).toLocaleString('en')} د.م/{t('bed') || 'سرير'}</Text>
+                                      <Text size="xs" fw={500} c="#C99A3D">{Number(inv.sell_price_per_bed || inv.sell_price || 0).toLocaleString('en')} د.م/{t('bed') || 'سرير'}</Text>
                                     </Card>
                                   );
                                 })}
@@ -2091,8 +2091,8 @@ export function BookingWizard() {
                     radius="md"
                     withBorder
                     style={{
-                      borderColor: isSelected ? '#8B7355' : undefined,
-                      backgroundColor: isSelected ? '#F5EFE6' : undefined,
+                      borderColor: isSelected ? '#0C7774' : undefined,
+                      backgroundColor: isSelected ? '#E7F3F2' : undefined,
                     }}
                   >
                     <Group
@@ -2105,7 +2105,7 @@ export function BookingWizard() {
                         <Badge size="sm" variant="light">{service.category}</Badge>
                       </div>
                       <div style={{ textAlign: 'left' }}>
-                        <Text fw={600} c="brown">{service.price?.toLocaleString('en')} {t('mad') || 'د.م'}</Text>
+                        <Text fw={600} c="#C99A3D">{service.price?.toLocaleString('en')} {t('mad') || 'د.م'}</Text>
                         <Checkbox checked={isSelected} readOnly />
                       </div>
                     </Group>
@@ -2312,7 +2312,7 @@ export function BookingWizard() {
 
             <Group justify="space-between">
               <Text size="xl" fw={700}>{t('total_general') || 'المجموع الكلي'}:</Text>
-              <Text size="xl" fw={700} c="brown">{calculateTotal().toLocaleString('en')} {t('mad') || 'د.م'}</Text>
+              <Text size="xl" fw={700} c="#C99A3D">{calculateTotal().toLocaleString('en')} {t('mad') || 'د.م'}</Text>
             </Group>
 
             <TextInput
@@ -2464,7 +2464,7 @@ export function BookingWizard() {
                   return (
                     <Stack gap="xs">
                       <Group>
-                        <Badge size="lg" color="brown">{t(rt?.type) || rt?.type}</Badge>
+                        <Badge size="lg" color="teal">{t(rt?.type) || rt?.type}</Badge>
                         <Text>{capacity} {t('beds_per_room') || 'أسرة/غرفة'}</Text>
                       </Group>
                       

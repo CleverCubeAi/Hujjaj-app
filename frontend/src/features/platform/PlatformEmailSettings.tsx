@@ -106,7 +106,7 @@ export function PlatformEmailSettings() {
             {form.test_status} {form.last_tested_at ? `· ${form.last_tested_at}` : ''}
           </Text>
         )}
-        <Button color="brown" loading={saving} onClick={save}>{t('save')}</Button>
+        <Button color="teal" loading={saving} onClick={save}>{t('save')}</Button>
         <Group>
           <TextInput placeholder={t('test_email') || 'email@example.com'} value={testTo} onChange={(e) => setTestTo(e.currentTarget.value)} style={{ flex: 1 }} />
           <Button variant="light" loading={testing} onClick={test}>{t('send_test') || 'Test'}</Button>

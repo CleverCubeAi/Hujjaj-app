@@ -221,7 +221,7 @@ export function BookingRoomsPage() {
             {t('back') || 'رجوع'}
           </Button>
           <Title order={2}>{t('room_allocation') || 'توزيع الغرف'}</Title>
-          <Badge color="brown">{booking.booking_number}</Badge>
+          <Badge color="teal">{booking.booking_number}</Badge>
         </Group>
         <Group>
           <Button 

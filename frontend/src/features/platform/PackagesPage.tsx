@@ -100,7 +100,7 @@ export function PackagesPage() {
     <Stack>
       <Group justify="space-between">
         <Title order={2}>{t('packages') || 'الباقات'}</Title>
-        <Button color="brown" leftSection={<Plus size={16} />} onClick={openCreate}>{t('create') || 'إنشاء'}</Button>
+        <Button color="teal" leftSection={<Plus size={16} />} onClick={openCreate}>{t('create') || 'إنشاء'}</Button>
       </Group>
       <Paper>
         <Table>
@@ -147,7 +147,7 @@ export function PackagesPage() {
           <Switch checked={form.is_public} label={t('public') || 'عام'} onChange={(e) => setForm({ ...form, is_public: e.currentTarget.checked })} />
           <Switch checked={form.is_default} label={t('default') || 'افتراضي'} onChange={(e) => setForm({ ...form, is_default: e.currentTarget.checked })} />
           <Switch checked={form.is_active} label={t('active')} onChange={(e) => setForm({ ...form, is_active: e.currentTarget.checked })} />
-          <Button color="brown" onClick={save}>{t('save')}</Button>
+          <Button color="teal" onClick={save}>{t('save')}</Button>
         </Stack>
       </Modal>
     </Stack>
