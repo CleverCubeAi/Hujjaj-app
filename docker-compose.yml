@@ -9,8 +9,10 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-hujjaj}
     volumes:
       - postgres-data:/var/lib/postgresql/data
-    ports:
-      - "${POSTGRES_PORT:-5432}:5432"
+    # No host ports — Coolify (and other reverse proxies) already bind 80/443.
+    # Postgres stays on the internal compose network only.
+    expose:
+      - "5432"
     networks:
       - hujjaj-network
     healthcheck:
@@ -25,8 +27,8 @@ services:
       dockerfile: Dockerfile
     container_name: hujjaj-backend
     restart: unless-stopped
-    ports:
-      - "3001:3001"
+    expose:
+      - "3001"
     env_file:
       - .env
     environment:
@@ -49,7 +51,7 @@ services:
       - TWILIO_PHONE_NUMBER=${TWILIO_PHONE_NUMBER:-}
       - PUBLIC_URL=${PUBLIC_URL:-http://localhost:3001}
     volumes:
-      - ./backend/uploads:/app/uploads
+      - backend-uploads:/app/uploads
     depends_on:
       postgres:
         condition: service_healthy
@@ -70,8 +72,9 @@ services:
         - VITE_API_URL=${VITE_API_URL:-/api}
     container_name: hujjaj-frontend
     restart: unless-stopped
-    ports:
-      - "80:80"
+    # Coolify proxy routes to this service — do not bind host :80
+    expose:
+      - "80"
     depends_on:
       - backend
     networks:
