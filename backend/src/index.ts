@@ -5,6 +5,7 @@ import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
 import path from 'path';
 import rateLimit from 'express-rate-limit';
+import csrf from 'csurf';
 import routes from './routes';
 import { scheduleExpireBookingsJob } from './jobs/expireBookings';
 import { trimBodyMiddleware } from './middleware/trimBody';
@@ -32,6 +33,8 @@ app.use(cookieParser());
 app.use(express.json({ limit: '2mb' }));
 app.use(trimBodyMiddleware);
 
+const csrfProtection = csrf({ cookie: true });
+
 const uploadRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 100,
@@ -41,7 +44,10 @@ const uploadRateLimiter = rateLimit({
 
 app.get('/uploads/:folder/:agencyId/:filename', uploadRateLimiter, optionalAuth, serveUpload);
 
-app.use('/api', routes);
+app.use('/api', csrfProtection, (req, res, next) => {
+  res.setHeader('X-CSRF-Token', req.csrfToken());
+  next();
+}, routes);
 
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date() });
