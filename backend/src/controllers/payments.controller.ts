@@ -16,7 +16,7 @@ export const updatePilgrimPayment = async (req: Request, res: Response) => {
       .from('pilgrims')
       .update(updates)
       .eq('id', id)
-      .eq('agency_id', agencyId)
+      .forAgency(agencyId)
       .select()
       .single();
 
@@ -38,7 +38,7 @@ export const getBookingPayments = async (req: Request, res: Response) => {
       .from('bookings')
       .select('id, total_amount, paid_amount, remaining_balance')
       .eq('id', bookingId)
-      .eq('agency_id', agencyId)
+      .forAgency(agencyId)
       .single();
 
     if (!booking) {
@@ -87,7 +87,7 @@ export const createBookingPayment = async (req: Request, res: Response) => {
       .from('bookings')
       .select('id, status, remaining_balance')
       .eq('id', bookingId)
-      .eq('agency_id', agencyId)
+      .forAgency(agencyId)
       .single();
 
     if (!booking) {
@@ -265,7 +265,7 @@ export const getPaymentSummary = async (req: Request, res: Response) => {
         status,
         clients (full_name, full_name_ar)
       `)
-      .eq('agency_id', agencyId)
+      .forAgency(agencyId)
       .in('status', ['confirmed', 'paid'])
       .order('created_at', { ascending: false });
 

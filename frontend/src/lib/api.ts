@@ -1,23 +1,40 @@
-import { getAccessToken } from '../providers/AuthProvider';
+const API_URL = import.meta.env.VITE_API_URL || '/api';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+let refreshPromise: Promise<boolean> | null = null;
 
-async function getAuthHeader() {
-  const token = getAccessToken();
-  return token ? { Authorization: `Bearer ${token}` } : {};
+async function tryRefresh() {
+  if (!refreshPromise) {
+    refreshPromise = fetch(`${API_URL}/auth/refresh`, {
+      method: 'POST',
+      credentials: 'include',
+    })
+      .then((r) => r.ok)
+      .finally(() => {
+        refreshPromise = null;
+      });
+  }
+  return refreshPromise;
 }
 
-async function request(endpoint: string, options: RequestInit = {}) {
-  const authHeader = await getAuthHeader();
-  
+function notifyUnauthorized() {
+  window.dispatchEvent(new Event('hujjaj:unauthorized'));
+}
+
+async function request(endpoint: string, options: RequestInit = {}, retried = false) {
   const response = await fetch(`${API_URL}${endpoint}`, {
     ...options,
+    credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
-      ...authHeader,
       ...(options.headers as Record<string, string> || {}),
     } as Record<string, string>,
   });
+
+  if (response.status === 401 && !retried && !endpoint.startsWith('/auth/')) {
+    const ok = await tryRefresh();
+    if (ok) return request(endpoint, options, true);
+    notifyUnauthorized();
+  }
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ error: 'Request failed' }));
@@ -27,16 +44,18 @@ async function request(endpoint: string, options: RequestInit = {}) {
   return response.json();
 }
 
-async function requestMultipart(endpoint: string, formData: FormData) {
-  const authHeader = await getAuthHeader();
-  
+async function requestMultipart(endpoint: string, formData: FormData, retried = false) {
   const response = await fetch(`${API_URL}${endpoint}`, {
     method: 'POST',
-    headers: {
-      ...authHeader,
-    } as Record<string, string>,
+    credentials: 'include',
     body: formData,
   });
+
+  if (response.status === 401 && !retried) {
+    const ok = await tryRefresh();
+    if (ok) return requestMultipart(endpoint, formData, true);
+    notifyUnauthorized();
+  }
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ error: 'Request failed' }));
@@ -51,6 +70,7 @@ export const api = {
   login: (email: string, password: string) => 
     fetch(`${API_URL}/auth/login`, {
       method: 'POST',
+      credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password }),
     }).then(r => r.json()),
@@ -58,9 +78,13 @@ export const api = {
   register: (data: any) =>
     fetch(`${API_URL}/auth/register`, {
       method: 'POST',
+      credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     }).then(r => r.json()),
+
+  me: () => request('/auth/me'),
+  logout: () => request('/auth/logout', { method: 'POST' }),
 
   // Seasons
   getSeasons: () => request('/seasons'),
@@ -206,14 +230,10 @@ export const api = {
   getBookingInvoice: (id: string) => request(`/bookings/${id}/invoice`),
   
   downloadInvoicePDF: async (id: string) => {
-    const authHeader = await getAuthHeader();
     const url = `${API_URL}/bookings/${id}/invoice/pdf`;
-    
     const response = await fetch(url, {
       method: 'GET',
-      headers: {
-        ...authHeader,
-      } as Record<string, string>,
+      credentials: 'include',
     });
 
     if (!response.ok) {
@@ -303,14 +323,11 @@ export const api = {
     request(`/upload/${folder}`, { method: 'DELETE', body: JSON.stringify({ path }) }),
 
   exportReport: async (params: string) => {
-    const authHeader = await getAuthHeader();
     const url = `${API_URL}/reports/export${params ? `?${params}` : ''}`;
     
     const response = await fetch(url, {
       method: 'GET',
-      headers: {
-        ...authHeader,
-      } as Record<string, string>,
+      credentials: 'include',
     });
 
     if (!response.ok) {

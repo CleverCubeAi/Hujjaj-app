@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 
-const TOKEN_KEY = 'hujjaj_token';
 const USER_KEY = 'hujjaj_user';
+const AUTH_FLAG = 'hujjaj_auth';
 
 export interface AuthUser {
   id: string;
@@ -15,14 +15,9 @@ export interface AuthUser {
   };
 }
 
-export interface AuthSession {
-  access_token: string;
-  user: AuthUser;
-}
-
 interface AuthContextType {
   user: AuthUser | null;
-  session: AuthSession | null;
+  session: { user: AuthUser } | null;
   agencyId: string | null;
   role: string | null;
   loading: boolean;
@@ -32,51 +27,60 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType>({} as AuthContextType);
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
-
-function loadStoredSession(): AuthSession | null {
-  try {
-    const token = localStorage.getItem(TOKEN_KEY);
-    const userRaw = localStorage.getItem(USER_KEY);
-    if (!token || !userRaw) return null;
-    return { access_token: token, user: JSON.parse(userRaw) };
-  } catch {
-    return null;
-  }
-}
-
-function persistSession(session: AuthSession | null) {
-  if (!session) {
-    localStorage.removeItem(TOKEN_KEY);
-    localStorage.removeItem(USER_KEY);
-    return;
-  }
-  localStorage.setItem(TOKEN_KEY, session.access_token);
-  localStorage.setItem(USER_KEY, JSON.stringify(session.user));
-}
+const API_URL = import.meta.env.VITE_API_URL || '/api';
 
 export function getAccessToken(): string | null {
-  return localStorage.getItem(TOKEN_KEY);
+  return null;
 }
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<AuthUser | null>(null);
-  const [session, setSession] = useState<AuthSession | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const stored = loadStoredSession();
-    if (stored) {
-      setSession(stored);
-      setUser(stored.user);
+  const applyUser = (next: AuthUser | null) => {
+    setUser(next);
+    if (next) {
+      localStorage.setItem(USER_KEY, JSON.stringify(next));
+      localStorage.setItem(AUTH_FLAG, '1');
+    } else {
+      localStorage.removeItem(USER_KEY);
+      localStorage.removeItem(AUTH_FLAG);
     }
-    setLoading(false);
+  };
+
+  const loadMe = async () => {
+    const res = await fetch(`${API_URL}/auth/me`, { credentials: 'include' });
+    if (!res.ok) {
+      applyUser(null);
+      return false;
+    }
+    const body = await res.json();
+    applyUser(body.user);
+    return true;
+  };
+
+  useEffect(() => {
+    loadMe().finally(() => setLoading(false));
+
+    const onUnauthorized = () => {
+      applyUser(null);
+    };
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === AUTH_FLAG && !e.newValue) applyUser(null);
+    };
+    window.addEventListener('hujjaj:unauthorized', onUnauthorized);
+    window.addEventListener('storage', onStorage);
+    return () => {
+      window.removeEventListener('hujjaj:unauthorized', onUnauthorized);
+      window.removeEventListener('storage', onStorage);
+    };
   }, []);
 
   const signIn = async (email: string, pass: string) => {
     try {
       const res = await fetch(`${API_URL}/auth/login`, {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password: pass }),
       });
@@ -84,14 +88,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (!res.ok) {
         return { error: new Error(body.error || 'Login failed') };
       }
-
-      const next: AuthSession = {
-        access_token: body.access_token || body.token,
-        user: body.user,
-      };
-      persistSession(next);
-      setSession(next);
-      setUser(next.user);
+      applyUser(body.user);
       return { data: body, error: null };
     } catch (err: any) {
       return { error: err instanceof Error ? err : new Error('Login failed') };
@@ -99,14 +96,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const signOut = async () => {
-    persistSession(null);
-    setSession(null);
-    setUser(null);
+    try {
+      await fetch(`${API_URL}/auth/logout`, { method: 'POST', credentials: 'include' });
+    } catch {
+      // still clear local state
+    }
+    applyUser(null);
   };
 
   const value: AuthContextType = {
     user,
-    session,
+    session: user ? { user } : null,
     agencyId: user?.user_metadata?.agency_id || null,
     role: user?.user_metadata?.role || null,
     loading,

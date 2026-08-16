@@ -30,7 +30,7 @@ export const getHandovers = async (req: Request, res: Response) => {
         recipient:recipient_user_id (id, full_name),
         seasons (id, name)
       `)
-      .eq('agency_id', agencyId)
+      .forAgency(agencyId)
       .order('created_at', { ascending: false });
 
     if (handover_type) query = query.eq('handover_type', handover_type);
@@ -73,7 +73,7 @@ export const getHandoverById = async (req: Request, res: Response) => {
         seasons (id, name)
       `)
       .eq('id', id)
-      .eq('agency_id', agencyId)
+      .forAgency(agencyId)
       .single();
 
     if (handoverError) throw handoverError;
@@ -211,7 +211,7 @@ export const updateHandoverStatus = async (req: Request, res: Response) => {
       .from('financial_handovers')
       .select('*')
       .eq('id', id)
-      .eq('agency_id', agencyId)
+      .forAgency(agencyId)
       .single();
 
     if (fetchError) throw fetchError;
@@ -288,7 +288,7 @@ export const deleteHandover = async (req: Request, res: Response) => {
       .from('financial_handovers')
       .select('*')
       .eq('id', id)
-      .eq('agency_id', agencyId)
+      .forAgency(agencyId)
       .single();
 
     if (fetchError) throw fetchError;
@@ -341,7 +341,7 @@ export const getHandoverStats = async (req: Request, res: Response) => {
     let query = supabaseAdmin
       .from('financial_handovers')
       .select('handover_type, status, amount')
-      .eq('agency_id', agencyId);
+      .forAgency(agencyId);
 
     if (season_id) query = query.eq('season_id', season_id);
 
@@ -419,7 +419,7 @@ async function sendHandoverNotification(
     const { data: settings } = await supabaseAdmin
       .from('notification_settings')
       .select('*')
-      .eq('agency_id', agencyId)
+      .forAgency(agencyId)
       .eq('type', 'email')
       .single();
 

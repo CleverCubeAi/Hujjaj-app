@@ -328,7 +328,7 @@ export const setDeletionPassword = async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Password is required' });
     }
 
-    if (password.length < 4) {
+    if (password.length < 8) {
       return res.status(400).json({ error: 'Deletion password must be at least 4 characters' });
     }
 

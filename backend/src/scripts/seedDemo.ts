@@ -15,6 +15,7 @@ import dotenv from 'dotenv';
 import path from 'path';
 import db from '../services/db';
 import { hashPassword } from '../services/auth.service';
+import { runAsPlatform } from '../middleware/rlsContext';
 
 dotenv.config({ path: path.resolve(process.cwd(), '../.env') });
 dotenv.config();
@@ -164,6 +165,7 @@ async function seedDemo() {
   }
 
   try {
+    await runAsPlatform(async () => {
     const existing = await db('agencies').where({ id: AGENCY_ID }).first();
     if (existing) {
       console.log('[seed:demo] Al-Baraka demo agency already exists — skipping');
@@ -1451,6 +1453,7 @@ async function seedDemo() {
     console.log('[seed:demo] Login as agency admin — email: ahmed@albaraka.ma / password: ' + DEMO_PASSWORD);
     console.log('[seed:demo] Other users: fatima@ / youssef@ / khadija@albaraka.ma (same password)');
     console.log('[seed:demo] Platform super admin is separate (see SUPER_ADMIN_* env)');
+    });
   } finally {
     await db.destroy();
   }

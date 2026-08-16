@@ -1,5 +1,11 @@
 import { Request, Response } from 'express';
 import { supabaseAdmin as supabase } from '../services/supabase';
+import { pickAllowed } from '../utils/httpError';
+
+const FLIGHT_INV_FIELDS = [
+  'season_id', 'flight_id', 'seat_class', 'seats_purchased', 'purchase_price_per_seat',
+  'sell_price_per_seat', 'supplier_name', 'supplier_contact', 'notes',
+] as const;
 
 export const listFlightInventory = async (req: Request, res: Response) => {
   try {
@@ -17,7 +23,7 @@ export const listFlightInventory = async (req: Request, res: Response) => {
         flights (id, code, departure_city, arrival_city, departure_date, return_date, carrier),
         seasons (id, name, type)
       `)
-      .eq('agency_id', agencyId)
+      .forAgency(agencyId)
       .order('created_at', { ascending: false });
 
     if (season_id) query = query.eq('season_id', season_id);
@@ -53,7 +59,7 @@ export const getFlightInventory = async (req: Request, res: Response) => {
         seasons (id, name, type)
       `)
       .eq('id', id)
-      .eq('agency_id', agencyId)
+      .forAgency(agencyId)
       .single();
 
     if (error) throw error;
@@ -104,7 +110,7 @@ export const createFlightInventory = async (req: Request, res: Response) => {
       .from('flights')
       .select('id')
       .eq('id', flight_id)
-      .eq('agency_id', agencyId)
+      .forAgency(agencyId)
       .single();
 
     if (!flight) {
@@ -161,7 +167,7 @@ export const updateFlightInventory = async (req: Request, res: Response) => {
       .from('flight_seat_inventory')
       .select('id, seats_sold, seats_purchased')
       .eq('id', id)
-      .eq('agency_id', agencyId)
+      .forAgency(agencyId)
       .single();
 
     if (!existing) {
@@ -184,10 +190,11 @@ export const updateFlightInventory = async (req: Request, res: Response) => {
     const { data, error } = await supabase
       .from('flight_seat_inventory')
       .update({
-        ...updateData,
+        ...pickAllowed(updateData, FLIGHT_INV_FIELDS),
         updated_at: new Date().toISOString()
       })
       .eq('id', id)
+      .forAgency(agencyId)
       .select(`
         *,
         flights (id, code, departure_city, arrival_city, departure_date, return_date, carrier),
@@ -222,7 +229,7 @@ export const deleteFlightInventory = async (req: Request, res: Response) => {
       .from('flight_seat_inventory')
       .select('id, seats_sold')
       .eq('id', id)
-      .eq('agency_id', agencyId)
+      .forAgency(agencyId)
       .single();
 
     if (!existing) {
@@ -268,7 +275,7 @@ export const getAvailableSeats = async (req: Request, res: Response) => {
         flights (id, code, departure_city, arrival_city, departure_date, return_date, carrier),
         seasons (id, name, type)
       `)
-      .eq('agency_id', agencyId)
+      .forAgency(agencyId)
       .eq('season_id', season_id)
       .gt('seats_available', 0)
       .order('created_at', { ascending: true });
@@ -322,7 +329,7 @@ export const getSeatMap = async (req: Request, res: Response) => {
         seasons (id, name, type)
       `)
       .eq('id', id)
-      .eq('agency_id', agencyId)
+      .forAgency(agencyId)
       .single();
 
     if (invError || !inventory) {
@@ -339,13 +346,13 @@ export const getSeatMap = async (req: Request, res: Response) => {
       .from('pilgrims')
       .select('id, booking_id')
       .eq('flight_seat_inventory_id', id)
-      .eq('agency_id', agencyId);
+      .forAgency(agencyId);
 
     const { data: bookingsWithFlightInv } = await supabase
       .from('bookings')
       .select('id')
       .eq('flight_seat_inventory_id', id)
-      .eq('agency_id', agencyId);
+      .forAgency(agencyId);
 
     const { data: flightAllocations } = await supabase
       .from('booking_flight_allocations')
@@ -362,7 +369,7 @@ export const getSeatMap = async (req: Request, res: Response) => {
         .from('pilgrims')
         .select('id, booking_id')
         .in('booking_id', allBookingIds)
-        .eq('agency_id', agencyId);
+        .forAgency(agencyId);
       pilgrimsFromBookings = pFromB || [];
     }
 

@@ -8,6 +8,7 @@ import { DateInput } from '@mantine/dates';
 import { useTranslation } from 'react-i18next';
 import { notifications } from '@mantine/notifications';
 import { api } from '../../lib/api';
+import { useAuth } from '../../providers/AuthProvider';
 import {
   Download, TrendingUp, DollarSign, Users, Calendar,
   Hotel, Plane, CreditCard, BarChart3, Wallet, ArrowUpCircle,
@@ -178,8 +179,8 @@ export function ReportsPage() {
   const [handoverRefreshTrigger, setHandoverRefreshTrigger] = useState(0);
   const [defaultHandoverType, setDefaultHandoverType] = useState<'sales_to_admin' | 'expense_reimbursement'>('sales_to_admin');
 
-  // Check if current user is admin (simplified - in real app, get from auth context)
-  const isAdmin = true; // TODO: Get from auth context
+  const { role } = useAuth();
+  const isAdmin = role === 'agency_admin' || role === 'super_admin';
 
   const fetchSeasons = async () => {
     try {

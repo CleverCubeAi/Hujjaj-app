@@ -54,7 +54,7 @@ export const getReports = async (req: Request, res: Response) => {
 
   console.log('[Reports] agencyId:', agencyId, 'query:', { season_id, date_from, date_to });
 
-  if (!agencyId) {
+  if (!agencyId && role !== 'super_admin') {
     console.log('[Reports] No agency ID found');
     return res.status(403).json({ error: 'Agency ID not found' });
   }
@@ -77,7 +77,7 @@ export const getReports = async (req: Request, res: Response) => {
     let bookingsQuery = supabaseAdmin
       .from('bookings')
       .select('id, total_amount, paid_amount, status, created_at, created_by, invoice_items (total_price, quantity, unit_price), payments (amount)')
-      .eq('agency_id', agencyId)
+      .forAgency(agencyId)
       .is('deleted_at', null);
 
     // Apply role-based filter
@@ -131,7 +131,7 @@ export const getReports = async (req: Request, res: Response) => {
     let bookingsBySeasonQuery = supabaseAdmin
       .from('bookings')
       .select('season_id, total_amount, created_by, seasons (name)')
-      .eq('agency_id', agencyId);
+      .forAgency(agencyId);
 
     // Apply role-based filter
     if (userIdsFilter !== null && userIdsFilter.length > 0) {
@@ -164,7 +164,7 @@ export const getReports = async (req: Request, res: Response) => {
         clients (full_name, full_name_ar),
         creator:users!bookings_created_by_fkey (id, full_name)
       `)
-      .eq('agency_id', agencyId)
+      .forAgency(agencyId)
       .order('created_at', { ascending: false })
       .limit(10);
 
@@ -183,14 +183,14 @@ export const getReports = async (req: Request, res: Response) => {
     let pilgrimsQuery = supabaseAdmin
       .from('pilgrims')
       .select('gender, status')
-      .eq('agency_id', agencyId);
+      .forAgency(agencyId);
 
     if (season_id) {
       // Get pilgrims from bookings in this season
       const { data: seasonBookings } = await supabaseAdmin
         .from('bookings')
         .select('id')
-        .eq('agency_id', agencyId)
+        .forAgency(agencyId)
         .eq('season_id', season_id);
       
       if (seasonBookings && seasonBookings.length > 0) {
@@ -222,7 +222,7 @@ export const getReports = async (req: Request, res: Response) => {
         name,
         room_types (id, total_rooms, total_beds)
       `)
-      .eq('agency_id', agencyId);
+      .forAgency(agencyId);
 
     const { data: accommodations } = await accommodationsQuery;
 
@@ -266,7 +266,7 @@ export const getReports = async (req: Request, res: Response) => {
     let flightsQuery = supabaseAdmin
       .from('flights')
       .select('is_direct, season_id, seasons (name)')
-      .eq('agency_id', agencyId);
+      .forAgency(agencyId);
 
     if (season_id) flightsQuery = flightsQuery.eq('season_id', season_id);
 
@@ -336,10 +336,8 @@ export const exportReport = async (req: Request, res: Response) => {
 
   console.log('[Reports] exportReport called', { format, tab, season_id, date_from, date_to });
 
-  if (!agencyId) {
-    return res.status(400).json({
-      error: 'Agency ID required to export reports. Super admin is not tied to an agency.',
-    });
+  if (!agencyId && role !== 'super_admin') {
+    return res.status(403).json({ error: 'Agency ID not found' });
   }
 
   if (!format || !['pdf', 'excel'].includes(format as string)) {
@@ -366,14 +364,15 @@ export const exportReport = async (req: Request, res: Response) => {
       date_to as string
     );
 
-    // Get agency info for header
-    const { data: agency } = await supabaseAdmin
-      .from('agencies')
-      .select('name, name_ar, logo_url')
-      .eq('id', agencyId)
-      .single();
-
-    const agencyName = agency?.name_ar || agency?.name || 'Agency Report';
+    let agencyName = 'Hujjaj';
+    if (agencyId) {
+      const { data: agency } = await supabaseAdmin
+        .from('agencies')
+        .select('name, name_ar, logo_url')
+        .eq('id', agencyId)
+        .single();
+      agencyName = agency?.name_ar || agency?.name || 'Agency Report';
+    }
 
     // Generate export based on format
     if (format === 'pdf') {
@@ -397,7 +396,7 @@ export const exportReport = async (req: Request, res: Response) => {
 
 // Helper function to fetch report data for export
 async function fetchReportDataForExport(
-  agencyId: string,
+  agencyId: string | null | undefined,
   tab: string,
   userIdsFilter: string[] | null,
   season_id?: string,
@@ -411,7 +410,7 @@ async function fetchReportDataForExport(
     let bookingsQuery = supabaseAdmin
       .from('bookings')
       .select('total_amount, paid_amount, status, created_at, created_by')
-      .eq('agency_id', agencyId);
+      .forAgency(agencyId);
 
     if (userIdsFilter !== null && userIdsFilter.length > 0) {
       bookingsQuery = bookingsQuery.in('created_by', userIdsFilter);
@@ -453,7 +452,7 @@ async function fetchReportDataForExport(
     let bookingsQuery = supabaseAdmin
       .from('bookings')
       .select('id, booking_number, total_amount, paid_amount, status, created_at, clients (full_name, full_name_ar)')
-      .eq('agency_id', agencyId)
+      .forAgency(agencyId)
       .is('deleted_at', null);
 
     if (userIdsFilter !== null && userIdsFilter.length > 0) {
@@ -472,7 +471,7 @@ async function fetchReportDataForExport(
     let expensesQuery = supabaseAdmin
       .from('expenses')
       .select('id, category, description, amount, paid_date, expense_categories (name, name_ar)')
-      .eq('agency_id', agencyId);
+      .forAgency(agencyId);
 
     if (season_id) expensesQuery = expensesQuery.eq('season_id', season_id);
     if (date_from) expensesQuery = expensesQuery.gte('paid_date', date_from);
@@ -518,7 +517,7 @@ async function fetchReportDataForExport(
         clients (full_name, full_name_ar),
         seasons (name)
       `)
-      .eq('agency_id', agencyId)
+      .forAgency(agencyId)
       .is('deleted_at', null)
       .order('created_at', { ascending: false });
 
@@ -564,13 +563,13 @@ async function fetchReportDataForExport(
         id, full_name, full_name_ar, gender, nationality, passport_number, phone, status,
         bookings (booking_number)
       `)
-      .eq('agency_id', agencyId);
+      .forAgency(agencyId);
 
     if (season_id) {
       const { data: seasonBookings } = await supabaseAdmin
         .from('bookings')
         .select('id')
-        .eq('agency_id', agencyId)
+        .forAgency(agencyId)
         .eq('season_id', season_id);
       
       if (seasonBookings && seasonBookings.length > 0) {
@@ -614,7 +613,7 @@ async function fetchReportDataForExport(
     const { data: accommodations } = await supabaseAdmin
       .from('accommodations')
       .select('id, name, name_ar, city, room_types (id, type, total_rooms, total_beds)')
-      .eq('agency_id', agencyId);
+      .forAgency(agencyId);
 
     let totalRooms = 0;
     let occupiedRooms = 0;
@@ -653,7 +652,7 @@ async function fetchReportDataForExport(
     let flightsQuery = supabaseAdmin
       .from('flights')
       .select('id, code, departure_city, arrival_city, departure_date, return_date, carrier, is_direct, seasons (name)')
-      .eq('agency_id', agencyId);
+      .forAgency(agencyId);
 
     if (season_id) flightsQuery = flightsQuery.eq('season_id', season_id);
 
@@ -1428,7 +1427,7 @@ export const getFinancialStatus = async (req: Request, res: Response) => {
         clients (full_name, full_name_ar),
         creator:users!bookings_created_by_fkey (id, full_name)
       `)
-      .eq('agency_id', agencyId)
+      .forAgency(agencyId)
       .is('deleted_at', null);
 
     // Apply role-based filter
@@ -1483,7 +1482,7 @@ export const getFinancialStatus = async (req: Request, res: Response) => {
         category_id,
         expense_categories (name, name_ar)
       `)
-      .eq('agency_id', agencyId);
+      .forAgency(agencyId);
 
     if (season_id) expensesQuery = expensesQuery.eq('season_id', season_id);
     if (date_from) expensesQuery = expensesQuery.gte('paid_date', date_from as string);
@@ -1529,7 +1528,7 @@ export const getFinancialStatus = async (req: Request, res: Response) => {
         accommodations (name, name_ar, city),
         room_types (type)
       `)
-      .eq('agency_id', agencyId);
+      .forAgency(agencyId);
 
     if (season_id) bedsQuery = bedsQuery.eq('season_id', season_id);
     if (date_from) bedsQuery = bedsQuery.gte('check_in_date', date_from as string);
@@ -1574,7 +1573,7 @@ export const getFinancialStatus = async (req: Request, res: Response) => {
         sell_price_per_seat,
         flights (code, departure_city, arrival_city, departure_date, return_date, carrier)
       `)
-      .eq('agency_id', agencyId);
+      .forAgency(agencyId);
 
     if (season_id) flightSeatsQuery = flightSeatsQuery.eq('season_id', season_id);
 

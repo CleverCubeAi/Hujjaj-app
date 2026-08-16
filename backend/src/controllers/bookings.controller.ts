@@ -75,7 +75,7 @@ export const getBookings = async (req: Request, res: Response) => {
         pilgrims (id, full_name, full_name_ar, gender),
         creator:users!bookings_created_by_fkey (id, full_name, branch_id)
       `)
-      .eq('agency_id', agencyId)
+      .forAgency(agencyId)
       .order('created_at', { ascending: false });
 
     // Handle deleted bookings filter (only admins can see deleted bookings)
@@ -171,7 +171,7 @@ export const getBookingById = async (req: Request, res: Response) => {
         creator:users!bookings_created_by_fkey (id, full_name, branch_id)
       `)
       .eq('id', id)
-      .eq('agency_id', agencyId)
+      .forAgency(agencyId)
       .is('deleted_at', null)  // Exclude soft-deleted bookings
       .single();
 
@@ -213,7 +213,7 @@ export const getBookingHotels = async (req: Request, res: Response) => {
         pilgrims (id, hotel_inventory_ids, room_type_id, accommodation_id)
       `)
       .eq('id', id)
-      .eq('agency_id', agencyId)
+      .forAgency(agencyId)
       .single();
 
     if (error || !booking) {
@@ -380,7 +380,7 @@ export const createBooking = async (req: Request, res: Response) => {
           .eq('accommodation_id', accommodation_id)
           .eq('room_type_id', room_type_id)
           .eq('season_id', season_id)
-          .eq('agency_id', agencyId);
+          .forAgency(agencyId);
 
         const totalBedsPurchased = (inventory || []).reduce((sum: number, inv: any) => sum + (inv.beds_purchased || 0), 0);
         const totalBedsAvailable = (inventory || []).reduce((sum: number, inv: any) => sum + (inv.beds_available || 0), 0);
@@ -415,7 +415,7 @@ export const createBooking = async (req: Request, res: Response) => {
             .eq('accommodation_id', accommodation_id)
             .eq('room_type_id', rtId)
             .eq('season_id', season_id)
-            .eq('agency_id', agencyId);
+            .forAgency(agencyId);
           const avail = (inv || []).reduce((s: number, i: any) => s + (i.beds_available || 0), 0);
           if (avail < count) {
             return res.status(400).json({ 
@@ -586,7 +586,7 @@ export const createBooking = async (req: Request, res: Response) => {
               status: 'pending'
             })
             .eq('id', p.id)
-            .eq('agency_id', agencyId)
+            .forAgency(agencyId)
             .select()
             .single();
           
@@ -872,7 +872,7 @@ export const updateBooking = async (req: Request, res: Response) => {
       .from('bookings')
       .select('status')
       .eq('id', id)
-      .eq('agency_id', agencyId)
+      .forAgency(agencyId)
       .single();
 
     if (!existing) {
@@ -892,7 +892,7 @@ export const updateBooking = async (req: Request, res: Response) => {
         notes
       })
       .eq('id', id)
-      .eq('agency_id', agencyId)
+      .forAgency(agencyId)
       .select()
       .single();
 
@@ -921,7 +921,7 @@ export const confirmBooking = async (req: Request, res: Response) => {
         room_types (id, type, total_beds)
       `)
       .eq('id', id)
-      .eq('agency_id', agencyId)
+      .forAgency(agencyId)
       .single();
 
     if (!booking) {
@@ -961,7 +961,7 @@ export const confirmBooking = async (req: Request, res: Response) => {
           .eq('accommodation_id', booking.accommodation_id)
           .eq('room_type_id', rtId)
           .eq('season_id', booking.season_id)
-          .eq('agency_id', agencyId);
+          .forAgency(agencyId);
         const avail = (inventory || []).reduce((s: number, i: any) => s + (i.beds_available || 0), 0);
         if (avail < needed) {
           return res.status(400).json({
@@ -1019,7 +1019,7 @@ export const confirmBooking = async (req: Request, res: Response) => {
               .from('hotel_bed_inventory')
               .select('*')
               .eq('id', invId)
-              .eq('agency_id', agencyId)
+              .forAgency(agencyId)
               .single();
             if (invErr || !inv) {
               throw new Error(`Invalid hotel inventory ID: ${invId}`);
@@ -1054,7 +1054,7 @@ export const confirmBooking = async (req: Request, res: Response) => {
                 .from('hotel_bed_inventory')
                 .select('*')
                 .eq('id', invId)
-                .eq('agency_id', agencyId)
+                .forAgency(agencyId)
                 .single();
               if (invErr || !inv || (inv.beds_available || 0) < 1) continue;
               const { error: pilgrimAllocErr } = await supabase.from('booking_bed_allocations').insert({
@@ -1081,7 +1081,7 @@ export const confirmBooking = async (req: Request, res: Response) => {
             const { data: hotelInventory } = await supabase
               .from('hotel_bed_inventory')
               .select('*')
-              .eq('agency_id', agencyId)
+              .forAgency(agencyId)
               .eq('accommodation_id', booking.accommodation_id)
               .eq('room_type_id', rtId)
               .eq('season_id', booking.season_id)
@@ -1137,7 +1137,7 @@ export const confirmBooking = async (req: Request, res: Response) => {
             .from('flight_seat_inventory')
             .select('*')
             .eq('id', invId)
-            .eq('agency_id', agencyId)
+            .forAgency(agencyId)
             .eq('flight_id', booking.flight_id)
             .single();
 
@@ -1164,7 +1164,7 @@ export const confirmBooking = async (req: Request, res: Response) => {
           const { data: fifoInventory } = await supabase
             .from('flight_seat_inventory')
             .select('*')
-            .eq('agency_id', agencyId)
+            .forAgency(agencyId)
             .eq('flight_id', booking.flight_id)
             .gt('seats_available', 0)
             .order('created_at', { ascending: true });
@@ -1235,7 +1235,7 @@ export const cancelBooking = async (req: Request, res: Response) => {
       .from('bookings')
       .select('id, status')
       .eq('id', id)
-      .eq('agency_id', agencyId)
+      .forAgency(agencyId)
       .single();
 
     if (!booking) {
@@ -1280,7 +1280,7 @@ export const addPilgrimToBooking = async (req: Request, res: Response) => {
       .from('bookings')
       .select('*, room_types (price_per_bed, type)')
       .eq('id', id)
-      .eq('agency_id', agencyId)
+      .forAgency(agencyId)
       .single();
 
     if (!booking) {
@@ -1355,7 +1355,7 @@ export const removePilgrimFromBooking = async (req: Request, res: Response) => {
       .from('bookings')
       .select('status')
       .eq('id', id)
-      .eq('agency_id', agencyId)
+      .forAgency(agencyId)
       .single();
 
     if (!booking) {
@@ -1415,7 +1415,7 @@ export const getBookingInvoice = async (req: Request, res: Response) => {
         )
       `)
       .eq('id', id)
-      .eq('agency_id', agencyId)
+      .forAgency(agencyId)
       .is('deleted_at', null)  // Exclude soft-deleted bookings
       .single();
 
@@ -1465,7 +1465,7 @@ export const exportInvoicePDF = async (req: Request, res: Response) => {
         )
       `)
       .eq('id', id)
-      .eq('agency_id', agencyId)
+      .forAgency(agencyId)
       .is('deleted_at', null)
       .single();
 
@@ -1739,7 +1739,7 @@ export const addInvoiceItem = async (req: Request, res: Response) => {
       .from('bookings')
       .select('status')
       .eq('id', id)
-      .eq('agency_id', agencyId)
+      .forAgency(agencyId)
       .single();
 
     if (!booking) {
@@ -1779,7 +1779,7 @@ export const deleteInvoiceItem = async (req: Request, res: Response) => {
       .from('bookings')
       .select('status')
       .eq('id', id)
-      .eq('agency_id', agencyId)
+      .forAgency(agencyId)
       .single();
 
     if (!booking) {
@@ -1832,7 +1832,7 @@ export const softDeleteBooking = async (req: Request, res: Response) => {
       .from('bookings')
       .select('id, booking_number, status, deleted_at')
       .eq('id', id)
-      .eq('agency_id', agencyId)
+      .forAgency(agencyId)
       .single();
 
     if (bookingError) {
@@ -1993,7 +1993,7 @@ export const permanentDeleteBooking = async (req: Request, res: Response) => {
       .from('bookings')
       .select('id, booking_number, deleted_at')
       .eq('id', id)
-      .eq('agency_id', agencyId)
+      .forAgency(agencyId)
       .single();
 
     if (bookingError || !booking) {
@@ -2118,7 +2118,7 @@ export const extendBookingHold = async (req: Request, res: Response) => {
       .from('bookings')
       .select('id, status, hold_expires_at, hold_session_id')
       .eq('id', id)
-      .eq('agency_id', agencyId)
+      .forAgency(agencyId)
       .single();
 
     if (fetchError || !booking) {
@@ -2179,7 +2179,7 @@ export const getBookingHoldStatus = async (req: Request, res: Response) => {
       .from('bookings')
       .select('id, booking_number, status, hold_expires_at, hold_session_id')
       .eq('id', id)
-      .eq('agency_id', agencyId)
+      .forAgency(agencyId)
       .single();
 
     if (fetchError || !booking) {

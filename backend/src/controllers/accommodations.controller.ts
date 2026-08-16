@@ -13,7 +13,7 @@ export const listAccommodations = async (req: Request, res: Response) => {
     *,
     room_types (*),
     seasons (name)
-  `).eq('agency_id', agencyId).order('created_at', { ascending: false });
+  `).forAgency(agencyId).order('created_at', { ascending: false });
   if (season_id) query = query.eq('season_id', season_id);
   
   const { data, error } = await query;
@@ -38,7 +38,7 @@ export const getAccommodation = async (req: Request, res: Response) => {
       seasons (name)
     `)
     .eq('id', id)
-    .eq('agency_id', agencyId)
+    .forAgency(agencyId)
     .single();
 
   if (error) return res.status(400).json({ error: error.message });
@@ -133,7 +133,7 @@ export const updateAccommodation = async (req: Request, res: Response) => {
     .from('accommodations')
     .update(updates)
     .eq('id', id)
-    .eq('agency_id', agencyId)
+    .forAgency(agencyId)
     .select(`*, room_types (*)`)
     .single();
 
@@ -154,7 +154,7 @@ export const deleteAccommodation = async (req: Request, res: Response) => {
     .from('accommodations')
     .delete()
     .eq('id', id)
-    .eq('agency_id', agencyId);
+    .forAgency(agencyId);
 
   if (error) return res.status(400).json({ error: error.message });
   res.json({ message: 'Accommodation deleted successfully' });
@@ -174,7 +174,7 @@ export const createRoomType = async (req: Request, res: Response) => {
     .from('accommodations')
     .select('id')
     .eq('id', accommodation_id)
-    .eq('agency_id', agencyId)
+    .forAgency(agencyId)
     .single();
 
   if (!acc) {

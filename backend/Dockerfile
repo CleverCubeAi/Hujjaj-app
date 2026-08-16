@@ -28,8 +28,13 @@ COPY --from=builder /app/dist ./dist
 COPY knexfile.js ./
 COPY db ./db
 
-RUN mkdir -p uploads
+RUN mkdir -p uploads \
+  && addgroup -S hujjaj \
+  && adduser -S hujjaj -G hujjaj \
+  && chown -R hujjaj:hujjaj /app
+
+USER hujjaj
 
 EXPOSE 3001
 
-CMD ["sh", "-c", "npx knex migrate:latest && node dist/scripts/seedSuperAdmin.js && node dist/scripts/seedDemo.js && node dist/index.js"]
+CMD ["sh", "-c", "npx knex migrate:latest && node dist/scripts/seedSuperAdmin.js && if [ \"$SEED_DEMO\" = \"true\" ]; then node dist/scripts/seedDemo.js; fi && node dist/index.js"]

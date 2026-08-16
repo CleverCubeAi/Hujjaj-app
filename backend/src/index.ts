@@ -1,28 +1,64 @@
 import express from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
+import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
 import path from 'path';
+import rateLimit from 'express-rate-limit';
+import csrf from 'csurf';
 import routes from './routes';
 import { scheduleExpireBookingsJob } from './jobs/expireBookings';
 import { trimBodyMiddleware } from './middleware/trimBody';
+import { optionalAuth } from './middleware/auth';
+import { serveUpload } from './controllers/upload.controller';
+import { assertProductionSecrets, corsOrigins } from './config/security';
 
 dotenv.config({ path: path.resolve(process.cwd(), '../.env') });
 dotenv.config();
 
+assertProductionSecrets();
+
 const app = express();
 const PORT = Number(process.env.PORT) || 3001;
 
-app.use(cors());
-app.use(express.json());
+app.set('trust proxy', 1);
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: 'cross-origin' },
+}));
+app.use(cors({
+  origin: corsOrigins(),
+  credentials: true,
+}));
+app.use(cookieParser());
+app.use(express.json({ limit: '2mb' }));
 app.use(trimBodyMiddleware);
 
-// Local file uploads
-app.use('/uploads', express.static(path.resolve(process.cwd(), 'uploads')));
+const csrfProtection = csrf({ cookie: true });
 
-app.use('/api', routes);
+const uploadRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+app.get('/uploads/:folder/:agencyId/:filename', uploadRateLimiter, optionalAuth, serveUpload);
+
+app.use('/api', csrfProtection, (req, res, next) => {
+  res.setHeader('X-CSRF-Token', req.csrfToken());
+  next();
+}, routes);
 
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date() });
+});
+
+app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+  console.error(err);
+  const status = err.status || 500;
+  res.status(status).json({
+    error: process.env.NODE_ENV === 'production' && status >= 500 ? 'Internal server error' : (err.message || 'Internal server error'),
+  });
 });
 
 app.listen(PORT, '0.0.0.0', () => {

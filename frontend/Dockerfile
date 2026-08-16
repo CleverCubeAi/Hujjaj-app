@@ -20,9 +20,17 @@ RUN npm run build:prod
 # Production stage with nginx
 FROM nginx:alpine
 
-COPY frontend/nginx.conf /etc/nginx/conf.d/default.conf
+RUN apk add --no-cache gettext wget
+
+COPY frontend/nginx.conf.template /etc/nginx/templates/default.conf.template
+COPY frontend/docker-entrypoint.sh /docker-entrypoint-hujjaj.sh
 COPY --from=builder /app/dist /usr/share/nginx/html
+
+RUN chmod +x /docker-entrypoint-hujjaj.sh
+
+ENV PORT=80
+ENV BACKEND_UPSTREAM=http://backend:3001
 
 EXPOSE 80
 
-CMD ["nginx", "-g", "daemon off;"]
+CMD ["/docker-entrypoint-hujjaj.sh"]
