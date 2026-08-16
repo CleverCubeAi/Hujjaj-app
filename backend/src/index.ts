@@ -4,6 +4,7 @@ import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
 import path from 'path';
+import rateLimit from 'express-rate-limit';
 import routes from './routes';
 import { scheduleExpireBookingsJob } from './jobs/expireBookings';
 import { trimBodyMiddleware } from './middleware/trimBody';
@@ -31,7 +32,14 @@ app.use(cookieParser());
 app.use(express.json({ limit: '2mb' }));
 app.use(trimBodyMiddleware);
 
-app.get('/uploads/:folder/:agencyId/:filename', optionalAuth, serveUpload);
+const uploadRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+app.get('/uploads/:folder/:agencyId/:filename', uploadRateLimiter, optionalAuth, serveUpload);
 
 app.use('/api', routes);
 
