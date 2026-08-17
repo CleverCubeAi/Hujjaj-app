@@ -29,7 +29,7 @@ function StatCard({
   title,
   value,
   icon,
-  color = 'brown',
+  color = 'teal',
 }: {
   title: string;
   value: string | number;
@@ -41,8 +41,8 @@ function StatCard({
       p="lg"
       radius="lg"
       style={{
-        backgroundColor: '#FFFFFF',
-        border: '1px solid #E8DFD0',
+        backgroundColor: '#F8F6F0',
+        border: '1px solid #E2D9C8',
         boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
       }}
     >
@@ -66,8 +66,8 @@ function statusColor(status: string) {
 }
 
 function planColor(plan: string) {
-  if (plan === 'premium') return 'violet';
-  if (plan === 'basic') return 'blue';
+  if (plan === 'premium') return 'gold';
+  if (plan === 'basic') return 'teal';
   return 'gray';
 }
 
@@ -89,14 +89,14 @@ export function PlatformDashboard() {
     <Stack gap="xl">
       <Group justify="space-between" align="center">
         <Box>
-          <Title order={1} fw={700} c="#2D2D2D">
+          <Title order={1} fw={700} c="#071D35">
             {t('platform_dashboard') || 'لوحة المنصة'}
           </Title>
           <Text size="sm" c="dimmed" mt={4}>
             {t('platform_dashboard_subtitle') || 'إدارة حسابات الوكالات واشتراكاتها'}
           </Text>
         </Box>
-        <Badge size="lg" variant="light" color="brown" radius="md">
+        <Badge size="lg" variant="light" color="teal" radius="md">
           {t('super_admin') || 'مدير المنصة'}
         </Badge>
       </Group>
@@ -106,7 +106,7 @@ export function PlatformDashboard() {
           title={t('total_agencies') || 'الوكالات'}
           value={fmt(agencies?.total)}
           icon={<Building2 size={24} />}
-          color="brown"
+          color="teal"
         />
         <StatCard
           title={t('active_agencies') || 'وكالات نشطة'}
@@ -124,7 +124,7 @@ export function PlatformDashboard() {
           title={t('agency_users') || 'مستخدمو الوكالات'}
           value={fmt(data?.users.total)}
           icon={<Users size={24} />}
-          color="blue"
+          color="teal"
         />
       </SimpleGrid>
 
@@ -135,15 +135,15 @@ export function PlatformDashboard() {
             title={slug}
             value={fmt(count as number)}
             icon={<CreditCard size={22} />}
-            color="brown"
+            color="teal"
           />
         ))}
       </SimpleGrid>
 
-      <Paper p="lg" radius="lg" style={{ backgroundColor: '#FFFFFF', border: '1px solid #E8DFD0' }}>
+      <Paper p="lg" radius="lg" style={{ backgroundColor: '#F8F6F0', border: '1px solid #E2D9C8' }}>
         <Group justify="space-between" mb="md">
           <Title order={4}>{t('recent_agencies') || 'أحدث الوكالات'}</Title>
-          <Button variant="subtle" color="brown" onClick={() => navigate('/agencies')}>
+          <Button variant="subtle" color="teal" onClick={() => navigate('/agencies')}>
             {t('view_all') || 'عرض الكل'}
           </Button>
         </Group>

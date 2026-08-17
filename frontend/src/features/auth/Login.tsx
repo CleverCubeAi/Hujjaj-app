@@ -1,35 +1,33 @@
-import React, { useState } from 'react';
-import { 
-  TextInput, 
-  PasswordInput, 
-  Paper, 
-  Title, 
-  Text, 
-  Container, 
-  Button, 
+import { useState } from 'react';
+import {
+  TextInput,
+  PasswordInput,
+  Paper,
+  Title,
+  Text,
+  Button,
   Box,
   Stack,
   Center,
-  Group,
-  Checkbox
+  Checkbox,
 } from '@mantine/core';
 import { useAuth } from '../../providers/AuthProvider';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Lock, User } from 'lucide-react';
-import bgImage from '../../assets/img/bg.jpg';
+import { Lock, Mail } from 'lucide-react';
+import haramEvening from '../../assets/img/haram-evening.png';
 import { useBranding } from '../../providers/BrandingProvider';
+import { BrandLogo } from '../../components/brand/BrandLogo';
+import { brand } from '../../theme/brand';
 
 export function Login() {
   const { signIn } = useAuth();
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
   const branding = useBranding();
-  const primary = branding.primary_color || '#8B7355';
-  const accent = branding.accent_color || '#6F5C45';
-  const bg = branding.login_background_url || bgImage;
+  const primary = branding.primary_color || brand.teal;
+  const hero = branding.login_background_url || haramEvening;
   const appName = i18n.language === 'fr' ? branding.app_name_fr : branding.app_name_ar;
-  const tagline = i18n.language === 'fr' ? branding.tagline_fr : branding.tagline_ar;
   const year = new Date().getFullYear();
   const copyright = (branding.copyright || `© {year} ${appName}`).replace('{year}', String(year));
   const [email, setEmail] = useState('');
@@ -42,8 +40,8 @@ export function Login() {
     setLoading(true);
     setError('');
     try {
-      const { error } = await signIn(email, password);
-      if (error) throw error;
+      const { error: signError } = await signIn(email, password);
+      if (signError) throw signError;
       navigate('/');
     } catch (err: any) {
       setError(err.message);
@@ -52,209 +50,168 @@ export function Login() {
     }
   };
 
+  const inputStyles = {
+    input: {
+      backgroundColor: '#fff',
+      border: `1px solid ${brand.border}`,
+      borderRadius: 12,
+      minHeight: 46,
+      color: brand.navy,
+      '&:focus': {
+        borderColor: brand.teal,
+      },
+    },
+    label: {
+      color: brand.navy,
+      fontWeight: 600,
+      marginBottom: 6,
+    },
+  };
+
   return (
-    <Box 
-      style={{ 
+    <Box
+      style={{
         minHeight: '100vh',
-        backgroundImage: `url(${bg})`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat',
+        backgroundColor: brand.sand,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '20px',
-        position: 'relative'
+        padding: 24,
+        position: 'relative',
+        overflow: 'hidden',
       }}
     >
-      {/* Overlay for better contrast */}
       <Box
+        aria-hidden
         style={{
           position: 'absolute',
           top: 0,
           left: 0,
           right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.3)',
-          zIndex: 0
+          height: 320,
+          backgroundImage: `url(${hero})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center top',
+          opacity: 0.42,
+          maskImage: 'linear-gradient(to bottom, black 40%, transparent 100%)',
+          WebkitMaskImage: 'linear-gradient(to bottom, black 40%, transparent 100%)',
         }}
       />
 
-      <Container size={800} style={{ position: 'relative', zIndex: 1 }}>
-        {/* Login Form */}
-        <Paper 
-          p={40} 
-          radius={0}
-          style={{ 
-            backgroundColor: 'rgba(45, 45, 45, 0.6)',
-            backdropFilter: 'blur(10px)',
-            border: `1px solid ${primary}4D`,
-            borderRadius: '10px',
-            boxShadow: '0 8px 32px rgba(0,0,0,0.3)'
+      <Box style={{ position: 'relative', zIndex: 1, width: '100%', maxWidth: 440 }}>
+        <Paper
+          radius={24}
+          p={36}
+          style={{
+            backgroundColor: brand.ivory,
+            border: `1px solid ${brand.border}`,
+            boxShadow: '0 12px 32px rgba(7, 29, 53, 0.08)',
           }}
         >
-          <Stack align="center" gap="lg" mb="xl">
-            {branding.logo_url && (
-              <img src={branding.logo_url} alt={appName} style={{ height: 48 }} />
-            )}
-            <Title order={2} fw={700} c="white" ta="center">
-              {appName || t('sign_in') || 'تسجيل الدخول'}
-            </Title>
-            {tagline && <Text c="white" size="sm" ta="center">{tagline}</Text>}
-            <Text c="white" size="sm" ta="center">{t('sign_in') || 'تسجيل الدخول'}</Text>
+          <Stack align="center" gap={4} mb={28}>
+            <BrandLogo variant="stacked" alt={appName} height={200} />
           </Stack>
 
+          <Box
+            mb="lg"
+            style={{
+              height: 1,
+              background: `linear-gradient(90deg, transparent, ${brand.gold}, ${brand.goldLight}, ${brand.gold}, transparent)`,
+            }}
+          />
+
+          <Title order={3} fw={700} ta="center" c={brand.tealDeep} mb="lg" style={{ fontSize: 22 }}>
+            {t('sign_in') || 'تسجيل الدخول'}
+          </Title>
+
           <form onSubmit={handleLogin}>
-            <Stack gap="lg">
-              {/* Username/Email Field */}
-              <Box>
-                <Text c="white" size="sm" fw={500} mb={8}>
-                  {t('email') || 'البريد الإلكتروني'}
-                </Text>
-                <Box style={{ display: 'flex', alignItems: 'stretch', borderRadius: '0', overflow: 'hidden' }}>
-                  <Box
-                    style={{
-                      width: 4,
-                      backgroundColor: primary
-                    }}
-                  />
-                  <Box
-                    style={{
-                      width: 40,
-                      backgroundColor: primary,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center'
-                    }}
-                  >
-                    <User size={18} color="white" />
-                  </Box>
-                  <TextInput 
-                    placeholder="username" 
-                    required 
-                    size="md"
-                    value={email}
-                    onChange={(e) => setEmail(e.currentTarget.value)}
-                    style={{ flex: 1 }}
-                    styles={{
-                      input: {
-                        backgroundColor: 'white',
-                        border: 'none',
-                        borderRadius: '0',
-                        '&:focus': {
-                          borderColor: primary,
-                          outline: 'none'
-                        }
-                      },
-                      root: {
-                        flex: 1
-                      }
-                    }}
-                  />
-                </Box>
-              </Box>
+            <Stack gap="md">
+              <TextInput
+                label={t('email') || 'البريد الإلكتروني'}
+                placeholder={t('email') || 'البريد الإلكتروني'}
+                required
+                size="md"
+                value={email}
+                onChange={(e) => setEmail(e.currentTarget.value)}
+                leftSection={<Mail size={18} color={brand.teal} />}
+                styles={inputStyles}
+              />
 
-              {/* Password Field */}
-              <Box>
-                <Text c="white" size="sm" fw={500} mb={8}>
-                  {t('password') || 'كلمة المرور'}
-                </Text>
-                <Box style={{ display: 'flex', alignItems: 'stretch', borderRadius: '0', overflow: 'hidden' }}>
-                  <Box
-                    style={{
-                      width: 4,
-                      backgroundColor: primary
-                    }}
-                  />
-                  <Box
-                    style={{
-                      width: 40,
-                      backgroundColor: primary,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center'
-                    }}
-                  >
-                    <Lock size={18} color="white" />
-                  </Box>
-                  <PasswordInput 
-                    placeholder="password" 
-                    required 
-                    size="md"
-                    value={password}
-                    onChange={(e) => setPassword(e.currentTarget.value)}
-                    style={{ flex: 1 }}
-                    styles={{
-                      input: {
-                        backgroundColor: 'white',
-                        border: 'none',
-                        borderRadius: '0',
-                        flex: 1,
-                        '&:focus': {
-                          borderColor: primary,
-                          outline: 'none'
-                        }
-                      },
-                      root: {
-                        flex: 1
-                      }
-                    }}
-                  />
-                </Box>
-              </Box>
+              <PasswordInput
+                label={t('password') || 'كلمة المرور'}
+                placeholder={t('password') || 'كلمة المرور'}
+                required
+                size="md"
+                value={password}
+                onChange={(e) => setPassword(e.currentTarget.value)}
+                leftSection={<Lock size={18} color={brand.teal} />}
+                styles={inputStyles}
+              />
 
-              {/* Remember Me */}
               <Checkbox
-                label={<Text c="white" size="sm">{t('remember_me') || 'تذكرني'}</Text>}
+                label={
+                  <Text size="sm" c={brand.navy}>
+                    {t('remember_me') || 'تذكرني'}
+                  </Text>
+                }
                 styles={{
                   input: {
-                    backgroundColor: 'transparent',
-                    borderColor: 'rgba(255, 255, 255, 0.5)',
+                    backgroundColor: '#fff',
+                    borderColor: brand.border,
                     '&:checked': {
-                      backgroundColor: primary,
-                      borderColor: primary
-                    }
-                  }
+                      backgroundColor: brand.teal,
+                      borderColor: brand.teal,
+                    },
+                  },
                 }}
               />
-              
+
               {error && (
-                <Paper p="sm" radius={0} style={{ backgroundColor: 'rgba(255, 0, 0, 0.2)', border: '1px solid rgba(255, 0, 0, 0.5)' }}>
-                  <Text c="red" size="sm">{error}</Text>
+                <Paper
+                  p="sm"
+                  radius="md"
+                  style={{
+                    backgroundColor: 'rgba(196, 71, 58, 0.08)',
+                    border: `1px solid ${brand.danger}55`,
+                  }}
+                >
+                  <Text c={brand.danger} size="sm">
+                    {error}
+                  </Text>
                 </Paper>
               )}
 
-              {/* Login Button */}
-              <Group justify="flex-end" mt="md">
-                <Button 
-                  size="lg" 
-                  type="submit"
-                  loading={loading}
-                  styles={{
-                    root: {
-                      backgroundColor: primary,
-                      color: '#2D2D2D',
-                      fontWeight: 600,
-                      width: '100%',
-                      '&:hover': {
-                        backgroundColor: accent
-                      }
-                    }
-                  }}
-                >
-                  {t('login') || 'تسجيل الدخول'}
-                </Button>
-              </Group>
+              <Button
+                size="lg"
+                type="submit"
+                loading={loading}
+                fullWidth
+                mt={4}
+                styles={{
+                  root: {
+                    backgroundColor: primary,
+                    color: brand.ivory,
+                    fontWeight: 700,
+                    height: 48,
+                    borderRadius: 12,
+                    '&:hover': {
+                      backgroundColor: brand.tealDeep,
+                    },
+                  },
+                }}
+              >
+                {t('login') || 'تسجيل الدخول'}
+              </Button>
             </Stack>
           </form>
         </Paper>
 
-        <Center mt="xl">
-          <Text size="xs" c="rgba(255, 255, 255, 0.7)">
+        <Center mt="lg">
+          <Text size="xs" c={brand.muted}>
             {copyright}
           </Text>
         </Center>
-      </Container>
+      </Box>
     </Box>
   );
 }

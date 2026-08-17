@@ -194,7 +194,7 @@ export function ExpenseCategories() {
                       <>
                         <ActionIcon
                           variant="subtle"
-                          color="blue"
+                          color="teal"
                           onClick={() => openEditModal(category)}
                         >
                           <Edit size={16} />

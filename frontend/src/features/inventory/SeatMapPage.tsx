@@ -97,7 +97,7 @@ export function SeatMapPage() {
           </div>
         </Group>
         <Group>
-          <Badge color="blue">{inventory.seats_sold} {t('occupied') || 'مشغولة'}</Badge>
+          <Badge color="teal">{inventory.seats_sold} {t('occupied') || 'مشغولة'}</Badge>
           <Badge color="green">{inventory.seats_purchased - inventory.seats_sold} {t('available') || 'متاحة'}</Badge>
           {inventory.seat_class && inventory.seat_class !== 'economy' && (
             <Badge variant="light">{t(inventory.seat_class) || inventory.seat_class}</Badge>
@@ -112,7 +112,7 @@ export function SeatMapPage() {
 
       <Card withBorder p="md">
         <Group>
-          <Plane size={24} color="#8B7355" />
+          <Plane size={24} color="#0C7774" />
           <div>
             <Text fw={600}>{flight?.code} — {flight?.carrier}</Text>
             <Text size="xs" c="dimmed">

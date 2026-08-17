@@ -22,7 +22,7 @@ import {
 } from '@mantine/core';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { api } from '../../lib/api';
+import { brand, cardStyle } from '../../theme/brand';
 import { useAuth } from '../../providers/AuthProvider';
 import { notifications } from '@mantine/notifications';
 import { 
@@ -74,7 +74,7 @@ interface Booking {
 
 const statusColors: Record<string, string> = {
   draft: 'gray',
-  confirmed: 'blue',
+  confirmed: 'teal',
   paid: 'green',
   cancelled: 'red',
   expired: 'orange'
@@ -107,7 +107,7 @@ function HoldCountdownBadge({ holdExpiresAt }: { holdExpiresAt?: string }) {
   
   if (status === 'none') return null;
   
-  const color = status === 'expiring_soon' ? 'orange' : status === 'expired' ? 'red' : 'blue';
+  const color = status === 'expiring_soon' ? 'orange' : status === 'expired' ? 'red' : 'teal';
   const icon = status === 'expiring_soon' ? <AlertTriangle size={10} /> : <Clock size={10} />;
   
   return (
@@ -245,7 +245,7 @@ export function BookingsPage() {
         </Button>
       </Group>
 
-      <Paper p="md" radius="lg" style={{ backgroundColor: '#FFFFFF', border: '1px solid #E8DFD0' }}>
+      <Paper p="md" radius="lg" style={cardStyle}>
         <Group mb="md">
           <TextInput
             placeholder={t('search') || 'بحث برقم الحجز أو اسم العميل...'}
@@ -318,7 +318,7 @@ export function BookingsPage() {
               {bookings.map((booking) => (
                 <Table.Tr key={booking.id}>
                   <Table.Td>
-                    <Text size="sm" fw={600} c="brown">
+                    <Text size="sm" fw={600} c="#C99A3D">
                       {booking.booking_number}
                     </Text>
                   </Table.Td>
@@ -331,7 +331,7 @@ export function BookingsPage() {
                     </div>
                   </Table.Td>
                   <Table.Td>
-                    <Badge variant="light" color="brown" size="sm">
+                    <Badge variant="light" color="teal" size="sm">
                       {booking.seasons?.name || '-'}
                     </Badge>
                   </Table.Td>
@@ -351,7 +351,7 @@ export function BookingsPage() {
                     </Text>
                   </Table.Td>
                   <Table.Td>
-                    <Text size="sm" c={Number(booking.remaining_balance) > 0 ? 'red' : 'green'} fw={500}>
+                    <Text size="sm" c={Number(booking.remaining_balance) > 0 ? brand.gold : 'green'} fw={600}>
                       {Number(booking.remaining_balance || 0).toLocaleString('en')} MAD
                     </Text>
                   </Table.Td>

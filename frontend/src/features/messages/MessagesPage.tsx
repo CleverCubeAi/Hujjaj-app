@@ -271,7 +271,7 @@ export function MessagesPage() {
                     </Table.Td>
                     <Table.Td>
                       {m.bookings?.booking_number ? (
-                        <Badge variant="light" color="brown">{m.bookings.booking_number}</Badge>
+                        <Badge variant="light" color="teal">{m.bookings.booking_number}</Badge>
                       ) : (
                         <Text size="sm" c="dimmed">-</Text>
                       )}

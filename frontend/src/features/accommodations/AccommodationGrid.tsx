@@ -5,12 +5,13 @@ import { api } from '../../lib/api';
 import { 
   Title, Paper, Table, Badge, Text, Loader, Center, Button, Group, 
   Modal, TextInput, Select, Stack, ActionIcon,
-  Accordion, Card, Tooltip, Box
+  Accordion, Alert, Tooltip, Box
 } from '@mantine/core';
 import { Plus, Edit, Trash2, Building, BedDouble, Package, AlertCircle } from 'lucide-react';
 import { countries, getCitiesByCountry, getLocalizedLabel } from '../../data/locations';
 import { ImageUpload } from '../../components/common/ImageUpload';
 import { HotelInventoryForm } from '../inventory/HotelInventoryForm';
+import { brand, cardStyle, tagStyle } from '../../theme/brand';
 
 interface RoomType {
   id: string;
@@ -238,16 +239,6 @@ export function AccommodationGrid() {
     fetchData();
   };
 
-  const getRoomTypeBadgeColor = (type: string) => {
-    switch (type) {
-      case 'double': return 'blue';
-      case 'triple': return 'green';
-      case 'quad': return 'orange';
-      case 'quint': return 'purple';
-      default: return 'gray';
-    }
-  };
-
   const getDisplayName = (acc: Accommodation) => {
     return i18n.language === 'ar' && acc.name_ar ? acc.name_ar : acc.name;
   };
@@ -270,19 +261,28 @@ export function AccommodationGrid() {
       </Group>
 
       {accommodations.length === 0 ? (
-        <Paper shadow="sm" p="xl">
+        <Paper shadow="sm" p="xl" style={cardStyle}>
           <Text ta="center" c="dimmed">
             {t('no_data') || 'No accommodations found. Create one to get started.'}
           </Text>
         </Paper>
       ) : (
-        <Accordion variant="separated">
+        <Accordion
+          variant="separated"
+          styles={{
+            item: {
+              backgroundColor: brand.ivory,
+              border: `1px solid ${brand.border}`,
+              borderRadius: 16,
+            },
+          }}
+        >
           {accommodations.map((acc) => (
             <Accordion.Item key={acc.id} value={acc.id}>
-              <Accordion.Control icon={<Building size={20} />}>
+              <Accordion.Control icon={<Building size={20} color={brand.teal} />}>
                 <Group justify="space-between" style={{ flex: 1 }} pr="md">
                   <div>
-                    <Text fw={500}>{getDisplayName(acc)}</Text>
+                    <Text fw={500} c={brand.navy}>{getDisplayName(acc)}</Text>
                     <Text size="sm" c="dimmed">
                       {acc.country && countries.find(c => c.value === acc.country) 
                         ? getLocalizedLabel(countries.find(c => c.value === acc.country)!, i18n.language) + ' - ' 
@@ -296,7 +296,7 @@ export function AccommodationGrid() {
                       } • {acc.seasons?.name || t('no_season') || 'No season'}
                     </Text>
                   </div>
-                  <Badge>{acc.room_types?.length || 0} {t('room_types') || 'room types'}</Badge>
+                  <Badge variant="light" styles={{ root: tagStyle.teal }}>{acc.room_types?.length || 0} {t('room_types') || 'room types'}</Badge>
                 </Group>
               </Accordion.Control>
               <Accordion.Panel>
@@ -308,7 +308,7 @@ export function AccommodationGrid() {
                     <Button 
                       size="xs" 
                       variant="light" 
-                      color="blue"
+                      color="teal"
                       leftSection={<Package size={14} />} 
                       onClick={() => navigate('/inventory/hotel-rooms', { state: { accommodation_id: acc.id } })}
                     >
@@ -317,8 +317,8 @@ export function AccommodationGrid() {
                     <Button size="xs" variant="light" leftSection={<BedDouble size={14} />} onClick={() => openCreateRoomModal(acc.id)}>
                       {t('add_room_type') || 'Add Room Type'}
                     </Button>
-                    <ActionIcon variant="subtle" onClick={() => openEditAccModal(acc)}>
-                      <Edit size={16} />
+                    <ActionIcon variant="subtle" color="teal" onClick={() => openEditAccModal(acc)}>
+                      <Edit size={16} color={brand.teal} />
                     </ActionIcon>
                     <ActionIcon variant="subtle" color="red" onClick={() => setDeleteAccConfirm(acc)}>
                       <Trash2 size={16} />
@@ -333,21 +333,37 @@ export function AccommodationGrid() {
                       const inventory = getRoomTypeInventory(acc.id, rt.id);
                       return inventory.beds_purchased === 0;
                     }) && (
-                      <Card mb="md" p="sm" withBorder style={{ backgroundColor: '#fff8e1', borderColor: '#ff9800' }}>
-                        <Group gap="sm">
-                          <AlertCircle size={20} color="#ff9800" />
-                          <div>
-                            <Text size="sm" fw={500} c="orange">
-                              {t('some_room_types_no_inventory') || 'بعض أنواع الغرف ليس لها مخزون'}
-                            </Text>
-                            <Text size="xs" c="dimmed">
-                              {t('add_inventory_to_book') || 'أنواع الغرف بدون مخزون لن تظهر في الحجوزات. أضف مخزون من صفحة المخزون.'}
-                            </Text>
-                          </div>
-                        </Group>
-                      </Card>
+                      <Alert
+                        mb="md"
+                        variant="light"
+                        icon={<AlertCircle size={20} color={brand.warning} />}
+                        title={t('some_room_types_no_inventory') || 'بعض أنواع الغرف ليس لها مخزون'}
+                        styles={{
+                          root: {
+                            backgroundColor: tagStyle.warning.backgroundColor,
+                            borderColor: brand.warning,
+                          },
+                          title: { color: brand.warning },
+                          body: { color: brand.navy },
+                        }}
+                      >
+                        <Text size="xs" c={brand.muted}>
+                          {t('add_inventory_to_book') || 'أنواع الغرف بدون مخزون لن تظهر في الحجوزات. أضف مخزون من صفحة المخزون.'}
+                        </Text>
+                      </Alert>
                     )}
-                    <Table striped highlightOnHover>
+                    <Table
+                      highlightOnHover
+                      styles={{
+                        th: {
+                          backgroundColor: brand.sand,
+                          color: brand.tealDeep,
+                          fontSize: 12,
+                          fontWeight: 600,
+                        },
+                        td: { color: brand.navy, fontSize: 14 },
+                      }}
+                    >
                     <Table.Thead>
                       <Table.Tr>
                         <Table.Th>{t('room_type') || 'Type'}</Table.Th>
@@ -366,30 +382,30 @@ export function AccommodationGrid() {
                         const hasInventory = inventory.beds_purchased > 0;
                         
                         return (
-                          <Table.Tr key={rt.id} style={{ backgroundColor: !hasInventory ? '#fff8e1' : undefined }}>
+                          <Table.Tr key={rt.id} style={{ backgroundColor: !hasInventory ? brand.goldSoft : undefined }}>
                             <Table.Td>
                               <Group gap="xs">
-                                <Badge color={getRoomTypeBadgeColor(rt.type)} variant="light">
+                                <Badge variant="light" styles={{ root: tagStyle.teal }}>
                                   {t(rt.type) || rt.type}
                                 </Badge>
                                 {!hasInventory && (
                                   <Tooltip label={t('no_inventory_warning') || 'لا يوجد مخزون - لن يظهر هذا النوع في الحجوزات'}>
-                                    <AlertCircle size={16} color="#ff9800" />
+                                    <AlertCircle size={16} color={brand.warning} />
                                   </Tooltip>
                                 )}
                               </Group>
                             </Table.Td>
                             <Table.Td>
-                              <Text fw={500}>{capacityPerRoom} {t('beds') || 'أسرة'}</Text>
+                              <Text fw={500} c={brand.navy}>{capacityPerRoom} {t('beds') || 'أسرة'}</Text>
                             </Table.Td>
                             <Table.Td>
                               {hasInventory ? (
-                                <Badge size="lg" color="blue" variant="light">
+                                <Badge size="lg" variant="light" styles={{ root: tagStyle.teal }}>
                                   {inventory.beds_purchased} {t('beds') || 'سرير'}
                                 </Badge>
                               ) : (
                                 <Group gap={4}>
-                                  <Badge size="sm" color="orange" variant="light">
+                                  <Badge size="sm" variant="light" styles={{ root: tagStyle.warning }}>
                                     {t('no_inventory') || 'لا يوجد مخزون'}
                                   </Badge>
                                 </Group>
@@ -398,17 +414,27 @@ export function AccommodationGrid() {
                             <Table.Td>
                               {hasInventory ? (
                                 <Tooltip label={`${t('sold') || 'مباع'}: ${inventory.beds_sold} | ${t('available') || 'متاح'}: ${inventory.beds_available}`}>
-                                  <Badge size="lg" color={inventory.beds_available > 0 ? 'green' : 'red'} variant="filled">
+                                  <Badge
+                                    size="lg"
+                                    variant="light"
+                                    styles={{ root: inventory.beds_available > 0 ? tagStyle.success : tagStyle.danger }}
+                                  >
                                     {inventory.beds_available} {t('beds_available') || 'متاح'}
                                   </Badge>
                                 </Tooltip>
                               ) : (
                                 <Button 
                                   size="xs" 
-                                  variant="light" 
-                                  color="orange"
-                                  leftSection={<Package size={12} />}
+                                  variant="light"
+                                  leftSection={<Package size={12} color={brand.warning} />}
                                   onClick={() => openAddInventoryModal(acc, rt)}
+                                  styles={{
+                                    root: {
+                                      backgroundColor: tagStyle.warning.backgroundColor,
+                                      color: brand.warning,
+                                      border: 'none',
+                                    },
+                                  }}
                                 >
                                   {t('add_inventory') || 'إضافة مخزون'}
                                 </Button>
@@ -420,14 +446,14 @@ export function AccommodationGrid() {
                                   <ActionIcon 
                                     size="sm" 
                                     variant="subtle" 
-                                    color="blue"
+                                    color="teal"
                                     onClick={() => navigate('/inventory/hotel-rooms', { state: { accommodation_id: acc.id, room_type_id: rt.id } })}
                                   >
-                                    <Package size={14} />
+                                    <Package size={14} color={brand.teal} />
                                   </ActionIcon>
                                 </Tooltip>
-                                <ActionIcon size="sm" variant="subtle" onClick={() => openEditRoomModal(rt, acc.id)}>
-                                  <Edit size={14} />
+                                <ActionIcon size="sm" variant="subtle" color="teal" onClick={() => openEditRoomModal(rt, acc.id)}>
+                                  <Edit size={14} color={brand.teal} />
                                 </ActionIcon>
                                 <ActionIcon size="sm" variant="subtle" color="red" onClick={() => setDeleteRoomConfirm({ room: rt, accId: acc.id })}>
                                   <Trash2 size={14} />

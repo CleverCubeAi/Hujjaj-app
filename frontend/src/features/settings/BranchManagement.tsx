@@ -216,7 +216,7 @@ export function BranchManagement() {
   const getStatusBadge = (branch: Branch) => {
     if (branch.is_headquarters) {
       return (
-        <Badge color="blue" variant="filled">
+        <Badge color="gold" variant="filled">
           {t('headquarters') || 'المقر الرئيسي'}
         </Badge>
       );
@@ -312,7 +312,7 @@ export function BranchManagement() {
                   <Group gap="xs">
                     <ActionIcon
                       variant="subtle"
-                      color="blue"
+                      color="teal"
                       onClick={() => openEditModal(branch)}
                     >
                       <Edit size={16} />

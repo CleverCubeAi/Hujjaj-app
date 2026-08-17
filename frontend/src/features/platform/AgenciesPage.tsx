@@ -51,8 +51,8 @@ function statusColor(status: string) {
 }
 
 function planColor(plan: string) {
-  if (plan === 'premium') return 'violet';
-  if (plan === 'basic') return 'blue';
+  if (plan === 'premium') return 'gold';
+  if (plan === 'basic') return 'teal';
   return 'gray';
 }
 
@@ -142,12 +142,12 @@ export function AgenciesPage() {
     <Stack gap="lg">
       <Group justify="space-between">
         <Title order={2}>{t('agencies') || 'الوكالات'}</Title>
-        <Button leftSection={<Plus size={16} />} color="brown" onClick={() => setModalOpen(true)}>
+        <Button leftSection={<Plus size={16} />} color="teal" onClick={() => setModalOpen(true)}>
           {t('create_agency') || 'إنشاء وكالة'}
         </Button>
       </Group>
 
-      <Paper p="md" radius="lg" style={{ backgroundColor: '#FFFFFF', border: '1px solid #E8DFD0' }} pos="relative">
+      <Paper p="md" radius="lg" style={{ backgroundColor: '#F8F6F0', border: '1px solid #E2D9C8' }} pos="relative">
         <LoadingOverlay visible={loading} />
         <Group mb="md" wrap="wrap">
           <TextInput
@@ -287,7 +287,7 @@ export function AgenciesPage() {
             <Button variant="default" onClick={() => setModalOpen(false)}>
               {t('cancel') || 'إلغاء'}
             </Button>
-            <Button color="brown" loading={saving} onClick={handleCreate}>
+            <Button color="teal" loading={saving} onClick={handleCreate}>
               {t('create') || 'إنشاء'}
             </Button>
           </Group>

@@ -395,11 +395,11 @@ export function ReportsPage() {
                 <Group justify="space-between">
                   <div>
                     <Text size="xs" c="dimmed" tt="uppercase">{t('total_received') || 'المستلم'}</Text>
-                    <Text fw={700} size="xl" c="blue">
+                    <Text fw={700} size="xl" c="gold">
                       {formatCurrency(reportData.financial.total_received)}
                     </Text>
                   </div>
-                  <CreditCard size={32} color="#228be6" />
+                  <CreditCard size={32} color="#0C7774" />
                 </Group>
               </Card>
               <Card withBorder p="md" radius="md">
@@ -424,7 +424,7 @@ export function ReportsPage() {
                       {t('avg_booking_value') || 'متوسط قيمة الحجز'}: {formatCurrency(reportData.financial.average_booking_value)}
                     </Text>
                   </div>
-                  <Calendar size={32} color="#8B7355" />
+                  <Calendar size={32} color="#0C7774" />
                 </Group>
               </Card>
             </SimpleGrid>
@@ -483,14 +483,14 @@ export function ReportsPage() {
                     <Group justify="space-between">
                       <div>
                         <Text size="xs" c="dimmed" tt="uppercase">{t('total_sales') || 'إجمالي المبيعات'}</Text>
-                        <Text fw={700} size="xl" c="blue">
+                        <Text fw={700} size="xl" c="gold">
                           {formatCurrency(financialStatus.summary.total_sales)}
                         </Text>
                         <Text size="xs" c="dimmed">
                           {financialStatus.sales.bookings_count} {t('bookings') || 'حجوزات'}
                         </Text>
                       </div>
-                      <ThemeIcon size={48} color="blue" variant="light" radius="md">
+                      <ThemeIcon size={48} color="teal" variant="light" radius="md">
                         <TrendingUp size={24} />
                       </ThemeIcon>
                     </Group>
@@ -552,10 +552,10 @@ export function ReportsPage() {
                 <Accordion variant="separated" radius="md">
                   {/* Sales Details */}
                   <Accordion.Item value="sales">
-                    <Accordion.Control icon={<ArrowUpCircle size={20} color="#228be6" />}>
+                    <Accordion.Control icon={<ArrowUpCircle size={20} color="#0C7774" />}>
                       <Group justify="space-between" pr="md">
                         <Text fw={600}>{t('sales_details') || 'تفاصيل المبيعات'}</Text>
-                        <Badge size="lg" color="blue" variant="light">
+                        <Badge size="lg" color="gold" variant="light">
                           {formatCurrency(financialStatus.sales.total)}
                         </Badge>
                       </Group>
@@ -599,8 +599,8 @@ export function ReportsPage() {
                                   <Table.Td c="orange">{formatCurrency(sale.remaining)}</Table.Td>
                                   <Table.Td>
                                     <Badge size="sm" variant="light" color={
-                                      sale.status === 'confirmed' ? 'green' :
-                                      sale.status === 'paid' ? 'blue' :
+                                      sale.status === 'confirmed' ? 'teal' :
+                                      sale.status === 'paid' ? 'green' :
                                       sale.status === 'cancelled' ? 'red' : 'gray'
                                     }>
                                       {t(sale.status) || sale.status}
@@ -703,7 +703,7 @@ export function ReportsPage() {
                                   <Table.Td>{t(bed.room_type) || bed.room_type}</Table.Td>
                                   <Table.Td>{bed.beds_purchased}</Table.Td>
                                   <Table.Td c="green">{bed.beds_sold}</Table.Td>
-                                  <Table.Td c="blue">{bed.beds_available}</Table.Td>
+                                  <Table.Td c="teal">{bed.beds_available}</Table.Td>
                                   <Table.Td c="red">{formatCurrency(bed.total_cost)}</Table.Td>
                                   <Table.Td>{formatCurrency(bed.revenue)}</Table.Td>
                                   <Table.Td c={bed.profit >= 0 ? 'green' : 'red'}>
@@ -720,7 +720,7 @@ export function ReportsPage() {
 
                   {/* Flight Seats Details */}
                   <Accordion.Item value="flights">
-                    <Accordion.Control icon={<PlaneTakeoff size={20} color="#228be6" />}>
+                    <Accordion.Control icon={<PlaneTakeoff size={20} color="#0C7774" />}>
                       <Group justify="space-between" pr="md">
                         <Text fw={600}>{t('flight_seats') || 'مقاعد الطائرات'}</Text>
                         <Group gap="xs">
@@ -777,7 +777,7 @@ export function ReportsPage() {
                                   <Table.Td>{flight.route}</Table.Td>
                                   <Table.Td>{flight.seats_purchased}</Table.Td>
                                   <Table.Td c="green">{flight.seats_sold}</Table.Td>
-                                  <Table.Td c="blue">{flight.seats_available}</Table.Td>
+                                  <Table.Td c="teal">{flight.seats_available}</Table.Td>
                                   <Table.Td c="red">{formatCurrency(flight.total_cost)}</Table.Td>
                                   <Table.Td>{formatCurrency(flight.revenue)}</Table.Td>
                                   <Table.Td c={flight.profit >= 0 ? 'green' : 'red'}>
@@ -932,7 +932,7 @@ export function ReportsPage() {
                         <Badge variant="light" color={
                           booking.status === 'confirmed' ? 'green' :
                           booking.status === 'draft' ? 'gray' :
-                          booking.status === 'cancelled' ? 'red' : 'blue'
+                          booking.status === 'cancelled' ? 'red' : 'teal'
                         }>
                           {t(booking.status) || booking.status}
                         </Badge>

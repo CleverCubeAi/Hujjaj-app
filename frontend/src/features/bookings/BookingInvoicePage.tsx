@@ -166,7 +166,7 @@ export function BookingInvoicePage() {
         </Group>
       </Group>
 
-      <Paper p="xl" radius="lg" style={{ backgroundColor: '#FFFFFF', border: '1px solid #E8DFD0' }} ref={printRef}>
+      <Paper p="xl" radius="lg" style={{ backgroundColor: '#F8F6F0', border: '1px solid #E2D9C8' }} ref={printRef}>
         {/* Header */}
         <Group justify="space-between" mb="xl">
           <div>
@@ -174,7 +174,7 @@ export function BookingInvoicePage() {
               <img src={agencyBrand.logo_url} alt={agencyBrand.name} style={{ height: 48 }} />
             ) : (
               <>
-                <Title order={2} c="brown">{agencyBrand?.name_ar || agencyBrand?.name || t('app_name')}</Title>
+                <Title order={2} c="#C99A3D">{agencyBrand?.name_ar || agencyBrand?.name || t('app_name')}</Title>
                 <Text size="sm" c="dimmed">{agencyBrand?.name}</Text>
               </>
             )}
@@ -212,7 +212,7 @@ export function BookingInvoicePage() {
 
         {/* Items Table */}
         <Table mb="xl" withTableBorder withColumnBorders>
-          <Table.Thead style={{ backgroundColor: '#F5EFE6' }}>
+          <Table.Thead style={{ backgroundColor: '#E7F3F2' }}>
             <Table.Tr>
               <Table.Th>#</Table.Th>
               <Table.Th>{t('description') || 'الوصف'}</Table.Th>

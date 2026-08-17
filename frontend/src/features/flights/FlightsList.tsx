@@ -362,7 +362,7 @@ export function FlightsList() {
                         </Group>
                       </Table.Td>
                       <Table.Td>
-                        <Badge variant="light" color="blue">
+                        <Badge variant="light" color="teal">
                           {flight.departure_city} → {flight.arrival_city}
                         </Badge>
                       </Table.Td>
@@ -382,7 +382,7 @@ export function FlightsList() {
                       <Table.Td>{formatDate(flight.departure_date)}</Table.Td>
                       <Table.Td>
                         {flight.seasons ? (
-                          <Badge variant="light" color="brown">
+                          <Badge variant="light" color="teal">
                             {flight.seasons.name}
                           </Badge>
                         ) : '-'}
@@ -391,7 +391,7 @@ export function FlightsList() {
                         {inventory.seats_purchased > 0 ? (
                           <Tooltip label={`${t('purchased') || 'Purchased'}: ${inventory.seats_purchased} | ${t('sold') || 'Sold'}: ${inventory.seats_sold} | ${t('available') || 'Available'}: ${inventory.seats_available}`}>
                             <Group gap={4}>
-                              <Badge size="sm" color="blue">{inventory.seats_purchased} {t('purchased') || 'P'}</Badge>
+                              <Badge size="sm" color="teal">{inventory.seats_purchased} {t('purchased') || 'P'}</Badge>
                               <Badge size="sm" color={inventory.seats_available > 0 ? 'green' : 'red'}>
                                 {inventory.seats_available} {t('available') || 'A'}
                               </Badge>
@@ -620,7 +620,7 @@ export function FlightsList() {
               {form.transits.map((transit, index) => (
                 <Card key={index} withBorder p="md" radius="md">
                   <Group justify="space-between" mb="sm">
-                    <Badge variant="filled" color="brown">
+                    <Badge variant="filled" color="teal">
                       {t('stop') || 'توقف'} {index + 1}
                     </Badge>
                     <ActionIcon 

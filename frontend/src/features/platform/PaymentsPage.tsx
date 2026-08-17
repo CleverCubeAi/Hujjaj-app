@@ -82,7 +82,7 @@ export function PaymentsPage() {
       </Paper>
       <Modal opened={!!noteOpen} onClose={() => setNoteOpen(null)} title={t('mark_paid') || 'Mark paid'}>
         <TextInput label={t('note') || 'ملاحظة'} value={note} onChange={(e) => setNote(e.currentTarget.value)} mb="md" />
-        <Button color="brown" onClick={() => act(async () => {
+        <Button color="teal" onClick={() => act(async () => {
           await api.markPlatformInvoicePaid(noteOpen.id, note);
           setNoteOpen(null);
           setNote('');

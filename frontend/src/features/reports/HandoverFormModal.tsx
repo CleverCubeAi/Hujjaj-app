@@ -180,7 +180,7 @@ export function HandoverFormModal({
       size="md"
     >
       <Stack gap="md">
-        <Alert icon={<AlertCircle size={16} />} color="blue" variant="light">
+        <Alert icon={<AlertCircle size={16} />} color="teal" variant="light">
           {handoverType === 'sales_to_admin'
             ? (t('sales_handover_info') || 'طلب تسليم مبلغ من المبيعات للإدارة')
             : (t('expense_reimbursement_info') || 'طلب استرداد مصاريف من الإدارة')}

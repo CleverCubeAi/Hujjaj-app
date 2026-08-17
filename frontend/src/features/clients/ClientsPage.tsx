@@ -161,7 +161,7 @@ export function ClientsPage() {
         </Button>
       </Group>
 
-      <Paper p="md" radius="lg" style={{ backgroundColor: '#FFFFFF', border: '1px solid #E8DFD0' }}>
+      <Paper p="md" radius="lg" style={{ backgroundColor: '#F8F6F0', border: '1px solid #E2D9C8' }}>
         <TextInput
           placeholder={t('search') || 'بحث...'}
           leftSection={<Search size={18} />}
@@ -213,7 +213,7 @@ export function ClientsPage() {
                   </Table.Td>
                   <Table.Td>{client.id_number || '-'}</Table.Td>
                   <Table.Td>
-                    <Badge variant="light" color="brown">
+                    <Badge variant="light" color="teal">
                       {client.bookings?.length || 0}
                     </Badge>
                   </Table.Td>

@@ -378,7 +378,7 @@ export function DiscountSettings() {
                     </Table.Td>
                     <Table.Td>
                       <Badge 
-                        color={discount.discount_type === 'percent' ? 'blue' : 'green'}
+                        color={discount.discount_type === 'percent' ? 'teal' : 'gold'}
                         leftSection={discount.discount_type === 'percent' ? <Percent size={12} /> : <DollarSign size={12} />}
                       >
                         {discount.discount_type === 'percent' ? t('percentage') || 'نسبة مئوية' : t('fixed_amount') || 'مبلغ ثابت'}
@@ -445,7 +445,7 @@ export function DiscountSettings() {
               </Button>
             </Group>
 
-            <Alert icon={<AlertCircle size={18} />} color="blue" mb="lg">
+            <Alert icon={<AlertCircle size={18} />} color="teal" mb="lg">
               {t('default_discounts_note') || 'الخصومات الافتراضية متاحة لجميع المستخدمين تلقائياً. هنا يمكنك تعيين خصومات إضافية لمستخدمين محددين.'}
             </Alert>
 
@@ -469,7 +469,7 @@ export function DiscountSettings() {
                       <Text size="xs" c="dimmed">{perm.user?.email}</Text>
                     </Table.Td>
                     <Table.Td>
-                      <Badge color="blue">{perm.discount_setting?.name || '-'}</Badge>
+                      <Badge color="teal">{perm.discount_setting?.name || '-'}</Badge>
                     </Table.Td>
                     <Table.Td>
                       {perm.usage_limit ? perm.usage_limit : t('unlimited') || 'غير محدود'}

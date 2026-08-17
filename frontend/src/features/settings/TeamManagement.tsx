@@ -290,7 +290,7 @@ export function TeamManagement() {
   const getRoleBadge = (role: string) => {
     const colors: Record<string, string> = {
       agency_admin: 'red',
-      manager: 'blue',
+      manager: 'teal',
       agent: 'gray'
     };
     return (
@@ -310,7 +310,7 @@ export function TeamManagement() {
     }
     return (
       <Badge 
-        color={branch.is_headquarters ? 'blue' : 'teal'} 
+        color={branch.is_headquarters ? 'gold' : 'teal'} 
         variant="light"
         leftSection={<Building2 size={12} />}
       >
@@ -388,7 +388,7 @@ export function TeamManagement() {
             <Table.Tr key={user.id}>
               <Table.Td>
                 <Group gap="xs">
-                  <Avatar src={user.avatar_url} size="sm" radius="xl" color="brown">
+                  <Avatar src={user.avatar_url} size="sm" radius="xl" color="teal">
                     {user.full_name?.[0]?.toUpperCase()}
                   </Avatar>
                   {user.full_name}
@@ -402,7 +402,7 @@ export function TeamManagement() {
                   {isAdmin && (
                     <ActionIcon
                       variant="subtle"
-                      color="blue"
+                      color="teal"
                       onClick={() => openEditModal(user)}
                     >
                       <Edit size={16} />
@@ -529,7 +529,7 @@ export function TeamManagement() {
                               label={
                                 <Group gap="xs">
                                   <Text size="sm" fw={500}>{discount.name}</Text>
-                                  <Badge size="xs" color={discount.discount_type === 'percent' ? 'blue' : 'green'}>
+                                  <Badge size="xs" color={discount.discount_type === 'percent' ? 'teal' : 'gold'}>
                                     {discount.discount_type === 'percent' ? `${discount.discount_value}%` : `${discount.discount_value} MAD`}
                                   </Badge>
                                 </Group>

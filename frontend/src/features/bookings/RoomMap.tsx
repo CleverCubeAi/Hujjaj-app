@@ -15,6 +15,7 @@ import {
   ThemeIcon
 } from '@mantine/core';
 import { useTranslation } from 'react-i18next';
+import { brand } from '../../theme/brand';
 import { 
   BedDouble, 
   User, 
@@ -204,15 +205,15 @@ export function RoomMap({
   };
 
   const statusColors = {
-    empty: '#e8f5e9',
-    partial: '#fff8e1',
-    full: '#ffebee'
+    empty: '#E3F2EA',
+    partial: brand.goldSoft,
+    full: '#F8E4E1'
   };
 
   const statusBorderColors = {
-    empty: '#4caf50',
-    partial: '#ff9800',
-    full: '#f44336'
+    empty: brand.success,
+    partial: brand.warning,
+    full: brand.danger
   };
 
   return (
@@ -221,7 +222,7 @@ export function RoomMap({
       <Paper p="md" withBorder>
         <Group justify="space-between" mb="sm">
           <Group>
-            <ThemeIcon size="lg" color="brown" variant="light">
+            <ThemeIcon size="lg" color="teal" variant="light">
               <Home size={20} />
             </ThemeIcon>
             <div>
@@ -230,14 +231,14 @@ export function RoomMap({
             </div>
           </Group>
           <Group>
-            <Badge size="lg" color="blue">{roomsNeeded} {t('rooms_needed') || 'غرف مطلوبة'}</Badge>
+            <Badge size="lg" color="teal">{roomsNeeded} {t('rooms_needed') || 'غرف مطلوبة'}</Badge>
             <Badge size="lg" color="green">{pilgrimsCount} {t('pilgrims') || 'معتمر'}</Badge>
           </Group>
         </Group>
         
         <Progress.Root size="xl">
           <Tooltip label={`${occupiedBeds} / ${pilgrimsCount} ${t('pilgrims_assigned') || 'معتمر تم توزيعهم'}`}>
-            <Progress.Section value={occupancyPercent} color={occupancyPercent === 100 ? 'green' : occupancyPercent > 50 ? 'yellow' : 'blue'}>
+            <Progress.Section value={occupancyPercent} color={occupancyPercent === 100 ? 'green' : occupancyPercent > 50 ? 'gold' : 'teal'}>
               <Progress.Label>{occupancyPercent}%</Progress.Label>
             </Progress.Section>
           </Tooltip>
@@ -424,9 +425,9 @@ export function RoomMap({
 
       {/* Unassigned Pilgrims - draggable to beds */}
       {unassignedPilgrims.length > 0 && (
-        <Paper p="md" withBorder style={{ backgroundColor: '#fff8e1', borderColor: '#ff9800' }}>
+        <Paper p="md" withBorder style={{ backgroundColor: brand.goldSoft, borderColor: brand.warning }}>
           <Group mb="sm" wrap="wrap" gap="xs">
-            <AlertCircle size={20} color="#ff9800" />
+            <AlertCircle size={20} color={brand.warning} />
             <Text fw={600} c="orange">
               {t('unassigned_pilgrims') || 'معتمرين بدون غرف'} ({unassignedPilgrims.length})
             </Text>
