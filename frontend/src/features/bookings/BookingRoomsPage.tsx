@@ -282,7 +282,7 @@ export function BookingRoomsPage() {
             </div>
           </Group>
         </Card>
-        <Card withBorder p="md" style={{ backgroundColor: unassignedPilgrims.length > 0 ? '#fff8e1' : '#e8f5e9' }}>
+        <Card withBorder p="md" style={{ backgroundColor: unassignedPilgrims.length > 0 ? '#F8F0DC' : '#E3F2EA' }}>
           <Group>
             {unassignedPilgrims.length > 0 ? <AlertCircle size={24} color="orange" /> : <CheckCircle size={24} color="green" />}
             <div>
@@ -296,7 +296,7 @@ export function BookingRoomsPage() {
       </SimpleGrid>
 
       {/* Rules Alert */}
-      <Alert color="blue" variant="light" icon={<BedDouble size={18} />}>
+      <Alert color="teal" variant="light" icon={<BedDouble size={18} />}>
         <Text size="sm">
           {t('allocation_rules_info') || 'يتم توزيع الغرف مع مراعاة الفصل بين الجنسين. المحارم يمكنهم المشاركة في نفس الغرفة.'}
         </Text>

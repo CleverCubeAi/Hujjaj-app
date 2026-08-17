@@ -109,7 +109,7 @@ export function PrepaymentBalances() {
       <SimpleGrid cols={{ base: 1, sm: 3 }} mb="lg">
         <Card shadow="sm" padding="md" radius="md" withBorder>
           <Text size="xs" c="dimmed" tt="uppercase">{t('total_prepayments') || 'إجمالي الدفعات المقدمة'}</Text>
-          <Text fw={700} size="xl" c="blue">{totalPrepayments.toLocaleString()} MAD</Text>
+          <Text fw={700} size="xl" c="gold">{totalPrepayments.toLocaleString()} MAD</Text>
         </Card>
         <Card shadow="sm" padding="md" radius="md" withBorder>
           <Text size="xs" c="dimmed" tt="uppercase">{t('total_used') || 'المستخدم'}</Text>
@@ -143,7 +143,7 @@ export function PrepaymentBalances() {
             return (
               <Table.Tr key={prepayment.id}>
                 <Table.Td>
-                  <Badge color={prepayment.linked_resource_type === 'accommodation' ? 'blue' : 'green'}>
+                  <Badge color={prepayment.linked_resource_type === 'accommodation' ? 'teal' : 'gold'}>
                     {prepayment.linked_resource_type === 'accommodation' 
                       ? t('accommodation') || 'السكن'
                       : t('flight') || 'الرحلة'}
@@ -176,7 +176,7 @@ export function PrepaymentBalances() {
                 <Table.Td>
                   <ActionIcon
                     variant="subtle"
-                    color="blue"
+                    color="teal"
                     onClick={() => handleViewAllocations(prepayment.id)}
                   >
                     <Eye size={16} />

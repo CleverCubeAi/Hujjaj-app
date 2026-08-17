@@ -97,7 +97,7 @@ export function SeatMapPage() {
           </div>
         </Group>
         <Group>
-          <Badge color="blue">{inventory.seats_sold} {t('occupied') || 'مشغولة'}</Badge>
+          <Badge color="teal">{inventory.seats_sold} {t('occupied') || 'مشغولة'}</Badge>
           <Badge color="green">{inventory.seats_purchased - inventory.seats_sold} {t('available') || 'متاحة'}</Badge>
           {inventory.seat_class && inventory.seat_class !== 'economy' && (
             <Badge variant="light">{t(inventory.seat_class) || inventory.seat_class}</Badge>

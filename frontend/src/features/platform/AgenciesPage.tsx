@@ -51,8 +51,8 @@ function statusColor(status: string) {
 }
 
 function planColor(plan: string) {
-  if (plan === 'premium') return 'violet';
-  if (plan === 'basic') return 'blue';
+  if (plan === 'premium') return 'gold';
+  if (plan === 'basic') return 'teal';
   return 'gray';
 }
 

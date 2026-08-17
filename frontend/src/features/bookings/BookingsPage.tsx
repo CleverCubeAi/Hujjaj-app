@@ -107,7 +107,7 @@ function HoldCountdownBadge({ holdExpiresAt }: { holdExpiresAt?: string }) {
   
   if (status === 'none') return null;
   
-  const color = status === 'expiring_soon' ? 'orange' : status === 'expired' ? 'red' : 'blue';
+  const color = status === 'expiring_soon' ? 'orange' : status === 'expired' ? 'red' : 'teal';
   const icon = status === 'expiring_soon' ? <AlertTriangle size={10} /> : <Clock size={10} />;
   
   return (

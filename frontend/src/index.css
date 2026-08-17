@@ -83,3 +83,26 @@ h1, h2, h3, h4, h5, h6 {
 a, button {
   transition: all 0.2s ease;
 }
+
+.mantine-Table-th,
+table thead th {
+  background-color: var(--bg-canvas);
+  color: var(--color-teal-deep);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.mantine-Table-td,
+table tbody td {
+  color: var(--text-primary);
+}
+
+.mantine-InputWrapper-label,
+.mantine-Input-label {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.mantine-Badge-root {
+  text-transform: none;
+}

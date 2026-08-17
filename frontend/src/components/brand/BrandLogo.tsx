@@ -11,7 +11,7 @@ type BrandLogoProps = {
 export function BrandLogo({
   variant = 'stacked',
   height = 180,
-  alt = 'Hajj & Umrah Agency Pro',
+  alt = 'حجاج',
   src,
 }: BrandLogoProps) {
   const image = src || (variant === 'horizontal' ? horizontalLogo : stackedLogo);

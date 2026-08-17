@@ -129,7 +129,7 @@ export function HandoverStatusModal({
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'sent': return 'blue';
+      case 'sent': return 'teal';
       case 'pending': return 'yellow';
       case 'received': return 'green';
       case 'refused': return 'red';
@@ -243,7 +243,7 @@ export function HandoverStatusModal({
                 <Badge 
                   size="lg" 
                   variant="light"
-                  color={handover.handover_type === 'sales_to_admin' ? 'blue' : 'orange'}
+                  color={handover.handover_type === 'sales_to_admin' ? 'teal' : 'gold'}
                 >
                   {getTypeLabel(handover.handover_type)}
                 </Badge>

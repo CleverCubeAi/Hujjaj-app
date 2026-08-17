@@ -80,7 +80,7 @@ interface Booking {
 
 const statusColors: Record<string, string> = {
   draft: 'gray',
-  confirmed: 'blue',
+  confirmed: 'teal',
   paid: 'green',
   cancelled: 'red',
   expired: 'orange'
@@ -243,7 +243,7 @@ export function BookingDetailsPage() {
         if (holdInfo.status === 'none') return null;
         
         const alertColor = holdInfo.status === 'expiring_soon' ? 'orange' : 
-                          holdInfo.status === 'expired' ? 'red' : 'blue';
+                          holdInfo.status === 'expired' ? 'red' : 'teal';
         const alertIcon = holdInfo.status === 'expiring_soon' ? <AlertTriangle size={20} /> : <Clock size={20} />;
         
         return (

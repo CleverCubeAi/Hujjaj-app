@@ -317,7 +317,7 @@ export function FlightInventoryForm({ inventory, onSave, onCancel }: FlightInven
               {t('total_seats') || 'إجمالي المقاعد'}: <Badge size="lg">{totalSeats}</Badge>
             </Text>
             <Text size="sm" fw={600}>
-              {t('total_purchase_cost') || 'إجمالي التكلفة'}: <Badge size="lg" color="blue">{totalPurchaseCost.toLocaleString()} MAD</Badge>
+              {t('total_purchase_cost') || 'إجمالي التكلفة'}: <Badge size="lg" color="gold">{totalPurchaseCost.toLocaleString()} MAD</Badge>
             </Text>
           </Group>
         )}

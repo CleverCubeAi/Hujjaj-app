@@ -88,7 +88,7 @@ export function HandoversList({ seasonId, onViewDetails, refreshTrigger }: Hando
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'sent': return 'blue';
+      case 'sent': return 'teal';
       case 'pending': return 'yellow';
       case 'received': return 'green';
       case 'refused': return 'red';
@@ -210,7 +210,7 @@ export function HandoversList({ seasonId, onViewDetails, refreshTrigger }: Hando
                     <Table.Td>
                       <Badge 
                         variant="light" 
-                        color={handover.handover_type === 'sales_to_admin' ? 'blue' : 'orange'}
+                        color={handover.handover_type === 'sales_to_admin' ? 'teal' : 'gold'}
                         size="sm"
                       >
                         {getTypeLabel(handover.handover_type)}
@@ -237,7 +237,7 @@ export function HandoversList({ seasonId, onViewDetails, refreshTrigger }: Hando
                       <Tooltip label={t('view_details') || 'عرض التفاصيل'}>
                         <ActionIcon 
                           variant="light" 
-                          color="blue"
+                          color="teal"
                           onClick={() => onViewDetails(handover)}
                         >
                           <Eye size={16} />

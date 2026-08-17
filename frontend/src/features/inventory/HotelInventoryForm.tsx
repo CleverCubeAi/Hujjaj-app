@@ -358,7 +358,7 @@ export function HotelInventoryForm({ inventory, prefill, onSave, onCancel }: Hot
             ({form.rooms_purchased} {t('rooms') || 'غرف'} × {bedsPerRoom} {t('beds') || 'أسرة'})
           </Text>
           <Text size="sm" c="dimmed">
-            {t('purchase_price_per_bed_whole_stay') || 'سعر السرير للمدة كاملة'}: <Badge size="lg" color="blue">{purchasePricePerBed.toFixed(2)} MAD</Badge>
+            {t('purchase_price_per_bed_whole_stay') || 'سعر السرير للمدة كاملة'}: <Badge size="lg" color="gold">{purchasePricePerBed.toFixed(2)} MAD</Badge>
           </Text>
         </Group>
       )}
@@ -368,7 +368,7 @@ export function HotelInventoryForm({ inventory, prefill, onSave, onCancel }: Hot
           <Text size="sm" c="dimmed">{t('nights') || 'الليالي'}:</Text>
           <Badge size="lg">{nights}</Badge>
           <Text size="sm" c="dimmed">{t('cost_per_bed_per_night') || 'التكلفة لكل سرير/ليلة'}:</Text>
-          <Badge size="lg" color="blue">{costPerBedPerNight.toFixed(2)} MAD</Badge>
+          <Badge size="lg" color="gold">{costPerBedPerNight.toFixed(2)} MAD</Badge>
         </Group>
       )}
 
@@ -421,7 +421,7 @@ export function HotelInventoryForm({ inventory, prefill, onSave, onCancel }: Hot
 
       <Group>
         <Text size="sm" c="dimmed">{t('total_purchase_cost') || 'إجمالي تكلفة الشراء'}:</Text>
-        <Badge size="lg" color="blue">{form.total_purchase_cost.toLocaleString()} MAD</Badge>
+        <Badge size="lg" color="gold">{form.total_purchase_cost.toLocaleString()} MAD</Badge>
       </Group>
 
       <Group justify="flex-end" mt="md">

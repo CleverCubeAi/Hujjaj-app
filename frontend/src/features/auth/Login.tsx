@@ -18,7 +18,6 @@ import { Lock, Mail } from 'lucide-react';
 import haramEvening from '../../assets/img/haram-evening.png';
 import { useBranding } from '../../providers/BrandingProvider';
 import { BrandLogo } from '../../components/brand/BrandLogo';
-import { LanguageSwitcher } from '../../components/common/LanguageSwitcher';
 import { brand } from '../../theme/brand';
 
 export function Login() {
@@ -99,10 +98,6 @@ export function Login() {
         }}
       />
 
-      <Box style={{ position: 'absolute', top: 20, insetInlineEnd: 20, zIndex: 2 }}>
-        <LanguageSwitcher variant="on-ivory" />
-      </Box>
-
       <Box style={{ position: 'relative', zIndex: 1, width: '100%', maxWidth: 440 }}>
         <Paper
           radius={24}
@@ -114,7 +109,7 @@ export function Login() {
           }}
         >
           <Stack align="center" gap={4} mb={28}>
-            <BrandLogo variant="stacked" src={branding.logo_url} alt={appName} height={168} />
+            <BrandLogo variant="stacked" alt={appName} height={200} />
           </Stack>
 
           <Box

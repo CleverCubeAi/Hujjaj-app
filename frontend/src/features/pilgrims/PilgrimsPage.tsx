@@ -460,7 +460,7 @@ export function PilgrimsPage() {
                       <ActionIcon
                         variant="subtle"
                         size="sm"
-                        color="blue"
+                        color="teal"
                         onClick={() => setViewPilgrim(pilgrim)}
                         title={t('view_details') || 'عرض التفاصيل'}
                       >
@@ -786,7 +786,7 @@ export function PilgrimsPage() {
             {viewPilgrim.seasons && (
               <Card withBorder p="md">
                 <Text fw={600} mb="sm">{t('season') || 'الموسم'}</Text>
-                <Badge color="blue" size="lg">{viewPilgrim.seasons.name}</Badge>
+                <Badge color="teal" size="lg">{viewPilgrim.seasons.name}</Badge>
               </Card>
             )}
           </Stack>

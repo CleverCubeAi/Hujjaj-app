@@ -1384,7 +1384,7 @@ export function BookingWizard() {
                               <CheckCircle size={14} />
                             </ThemeIcon>
                           ) : (
-                            <ActionIcon variant="light" color="blue" size="sm">
+                            <ActionIcon variant="light" color="teal" size="sm">
                               <Plus size={14} />
                             </ActionIcon>
                           )}
@@ -1415,7 +1415,7 @@ export function BookingWizard() {
                         <Badge color="green" variant="light">{t('is_booking_client') || 'العميل الحاجز'}</Badge>
                       )}
                       {pilgrim.is_self_client && (
-                        <Badge color="blue" variant="light">{t('will_create_client') || 'سيتم إنشاء كعميل'}</Badge>
+                        <Badge color="teal" variant="light">{t('will_create_client') || 'سيتم إنشاء كعميل'}</Badge>
                       )}
                     </Group>
                     <ActionIcon color="red" variant="subtle" onClick={() => removePilgrim(index)}>
@@ -1739,7 +1739,7 @@ export function BookingWizard() {
                         </Badge>
                       </Tooltip>
                     )}
-                    <Badge color="blue">{pilgrims.length} {t('pilgrims') || 'معتمر'}</Badge>
+                    <Badge color="teal">{pilgrims.length} {t('pilgrims') || 'معتمر'}</Badge>
                     <Switch
                       label={sameSelectionForAll ? (t('same_for_all_pilgrims') || 'نفس الخيار لجميع المعتمرين') : (t('different_per_pilgrim') || 'اختيار مختلف لكل معتمر')}
                       checked={sameSelectionForAll}
@@ -2411,7 +2411,7 @@ export function BookingWizard() {
         {/* Step 8: Room Allocation */}
         {active === 7 && (
           <Stack>
-            <Alert color="blue" icon={<BedDouble size={18} />} mb="md">
+            <Alert color="teal" icon={<BedDouble size={18} />} mb="md">
               <Text fw={500} mb="xs">{t('room_allocation_rules') || 'قواعد توزيع الغرف:'}</Text>
               <ul style={{ margin: 0, paddingRight: '20px' }}>
                 <li>{t('gender_separation') || 'الفصل بين الجنسين (الرجال مع الرجال، النساء مع النساء)'}</li>

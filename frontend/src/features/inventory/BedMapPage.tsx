@@ -139,7 +139,7 @@ export function BedMapPage() {
           </div>
         </Group>
         <Group>
-          <Badge color="blue">{inventory.beds_sold} {t('occupied') || 'مشغولة'}</Badge>
+          <Badge color="teal">{inventory.beds_sold} {t('occupied') || 'مشغولة'}</Badge>
           <Badge color="green">{inventory.beds_purchased - inventory.beds_sold} {t('available') || 'متاحة'}</Badge>
           <Text size="xs" c="dimmed">
             {formatLocalDate(inventory.check_in_date)} → {formatLocalDate(inventory.check_out_date)}

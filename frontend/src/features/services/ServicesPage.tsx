@@ -43,11 +43,11 @@ const categoryIcons: Record<string, React.ReactNode> = {
 };
 
 const categoryColors: Record<string, string> = {
-  transport: 'blue',
-  guide: 'green',
-  meals: 'orange',
-  tours: 'grape',
-  insurance: 'cyan',
+  transport: 'teal',
+  guide: 'teal',
+  meals: 'gold',
+  tours: 'gold',
+  insurance: 'gray',
   other: 'gray'
 };
 

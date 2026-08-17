@@ -66,8 +66,8 @@ function statusColor(status: string) {
 }
 
 function planColor(plan: string) {
-  if (plan === 'premium') return 'violet';
-  if (plan === 'basic') return 'blue';
+  if (plan === 'premium') return 'gold';
+  if (plan === 'basic') return 'teal';
   return 'gray';
 }
 
@@ -89,7 +89,7 @@ export function PlatformDashboard() {
     <Stack gap="xl">
       <Group justify="space-between" align="center">
         <Box>
-          <Title order={1} fw={700} c="#2D2D2D">
+          <Title order={1} fw={700} c="#071D35">
             {t('platform_dashboard') || 'لوحة المنصة'}
           </Title>
           <Text size="sm" c="dimmed" mt={4}>
@@ -124,7 +124,7 @@ export function PlatformDashboard() {
           title={t('agency_users') || 'مستخدمو الوكالات'}
           value={fmt(data?.users.total)}
           icon={<Users size={24} />}
-          color="blue"
+          color="teal"
         />
       </SimpleGrid>
 

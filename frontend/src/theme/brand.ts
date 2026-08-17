@@ -24,6 +24,14 @@ export const cardStyle = {
   boxShadow: '0 4px 14px rgba(7, 29, 53, 0.07)',
 } as const;
 
+export const tagStyle = {
+  teal: { backgroundColor: brand.tealSoft, color: brand.tealDeep, border: 'none' },
+  gold: { backgroundColor: brand.goldSoft, color: brand.gold, border: 'none' },
+  success: { backgroundColor: '#E3F2EA', color: brand.success, border: 'none' },
+  warning: { backgroundColor: '#F8EEDC', color: brand.warning, border: 'none' },
+  danger: { backgroundColor: '#F8E4E1', color: brand.danger, border: 'none' },
+} as const;
+
 export const LEGACY_PRIMARY = new Set(['#8B7355', '#8b7355']);
 export const LEGACY_ACCENT = new Set(['#6F5C45', '#6f5c45']);
 export const LEGACY_APP_NAMES = new Set([
@@ -86,6 +94,63 @@ export const appTheme = createTheme({
     },
     Card: {
       defaultProps: { radius: 'lg' },
+    },
+    Badge: {
+      defaultProps: { radius: 'sm', variant: 'light' },
+      styles: {
+        root: {
+          fontWeight: 600,
+          textTransform: 'none',
+        },
+      },
+    },
+    Table: {
+      defaultProps: {
+        highlightOnHover: true,
+        highlightOnHoverColor: 'teal.0',
+        stripedColor: 'gold.0',
+      },
+      styles: {
+        th: {
+          backgroundColor: brand.sand,
+          color: brand.tealDeep,
+          fontSize: 12,
+          fontWeight: 600,
+        },
+        td: {
+          color: brand.navy,
+          fontSize: 14,
+        },
+      },
+    },
+    InputWrapper: {
+      styles: {
+        label: {
+          color: brand.navy,
+          fontWeight: 500,
+          fontSize: 14,
+        },
+        description: {
+          color: brand.muted,
+        },
+      },
+    },
+    Input: {
+      styles: {
+        input: {
+          backgroundColor: '#FFFDF8',
+          borderColor: brand.border,
+        },
+      },
+    },
+    ActionIcon: {
+      defaultProps: { color: 'teal' },
+    },
+    ThemeIcon: {
+      defaultProps: { color: 'teal', variant: 'light' },
+    },
+    Alert: {
+      defaultProps: { color: 'teal' },
     },
   },
 });

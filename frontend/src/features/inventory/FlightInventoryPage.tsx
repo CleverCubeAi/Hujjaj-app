@@ -171,7 +171,7 @@ export default function FlightInventoryPage() {
       <SimpleGrid cols={{ base: 2, sm: 4 }} mb="lg">
         <Card shadow="sm" padding="md" radius="md" withBorder>
           <Text size="xs" c="dimmed" tt="uppercase">{t('total_seats') || 'إجمالي المقاعد'}</Text>
-          <Text fw={700} size="xl" c="blue">{totalPurchased}</Text>
+          <Text fw={700} size="xl" c="teal">{totalPurchased}</Text>
         </Card>
         <Card shadow="sm" padding="md" radius="md" withBorder>
           <Text size="xs" c="dimmed" tt="uppercase">{t('seats_sold') || 'المقاعد المباعة'}</Text>
@@ -268,7 +268,7 @@ export default function FlightInventoryPage() {
                       <>
                         <ActionIcon
                           variant="subtle"
-                          color="blue"
+                          color="teal"
                           onClick={() => {
                             setEditingInventory(inv);
                             setModalOpen(true);
