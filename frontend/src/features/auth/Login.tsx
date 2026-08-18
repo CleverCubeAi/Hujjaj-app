@@ -109,7 +109,7 @@ export function Login() {
           }}
         >
           <Stack align="center" gap={4} mb={28}>
-            <BrandLogo variant="stacked" alt={appName} height={200} />
+            <BrandLogo variant="horizontal" alt={appName} height={72} />
           </Stack>
 
           <Box
