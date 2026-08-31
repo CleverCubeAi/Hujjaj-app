@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import {
   LayoutDashboard, Sun, Plane, Hotel, Users, CreditCard, Settings,
   FileText, MessageSquare, UserCircle, CalendarCheck, PackagePlus,
-  ChevronDown, ChevronLeft, ChevronRight, BedDouble, Building2, Boxes, Wallet
+  ChevronDown, ChevronLeft, ChevronRight, BedDouble, Building2, Boxes, Wallet, Shield
 } from 'lucide-react';
 import { useAuth } from '../../providers/AuthProvider';
 import sidebarBg from '../../assets/img/sidebar-bg.png';
@@ -118,16 +118,16 @@ function NavItem({
 }
 
 export function Sidebar({ closeMobile }: { closeMobile: () => void }) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const location = useLocation();
   const { role } = useAuth();
   const path = location.pathname;
   const isSuperAdmin = role === 'super_admin';
-  const isRtl = i18n.language === 'ar';
 
   const [bookingsExpanded, setBookingsExpanded] = useState(() => path.startsWith('/bookings') || path.startsWith('/clients') || path.startsWith('/pilgrims'));
   const [configExpanded, setConfigExpanded] = useState(() => path.startsWith('/services') || path.startsWith('/flights') || path.startsWith('/accommodations') || path.startsWith('/seasons'));
   const [inventoryExpanded, setInventoryExpanded] = useState(() => path.startsWith('/inventory'));
+  const [adminExpanded, setAdminExpanded] = useState(() => path.startsWith('/reports') || path.startsWith('/messages'));
 
   const bookingGroupLinks = [
     { label: t('bookings') || 'الحجوزات', icon: CalendarCheck, link: '/bookings' },
@@ -142,14 +142,14 @@ export function Sidebar({ closeMobile }: { closeMobile: () => void }) {
     { label: t('seasons') || 'المواسم', icon: Sun, link: '/seasons' },
   ];
 
-  const settingsLinks = [
-    { label: t('settings') || 'الإعدادات', icon: Settings, link: '/settings' },
+  const adminGroupLinks = [
     { label: t('reports') || 'التقارير', icon: FileText, link: '/reports' },
     { label: t('messages') || 'الرسائل', icon: MessageSquare, link: '/messages' },
   ];
 
   const isBookingGroupActive = path.startsWith('/bookings') || path.startsWith('/clients') || path.startsWith('/pilgrims');
   const isConfigGroupActive = path.startsWith('/services') || path.startsWith('/flights') || path.startsWith('/accommodations') || path.startsWith('/seasons');
+  const isAdminGroupActive = path.startsWith('/reports') || path.startsWith('/messages');
   
   const divider = <Divider my="sm" color="rgba(229, 196, 106, 0.08)" />;
 
@@ -253,6 +253,30 @@ export function Sidebar({ closeMobile }: { closeMobile: () => void }) {
           active={path === '/expenses' || path.startsWith('/expenses')}
           onClick={closeMobile}
         />
+
+        <NavItem
+          label={t('administration') || 'الإدارة'}
+          icon={Shield}
+          hasSubmenu
+          expanded={adminExpanded}
+          active={isAdminGroupActive}
+          onToggle={() => setAdminExpanded(!adminExpanded)}
+        />
+        <Collapse in={adminExpanded}>
+          <Stack gap={2} ps="sm" pe="xs">
+            {adminGroupLinks.map((item) => (
+              <NavItem
+                key={item.link}
+                to={item.link}
+                label={item.label}
+                icon={item.icon}
+                nested
+                active={path === item.link || path.startsWith(item.link)}
+                onClick={closeMobile}
+              />
+            ))}
+          </Stack>
+        </Collapse>
       </Stack>
     );
   };
@@ -268,19 +292,13 @@ export function Sidebar({ closeMobile }: { closeMobile: () => void }) {
 
     return (
       <Stack gap={4}>
-        <Text size="xs" fw={600} px="md" py="xs" c="rgba(229, 196, 106, 0.6)" style={{ letterSpacing: '0.5px', textAlign: isRtl ? 'right' : 'left' }}>
-          {t('settings') || 'الإعدادات'}
-        </Text>
-        {settingsLinks.map((item) => (
-          <NavItem
-            key={item.link}
-            to={item.link}
-            label={item.label}
-            icon={item.icon}
-            active={path === item.link}
-            onClick={closeMobile}
-          />
-        ))}
+        <NavItem
+          to="/settings"
+          label={t('settings') || 'الإعدادات'}
+          icon={Settings}
+          active={path === '/settings' || path.startsWith('/settings')}
+          onClick={closeMobile}
+        />
       </Stack>
     );
   };
