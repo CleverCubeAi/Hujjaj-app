@@ -22,6 +22,7 @@ import {
 } from '@mantine/core';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
+import { api } from '../../lib/api';
 import { brand, cardStyle } from '../../theme/brand';
 import { useAuth } from '../../providers/AuthProvider';
 import { notifications } from '@mantine/notifications';
