@@ -26,6 +26,28 @@ async function assertAgencyActive(user: { role?: string; agency_id?: string | nu
   return null;
 }
 
+const ACCESS_EXPIRES_SECONDS = 15 * 60;
+
+function mobileTokenFields(access_token: string, refresh_token: string) {
+  return {
+    access_token,
+    refresh_token,
+    expires_in: ACCESS_EXPIRES_SECONDS,
+    token_type: 'Bearer' as const,
+  };
+}
+
+function isMobileClient(req: Request): boolean {
+  return req.body?.client === 'mobile';
+}
+
+function refreshTokenFromRequest(req: Request): { token: string | undefined; fromBody: boolean } {
+  const bodyToken = typeof req.body?.refresh_token === 'string' ? req.body.refresh_token.trim() : '';
+  if (bodyToken) return { token: bodyToken, fromBody: true };
+  const cookieToken = req.cookies?.[AUTH_COOKIE_NAMES.REFRESH_COOKIE];
+  return { token: cookieToken, fromBody: false };
+}
+
 async function issueSession(req: Request, res: Response, user: any) {
   const authUser = toAuthUser(user);
   const access_token = signToken({
@@ -38,7 +60,7 @@ async function issueSession(req: Request, res: Response, user: any) {
   });
   const refresh = await createRefreshSession(user.id, req.get('user-agent') || undefined);
   setAuthCookies(res, access_token, refresh.token, refresh.expires_at);
-  return { authUser, access_token };
+  return { authUser, access_token, refresh_token: refresh.token };
 }
 
 export const login = async (req: Request, res: Response) => {
@@ -69,8 +91,12 @@ export const login = async (req: Request, res: Response) => {
         return;
       }
 
-      const { authUser } = await issueSession(req, res, user);
-      res.json({ user: authUser });
+      const { authUser, access_token, refresh_token } = await issueSession(req, res, user);
+      if (isMobileClient(req)) {
+        res.json({ user: authUser, ...mobileTokenFields(access_token, refresh_token) });
+      } else {
+        res.json({ user: authUser });
+      }
     });
   } catch (err) {
     console.error(err);
@@ -151,7 +177,7 @@ export const me = async (req: Request, res: Response) => {
 export const logout = async (req: Request, res: Response) => {
   try {
     await runAsPlatform(async () => {
-      const token = req.cookies?.[AUTH_COOKIE_NAMES.REFRESH_COOKIE];
+      const { token } = refreshTokenFromRequest(req);
       if (token) await revokeRefreshToken(token);
       clearAuthCookies(res);
       res.json({ message: 'Logged out' });
@@ -165,7 +191,7 @@ export const logout = async (req: Request, res: Response) => {
 export const refresh = async (req: Request, res: Response) => {
   try {
     await runAsPlatform(async () => {
-      const token = req.cookies?.[AUTH_COOKIE_NAMES.REFRESH_COOKIE];
+      const { token, fromBody } = refreshTokenFromRequest(req);
       if (!token) {
         res.status(401).json({ error: 'Unauthorized' });
         return;
@@ -202,7 +228,14 @@ export const refresh = async (req: Request, res: Response) => {
         full_name: user.full_name,
       });
       setAuthCookies(res, access_token, rotated.token, rotated.expires_at);
-      res.json({ user: toAuthUser(user) });
+      if (fromBody) {
+        res.json({
+          user: toAuthUser(user),
+          ...mobileTokenFields(access_token, rotated.token),
+        });
+      } else {
+        res.json({ user: toAuthUser(user) });
+      }
     });
   } catch (err) {
     console.error(err);

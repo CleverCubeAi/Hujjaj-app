@@ -134,10 +134,11 @@ export const getBookings = async (req: Request, res: Response) => {
     let result = data;
     if (search && typeof search === 'string') {
       const searchLower = search.toLowerCase();
-      result = data?.filter((b: any) => 
+      result = data?.filter((b: any) =>
         b.booking_number?.toLowerCase().includes(searchLower) ||
         b.clients?.full_name?.toLowerCase().includes(searchLower) ||
-        b.clients?.full_name_ar?.includes(search)
+        b.clients?.full_name_ar?.includes(search) ||
+        b.clients?.phone?.toLowerCase().includes(searchLower)
       );
     }
 
@@ -344,15 +345,6 @@ export const createBooking = async (req: Request, res: Response) => {
     }
 
     const pilgrimsCount = pilgrims?.length || 0;
-    if (pilgrimsCount > 0) {
-      const missingPassport = pilgrims.find((p: any) => !(p.passport_number || '').toString().trim());
-      if (missingPassport) {
-        return res.status(400).json({
-          error: 'رقم الجواز إلزامي لجميع المعتمرين',
-          error_en: 'Passport number is required for all pilgrims'
-        });
-      }
-    }
 
     // Validate room type(s) have INVENTORY
     // Skip validation if hotel_inventory_ids are explicitly provided — those ARE the inventory
