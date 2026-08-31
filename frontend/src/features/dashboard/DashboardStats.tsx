@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
-  SimpleGrid, Paper, Text, Group, RingProgress, Title, Stack, Box, ThemeIcon, Badge, Alert, UnstyledButton, Grid,
+  SimpleGrid, Paper, Text, Group, RingProgress, Title, Stack, Box, ThemeIcon, Badge, Alert, UnstyledButton, Grid, Progress,
 } from '@mantine/core';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import {
-  Users, CreditCard, TrendingUp, TrendingDown, Info, Plane, Hotel, Plus, UserPlus, MessageSquare, FileText, ChevronLeft, ChevronRight,
+  CreditCard, TrendingUp, TrendingDown, Info, Plus, UserPlus, MessageSquare, FileText, ChevronLeft, ChevronRight,
+  Wallet, AlertCircle, Scale,
 } from 'lucide-react';
 import {
   ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, PieChart, Pie, Cell, BarChart, Bar,
@@ -23,7 +24,19 @@ import haramEvening from '../../assets/img/haram-evening.png';
 interface DashboardData {
   pilgrims: { total: number; male: number; female: number };
   bookings: { total: number; draft: number; confirmed: number; paid: number; cancelled: number };
-  financial: { totalAgreed: number; totalPaid: number; totalRemaining: number; paymentPercentage: number };
+  financial: {
+    totalAgreed: number;
+    totalPaid: number;
+    totalRemaining: number;
+    paymentPercentage: number;
+    totalExpenses?: number;
+    totalBedsCost?: number;
+    totalFlightsCost?: number;
+    totalCosts?: number;
+    netPosition?: number;
+    inventoryProfit?: number;
+    unpaidCount?: number;
+  };
   recentBookings: Array<{
     id: string;
     booking_number: string;
@@ -45,7 +58,7 @@ interface DashboardData {
   monthlyRevenue?: Array<{ month: string; amount: number }>;
   destinations?: Array<{ name: string; value: number }>;
   upcomingSeasons?: Array<{ id: string; name: string; type: string; start_date?: string; end_date?: string; status?: string }>;
-  trends?: { bookings: number; revenue: number; clients: number };
+  trends?: { bookings: number | null; revenue: number | null; clients: number | null };
   performance?: {
     week: { total: number; growth: number };
     month: { total: number; growth: number };
@@ -65,9 +78,11 @@ const PIE_LEGEND_COLORS = [brand.teal, brand.gold, brand.tealDeep, brand.goldLig
 type PerformancePeriod = 'week' | 'month' | 'year';
 
 function compactNumber(value: number) {
-  if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(2).replace(/\.00$/, '')}M`;
-  if (value >= 1_000) return `${(value / 1_000).toFixed(1).replace(/\.0$/, '')}K`;
-  return value.toLocaleString('en');
+  const sign = value < 0 ? '-' : '';
+  const abs = Math.abs(value);
+  if (abs >= 1_000_000) return `${sign}${(abs / 1_000_000).toFixed(2).replace(/\.00$/, '')}M`;
+  if (abs >= 1_000) return `${sign}${(abs / 1_000).toFixed(1).replace(/\.0$/, '')}K`;
+  return `${sign}${abs.toLocaleString('en')}`;
 }
 
 function destinationLabel(name: string, lang: string): string {
@@ -85,29 +100,72 @@ function destinationLabel(name: string, lang: string): string {
   return name;
 }
 
+type KpiTone = 'default' | 'warning' | 'danger' | 'success';
+
+const KPI_TONE: Record<KpiTone, { icon: string; accent: string; bar: string }> = {
+  default: { icon: 'teal', accent: brand.teal, bar: 'teal' },
+  success: { icon: 'teal', accent: brand.success, bar: 'teal' },
+  warning: { icon: 'orange', accent: brand.warning, bar: 'orange' },
+  danger: { icon: 'red', accent: brand.danger, bar: 'red' },
+};
+
 function KpiCard({
   title,
   value,
   icon,
   trend,
+  hint,
+  progress,
+  tone = 'default',
+  to,
 }: {
   title: string;
   value: string | number;
   icon: React.ReactNode;
-  trend?: number;
+  trend?: number | null;
+  hint?: string;
+  progress?: number;
+  tone?: KpiTone;
+  to?: string;
 }) {
   const { t } = useTranslation();
+  const navigate = useNavigate();
+  const colors = KPI_TONE[tone];
+  const showTrend = trend !== undefined && trend !== null;
   const up = (trend || 0) >= 0;
-  return (
-    <Paper p="lg" radius={20} style={{ ...cardStyle, height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <ThemeIcon size={44} radius="xl" variant="light" color="teal" mb="md">
+  const borderAccent = tone === 'default' ? brand.border : colors.accent;
+
+  const body = (
+    <Paper
+      p="lg"
+      radius={20}
+      style={{
+        ...cardStyle,
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        borderColor: borderAccent,
+        borderInlineStartWidth: tone === 'default' ? 1 : 3,
+        cursor: to ? 'pointer' : 'default',
+        transition: 'box-shadow 0.2s ease, transform 0.2s ease',
+      }}
+    >
+      <ThemeIcon size={44} radius="xl" variant="light" color={colors.icon} mb="md">
         {icon}
       </ThemeIcon>
       <Box style={{ flex: 1 }}>
         <Text size="sm" c={brand.muted} fw={500}>{title}</Text>
         <Text fz={28} fw={700} c={brand.navy} mt={4} lh={1.1}>{value}</Text>
       </Box>
-      {trend !== undefined && (
+      {hint && (
+        <Text size="xs" c={tone === 'default' ? brand.muted : colors.accent} fw={600} mt={8}>
+          {hint}
+        </Text>
+      )}
+      {progress !== undefined && (
+        <Progress value={Math.max(0, Math.min(100, progress))} color={colors.bar} size="sm" mt={8} radius="xl" />
+      )}
+      {showTrend && (
         <Group gap={4} mt={8}>
           {up ? <TrendingUp size={14} color={brand.teal} /> : <TrendingDown size={14} color={brand.danger} />}
           <Text size="xs" fw={600} c={up ? brand.teal : brand.danger}>
@@ -117,6 +175,18 @@ function KpiCard({
         </Group>
       )}
     </Paper>
+  );
+
+  if (!to) return body;
+
+  return (
+    <UnstyledButton
+      onClick={() => navigate(to)}
+      aria-label={title}
+      style={{ height: '100%', width: '100%', display: 'block', textAlign: 'inherit' }}
+    >
+      {body}
+    </UnstyledButton>
   );
 }
 
@@ -150,7 +220,19 @@ export function DashboardStats() {
   const stats = data || {
     pilgrims: { total: 0, male: 0, female: 0 },
     bookings: { total: 0, draft: 0, confirmed: 0, paid: 0, cancelled: 0 },
-    financial: { totalAgreed: 0, totalPaid: 0, totalRemaining: 0, paymentPercentage: 0 },
+    financial: {
+      totalAgreed: 0,
+      totalPaid: 0,
+      totalRemaining: 0,
+      paymentPercentage: 0,
+      totalExpenses: 0,
+      totalBedsCost: 0,
+      totalFlightsCost: 0,
+      totalCosts: 0,
+      netPosition: 0,
+      inventoryProfit: 0,
+      unpaidCount: 0,
+    },
     recentBookings: [],
     accommodations: [],
     flightsCount: 0,
@@ -162,7 +244,7 @@ export function DashboardStats() {
     monthlyRevenue: [],
     destinations: [],
     upcomingSeasons: [],
-    trends: { bookings: 0, revenue: 0, clients: 0 },
+    trends: { bookings: null, revenue: null, clients: null },
     performance: {
       week: { total: 0, growth: 0 },
       month: { total: 0, growth: 0 },
@@ -235,6 +317,29 @@ export function DashboardStats() {
   const seasonPct = stats.bookings.total > 0
     ? Math.round(((stats.bookings.confirmed + stats.bookings.paid) / stats.bookings.total) * 100)
     : stats.financial.paymentPercentage || 0;
+
+  const sales = stats.financial.totalAgreed;
+  const collected = stats.financial.totalPaid;
+  const outstanding = stats.financial.totalRemaining;
+  const collectionRate = stats.financial.paymentPercentage || 0;
+  const netPosition = stats.financial.netPosition ?? (collected - (stats.financial.totalCosts || 0));
+  const unpaidCount = stats.financial.unpaidCount || 0;
+  const inventoryProfit = stats.financial.inventoryProfit || 0;
+
+  const outstandingTone: KpiTone = outstanding <= 0
+    ? 'success'
+    : collectionRate < 70
+      ? 'danger'
+      : 'warning';
+  const netTone: KpiTone = netPosition >= 0 ? 'success' : 'danger';
+  const collectedTone: KpiTone = sales > 0 && collectionRate < 70 ? 'warning' : 'default';
+
+  const outstandingHint = outstanding <= 0
+    ? (t('kpi_unpaid_bookings_zero') || 'لا توجد أرصدة مفتوحة')
+    : (t('kpi_unpaid_bookings', { count: unpaidCount }) || `${unpaidCount} حجوزات بأرصدة مفتوحة`);
+  const netHint = netPosition >= 0
+    ? (t('kpi_net_positive') || 'المحصل أعلى من التكاليف')
+    : (t('kpi_net_negative') || 'التكاليف أعلى من المحصّل');
 
   const Chevron = isRtl ? ChevronLeft : ChevronRight;
 
@@ -321,26 +426,37 @@ export function DashboardStats() {
 
             <SimpleGrid cols={{ base: 1, sm: 2, lg: 4 }} spacing="md">
               <KpiCard
-                title={t('air_travels') || t('flights') || 'الرحلات الجوية'}
-                value={stats.flightsCount}
-                icon={<Plane size={22} />}
-              />
-              <KpiCard
-                title={t('hotels') || 'الفنادق'}
-                value={stats.hotelsCount ?? stats.accommodations.length}
-                icon={<Hotel size={22} />}
-              />
-              <KpiCard
-                title={t('clients') || 'العملاء'}
-                value={(stats.clientsCount || stats.pilgrims.total).toLocaleString('en')}
-                icon={<Users size={22} />}
-                trend={stats.trends?.clients}
-              />
-              <KpiCard
-                title={t('total_revenue') || 'الإيرادات'}
-                value={`${compactNumber(stats.financial.totalAgreed)} MAD`}
+                title={t('kpi_sales') || t('total_sales') || 'المبيعات'}
+                value={`${compactNumber(sales)} MAD`}
                 icon={<CreditCard size={22} />}
                 trend={stats.trends?.revenue}
+                to="/reports?tab=financial"
+              />
+              <KpiCard
+                title={t('kpi_collected') || t('payments_received') || 'المحصّل'}
+                value={`${compactNumber(collected)} MAD`}
+                icon={<Wallet size={22} />}
+                hint={`${collectionRate}% ${t('kpi_of_sales') || 'من المبيعات'}`}
+                progress={collectionRate}
+                tone={collectedTone}
+                to="/reports?tab=financial"
+              />
+              <KpiCard
+                title={t('kpi_outstanding') || t('total_pending') || 'المتبقي للتحصيل'}
+                value={`${compactNumber(outstanding)} MAD`}
+                icon={<AlertCircle size={22} />}
+                hint={outstandingHint}
+                progress={sales > 0 ? Math.round((outstanding / sales) * 100) : 0}
+                tone={outstandingTone}
+                to="/bookings"
+              />
+              <KpiCard
+                title={t('kpi_net_position') || t('net_balance') || 'صافي الوضع'}
+                value={`${compactNumber(netPosition)} MAD`}
+                icon={<Scale size={22} />}
+                hint={`${netHint} · ${t('inventory_profit') || 'ربح المخزون'} ${compactNumber(inventoryProfit)} MAD`}
+                tone={netTone}
+                to="/reports?tab=financial-status"
               />
             </SimpleGrid>
           </Stack>

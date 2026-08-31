@@ -47,10 +47,24 @@ function relatedCity(rel: any): string | null {
   return canonicalCity(row?.city);
 }
 
-function trendPct(curr: number, prev: number): number {
-  if (prev <= 0) return curr > 0 ? 100 : 0;
+function trendPct(curr: number, prev: number): number | null {
+  if (prev <= 0) return null;
   return Math.round(((curr - prev) / prev) * 100);
 }
+
+const emptyFinancial = {
+  totalAgreed: 0,
+  totalPaid: 0,
+  totalRemaining: 0,
+  paymentPercentage: 0,
+  totalExpenses: 0,
+  totalBedsCost: 0,
+  totalFlightsCost: 0,
+  totalCosts: 0,
+  netPosition: 0,
+  inventoryProfit: 0,
+  unpaidCount: 0,
+};
 
 function canonicalCity(raw: string | null | undefined): string | null {
   const city = (raw || '').trim();
@@ -66,7 +80,7 @@ function emptyStats(role: string | undefined, isFiltered: boolean) {
   return {
     pilgrims: { total: 0, male: 0, female: 0 },
     bookings: { total: 0, draft: 0, confirmed: 0, paid: 0, cancelled: 0 },
-    financial: { totalAgreed: 0, totalPaid: 0, totalRemaining: 0, paymentPercentage: 0 },
+    financial: { ...emptyFinancial },
     recentBookings: [],
     accommodations: [],
     flightsCount: 0,
@@ -284,12 +298,17 @@ export const getDashboardStats = async (req: Request, res: Response) => {
 
     const { data: hotelInventory } = await supabase
       .from('hotel_bed_inventory')
-      .select('id, accommodation_id, beds_purchased, beds_sold, beds_available, accommodations (city)')
+      .select('id, accommodation_id, beds_purchased, beds_sold, beds_available, total_purchase_cost, purchase_price_per_bed, sell_price_per_bed, accommodations (city)')
       .forAgency(agencyId);
 
     const { data: flightInventory } = await supabase
       .from('flight_seat_inventory')
-      .select('seats_purchased, seats_sold, seats_available')
+      .select('seats_purchased, seats_sold, seats_available, total_purchase_cost, purchase_price_per_seat, sell_price_per_seat')
+      .forAgency(agencyId);
+
+    const { data: expenseRows } = await supabase
+      .from('expenses')
+      .select('amount')
       .forAgency(agencyId);
 
     const inventoryStats = {
@@ -304,6 +323,15 @@ export const getDashboardStats = async (req: Request, res: Response) => {
         availableSeats: flightInventory?.reduce((sum: number, i: any) => sum + num(i.seats_available), 0) || 0,
       },
     };
+
+    const totalBedsCost = hotelInventory?.reduce((sum: number, i: any) => sum + num(i.total_purchase_cost), 0) || 0;
+    const totalFlightsCost = flightInventory?.reduce((sum: number, i: any) => sum + num(i.total_purchase_cost), 0) || 0;
+    const totalExpenses = (expenseRows || []).reduce((sum: number, e: any) => sum + num(e.amount), 0);
+    const bedsSoldRevenue = hotelInventory?.reduce((sum: number, i: any) => sum + num(i.beds_sold) * num(i.sell_price_per_bed), 0) || 0;
+    const flightsSoldRevenue = flightInventory?.reduce((sum: number, i: any) => sum + num(i.seats_sold) * num(i.sell_price_per_seat), 0) || 0;
+    const inventoryProfit = (bedsSoldRevenue - totalBedsCost) + (flightsSoldRevenue - totalFlightsCost);
+    const totalCosts = totalExpenses + totalBedsCost + totalFlightsCost;
+    const unpaidCount = revenueBookings.filter((b: any) => num(b.total_amount) - num(b.paid_amount) > 0.009).length;
 
     const { data: clientRows, count: clientsCount } = await supabase
       .from('clients')
@@ -388,6 +416,13 @@ export const getDashboardStats = async (req: Request, res: Response) => {
         totalPaid,
         totalRemaining,
         paymentPercentage: totalAgreed > 0 ? Math.round((totalPaid / totalAgreed) * 100) : 0,
+        totalExpenses,
+        totalBedsCost,
+        totalFlightsCost,
+        totalCosts,
+        netPosition: totalPaid - totalCosts,
+        inventoryProfit,
+        unpaidCount,
       },
       recentBookings,
       accommodations: accommodations || [],
