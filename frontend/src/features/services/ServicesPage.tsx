@@ -43,11 +43,11 @@ const categoryIcons: Record<string, React.ReactNode> = {
 };
 
 const categoryColors: Record<string, string> = {
-  transport: 'blue',
-  guide: 'green',
-  meals: 'orange',
-  tours: 'grape',
-  insurance: 'cyan',
+  transport: 'teal',
+  guide: 'teal',
+  meals: 'gold',
+  tours: 'gold',
+  insurance: 'gray',
   other: 'gray'
 };
 
@@ -164,7 +164,7 @@ export function ServicesPage() {
         </Button>
       </Group>
 
-      <Paper p="md" radius="lg" style={{ backgroundColor: '#FFFFFF', border: '1px solid #E8DFD0' }}>
+      <Paper p="md" radius="lg" style={{ backgroundColor: '#F8F6F0', border: '1px solid #E2D9C8' }}>
         <Box pos="relative">
           <LoadingOverlay visible={loading} />
           <Table striped highlightOnHover>

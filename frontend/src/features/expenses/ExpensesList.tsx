@@ -161,7 +161,7 @@ export function ExpensesList() {
 
       <Card shadow="sm" padding="md" radius="md" withBorder mb="lg">
         <Text size="sm" c="dimmed">{t('total_expenses') || 'إجمالي المصاريف'}</Text>
-        <Text fw={700} size="xl" c="blue">{totalExpenses.toLocaleString()} MAD</Text>
+        <Text fw={700} size="xl" c="gold">{totalExpenses.toLocaleString()} MAD</Text>
       </Card>
 
 
@@ -188,7 +188,7 @@ export function ExpensesList() {
                     <Group gap="xs">
                       <ActionIcon
                         variant="subtle"
-                        color="blue"
+                        color="teal"
                         onClick={() => {
                           setEditingExpense(expense);
                           setModalOpen(true);

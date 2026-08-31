@@ -47,7 +47,8 @@ export const getDashboardStats = async (req: Request, res: Response) => {
         created_at,
         created_by,
         clients (full_name, full_name_ar),
-        pilgrims (id, gender)
+        pilgrims (id, gender),
+        seasons (name, type)
       `)
       .forAgency(agencyId)
       .is('deleted_at', null);
@@ -60,9 +61,20 @@ export const getDashboardStats = async (req: Request, res: Response) => {
         return res.json({
           pilgrims: { total: 0, male: 0, female: 0 },
           bookings: { total: 0, draft: 0, confirmed: 0, paid: 0, cancelled: 0 },
-          financial: { totalAgreed: 0, totalPaid: 0, totalRemaining: 0 },
+          financial: { totalAgreed: 0, totalPaid: 0, totalRemaining: 0, paymentPercentage: 0 },
           recentBookings: [],
-          accommodations: []
+          accommodations: [],
+          flightsCount: 0,
+          hotelsCount: 0,
+          clientsCount: 0,
+          weeklyBookings: [],
+          monthlyRevenue: [],
+          destinations: [],
+          upcomingSeasons: [],
+          trends: { bookings: 0, revenue: 0, clients: 0 },
+          inventory: { hotel: { totalBeds: 0, soldBeds: 0, availableBeds: 0 }, flight: { totalSeats: 0, soldSeats: 0, availableSeats: 0 } },
+          userRole: role,
+          isFiltered: true,
         });
       }
     }
@@ -103,10 +115,10 @@ export const getDashboardStats = async (req: Request, res: Response) => {
     const totalPaid = bookings?.reduce((sum: number, b: any) => sum + num(b.paid_amount), 0) || 0;
     const totalRemaining = totalAgreed - totalPaid;
 
-    // Get recent bookings (last 5)
+    // Get recent bookings (last 8)
     const recentBookings = bookings
       ?.sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-      .slice(0, 5)
+      .slice(0, 8)
       .map((b: any) => ({
         id: b.id,
         booking_number: b.booking_number,
@@ -115,8 +127,49 @@ export const getDashboardStats = async (req: Request, res: Response) => {
         paid_amount: num(b.paid_amount),
         status: b.status,
         pilgrims_count: b.pilgrims?.length || 0,
-        created_at: b.created_at
+        created_at: b.created_at,
+        season_name: b.seasons?.name || null,
+        season_type: b.seasons?.type || null,
       })) || [];
+
+    const weekdayKey = (d: Date) => {
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    };
+    const weeklyBookings = Array.from({ length: 7 }, (_, i) => {
+      const d = new Date();
+      d.setHours(0, 0, 0, 0);
+      d.setDate(d.getDate() - (6 - i));
+      const key = weekdayKey(d);
+      const count = bookings?.filter((b: any) => String(b.created_at).slice(0, 10) === key).length || 0;
+      return { date: key, weekday: d.getDay(), count };
+    });
+
+    const monthlyRevenue = Array.from({ length: 6 }, (_, i) => {
+      const d = new Date();
+      d.setDate(1);
+      d.setMonth(d.getMonth() - (5 - i));
+      const ym = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      const amount = bookings
+        ?.filter((b: any) => String(b.created_at).slice(0, 7) === ym)
+        .reduce((sum: number, b: any) => sum + num(b.total_amount), 0) || 0;
+      return { month: ym, amount };
+    });
+
+    const now = new Date();
+    const thisMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    const lastMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const lastMonthKey = `${lastMonthDate.getFullYear()}-${String(lastMonthDate.getMonth() + 1).padStart(2, '0')}`;
+    const thisMonthCount = bookings?.filter((b: any) => String(b.created_at).slice(0, 7) === thisMonthKey).length || 0;
+    const lastMonthCount = bookings?.filter((b: any) => String(b.created_at).slice(0, 7) === lastMonthKey).length || 0;
+    const thisMonthRevenue = bookings?.filter((b: any) => String(b.created_at).slice(0, 7) === thisMonthKey).reduce((s: number, b: any) => s + num(b.total_amount), 0) || 0;
+    const lastMonthRevenue = bookings?.filter((b: any) => String(b.created_at).slice(0, 7) === lastMonthKey).reduce((s: number, b: any) => s + num(b.total_amount), 0) || 0;
+    const trendPct = (curr: number, prev: number) => {
+      if (prev <= 0) return curr > 0 ? 100 : 0;
+      return Math.round(((curr - prev) / prev) * 100);
+    };
 
     // 2. Get accommodations (agency-wide - all users can see)
     const { data: accommodations } = await supabase
@@ -161,6 +214,33 @@ export const getDashboardStats = async (req: Request, res: Response) => {
       }
     };
 
+    const { count: clientsCount } = await supabase
+      .from('clients')
+      .select('id', { count: 'exact', head: true })
+      .forAgency(agencyId);
+
+    const { data: seasons } = await supabase
+      .from('seasons')
+      .select('id, name, type, start_date, end_date, status')
+      .forAgency(agencyId)
+      .order('start_date', { ascending: true })
+      .limit(12);
+
+    const today = weekdayKey(new Date());
+    const upcomingSeasons = (seasons || [])
+      .filter((s: any) => !s.end_date || String(s.end_date).slice(0, 10) >= today)
+      .slice(0, 4);
+
+    const cityCounts: Record<string, number> = {};
+    (accommodations || []).forEach((a: any) => {
+      const city = (a.city || '').trim() || 'other';
+      cityCounts[city] = (cityCounts[city] || 0) + 1;
+    });
+    const destinations = Object.entries(cityCounts)
+      .map(([name, value]) => ({ name, value }))
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 5);
+
     res.json({
       pilgrims: {
         total: totalPilgrims,
@@ -177,7 +257,18 @@ export const getDashboardStats = async (req: Request, res: Response) => {
       recentBookings,
       accommodations: accommodations || [],
       flightsCount: flights?.length || 0,
+      hotelsCount: accommodations?.length || 0,
+      clientsCount: clientsCount || 0,
       inventory: inventoryStats,
+      weeklyBookings,
+      monthlyRevenue,
+      destinations,
+      upcomingSeasons,
+      trends: {
+        bookings: trendPct(thisMonthCount, lastMonthCount),
+        revenue: trendPct(thisMonthRevenue, lastMonthRevenue),
+        clients: trendPct(thisMonthCount, lastMonthCount),
+      },
       userRole: role,
       isFiltered: userIdsFilter !== null
     });

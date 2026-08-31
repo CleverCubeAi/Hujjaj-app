@@ -139,7 +139,7 @@ export function BedMapPage() {
           </div>
         </Group>
         <Group>
-          <Badge color="blue">{inventory.beds_sold} {t('occupied') || 'مشغولة'}</Badge>
+          <Badge color="teal">{inventory.beds_sold} {t('occupied') || 'مشغولة'}</Badge>
           <Badge color="green">{inventory.beds_purchased - inventory.beds_sold} {t('available') || 'متاحة'}</Badge>
           <Text size="xs" c="dimmed">
             {formatLocalDate(inventory.check_in_date)} → {formatLocalDate(inventory.check_out_date)}
@@ -149,7 +149,7 @@ export function BedMapPage() {
 
       <Card withBorder p="md">
         <Group>
-          <Building2 size={24} color="#8B7355" />
+          <Building2 size={24} color="#0C7774" />
           <div>
             <Text fw={600}>{acc?.name_ar || acc?.name}</Text>
             <Text size="xs" c="dimmed">{acc?.city} • {t(roomType?.type) || roomType?.type} ({beds_per_room} {t('beds_per_room') || 'أسرة/غرفة'})</Text>
@@ -163,7 +163,7 @@ export function BedMapPage() {
           const displayLabel = savedLabel || `${t('room') || 'غرفة'} ${roomIdx + 1}`;
           const isEditing = editingRoom === roomIdx;
           return (
-            <Card key={roomIdx} withBorder p="md" radius="md" style={{ backgroundColor: '#FEFBF6' }}>
+            <Card key={roomIdx} withBorder p="md" radius="md" style={{ backgroundColor: '#F8F6F0' }}>
               <Group justify="space-between" mb="sm" wrap="nowrap">
                 {isEditing ? (
                   <Group gap={4} wrap="nowrap" style={{ flex: 1 }}>
@@ -188,7 +188,7 @@ export function BedMapPage() {
                   </Group>
                 ) : (
                   <Group gap={4} wrap="nowrap">
-                    <Badge size="lg" variant="light" color="brown">
+                    <Badge size="lg" variant="light" color="teal">
                       {displayLabel}
                     </Badge>
                     <ActionIcon size="xs" variant="subtle" color="gray" onClick={() => startEditing(roomIdx, savedLabel || '')}>

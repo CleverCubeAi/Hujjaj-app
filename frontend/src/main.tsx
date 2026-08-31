@@ -7,6 +7,8 @@ import { I18nextProvider } from 'react-i18next';
 import App from './App';
 import i18n from './i18n';
 import { AuthProvider } from './providers/AuthProvider';
+import { BrandingProvider } from './providers/BrandingProvider';
+import { appTheme } from './theme/brand';
 import '@mantine/core/styles.css';
 import '@mantine/dates/styles.css';
 import '@mantine/notifications/styles.css';
@@ -34,32 +36,7 @@ const AppProvider = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <DirectionProvider initialDirection={dir}>
-      <MantineProvider
-        theme={{
-          fontFamily: "'Tajawal', -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
-          primaryColor: 'brown',
-          colors: {
-            brown: [
-              '#F5EFE6',
-              '#E8DFD0',
-              '#D4C5B0',
-              '#C0AB90',
-              '#A89080',
-              '#8B7355',
-              '#6F5C45',
-              '#534635',
-              '#3A3025',
-              '#221B15'
-            ]
-          },
-          defaultRadius: 'md',
-          shadows: {
-            sm: '0 1px 3px rgba(0, 0, 0, 0.05)',
-            md: '0 4px 6px rgba(0, 0, 0, 0.07)',
-            lg: '0 10px 15px rgba(0, 0, 0, 0.1)',
-          }
-        }}
-      >
+      <MantineProvider theme={appTheme}>
         <Notifications position="top-right" />
         {children}
       </MantineProvider>
@@ -72,9 +49,11 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     <I18nextProvider i18n={i18n}>
       <BrowserRouter>
         <AuthProvider>
-          <AppProvider>
-            <App />
-          </AppProvider>
+          <BrandingProvider>
+            <AppProvider>
+              <App />
+            </AppProvider>
+          </BrandingProvider>
         </AuthProvider>
       </BrowserRouter>
     </I18nextProvider>

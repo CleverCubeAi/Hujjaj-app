@@ -3,8 +3,11 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
+# Coolify may inject NODE_ENV=production; force install of typescript etc.
+ENV NODE_ENV=development
+
 COPY package.json package-lock.json* ./
-RUN npm ci
+RUN npm ci --include=dev
 
 COPY tsconfig.json ./
 COPY src ./src

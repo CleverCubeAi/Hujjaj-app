@@ -16,6 +16,16 @@ import { allowPublicRegister } from '../config/security';
 import { assertPasswordPolicy } from '../utils/httpError';
 import { runAsPlatform } from '../middleware/rlsContext';
 
+async function assertAgencyActive(user: { role?: string; agency_id?: string | null }) {
+  if (user.role === 'super_admin') return null;
+  if (!user.agency_id) return 'This account is not linked to an agency';
+  const agency = await db('agencies').where({ id: user.agency_id }).first();
+  if (!agency || agency.status !== 'active') {
+    return 'This agency account is not active';
+  }
+  return null;
+}
+
 async function issueSession(req: Request, res: Response, user: any) {
   const authUser = toAuthUser(user);
   const access_token = signToken({
@@ -50,6 +60,12 @@ export const login = async (req: Request, res: Response) => {
       const ok = await verifyPassword(password, user.password_hash);
       if (!ok) {
         res.status(401).json({ error: 'Invalid login credentials' });
+        return;
+      }
+
+      const agencyError = await assertAgencyActive(user);
+      if (agencyError) {
+        res.status(403).json({ error: agencyError });
         return;
       }
 
@@ -166,6 +182,14 @@ export const refresh = async (req: Request, res: Response) => {
       if (!user) {
         clearAuthCookies(res);
         res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      const agencyError = await assertAgencyActive(user);
+      if (agencyError) {
+        await revokeRefreshToken(rotated.token);
+        clearAuthCookies(res);
+        res.status(403).json({ error: agencyError });
         return;
       }
 

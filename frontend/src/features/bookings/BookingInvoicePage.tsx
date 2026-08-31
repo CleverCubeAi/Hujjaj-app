@@ -18,6 +18,7 @@ import { useTranslation } from 'react-i18next';
 import { notifications } from '@mantine/notifications';
 import { api } from '../../lib/api';
 import { ArrowRight, Printer, Download } from 'lucide-react';
+import { useBranding } from '../../providers/BrandingProvider';
 
 interface InvoiceItem {
   id: string;
@@ -54,16 +55,19 @@ interface Invoice {
 export function BookingInvoicePage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const branding = useBranding();
   const [invoice, setInvoice] = useState<Invoice | null>(null);
   const [loading, setLoading] = useState(true);
   const [downloading, setDownloading] = useState(false);
+  const [agencyBrand, setAgencyBrand] = useState<any>(null);
   const printRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (id) {
       fetchInvoice();
     }
+    api.getSessionBranding().then(setAgencyBrand).catch(() => undefined);
   }, [id]);
 
   const fetchInvoice = async () => {
@@ -162,12 +166,18 @@ export function BookingInvoicePage() {
         </Group>
       </Group>
 
-      <Paper p="xl" radius="lg" style={{ backgroundColor: '#FFFFFF', border: '1px solid #E8DFD0' }} ref={printRef}>
+      <Paper p="xl" radius="lg" style={{ backgroundColor: '#F8F6F0', border: '1px solid #E2D9C8' }} ref={printRef}>
         {/* Header */}
         <Group justify="space-between" mb="xl">
           <div>
-            <Title order={2} c="brown">حجاج للحج والعمرة</Title>
-            <Text size="sm" c="dimmed">Hujjaj Hajj & Omra</Text>
+            {agencyBrand?.logo_url ? (
+              <img src={agencyBrand.logo_url} alt={agencyBrand.name} style={{ height: 48 }} />
+            ) : (
+              <>
+                <Title order={2} c="#C99A3D">{agencyBrand?.name_ar || agencyBrand?.name || t('app_name')}</Title>
+                <Text size="sm" c="dimmed">{agencyBrand?.name}</Text>
+              </>
+            )}
           </div>
           <div style={{ textAlign: 'left' }}>
             <Text fw={700} size="xl">فاتورة</Text>
@@ -202,7 +212,7 @@ export function BookingInvoicePage() {
 
         {/* Items Table */}
         <Table mb="xl" withTableBorder withColumnBorders>
-          <Table.Thead style={{ backgroundColor: '#F5EFE6' }}>
+          <Table.Thead style={{ backgroundColor: '#E7F3F2' }}>
             <Table.Tr>
               <Table.Th>#</Table.Th>
               <Table.Th>{t('description') || 'الوصف'}</Table.Th>
@@ -284,8 +294,13 @@ export function BookingInvoicePage() {
         {/* Footer */}
         <Divider my="xl" />
         <Text size="sm" c="dimmed" ta="center">
-          شكراً لثقتكم بنا - حجاج للحج والعمرة
+          {agencyBrand?.invoice_footer || (t('thank_you_trust') || 'شكراً لثقتكم بنا')}
         </Text>
+        {!agencyBrand?.hide_platform_mark && (
+          <Text size="xs" c="dimmed" ta="center" mt={4}>
+            Powered by {i18n.language === 'fr' ? branding.app_name_fr : branding.app_name_ar}
+          </Text>
+        )}
       </Paper>
 
       <style>{`

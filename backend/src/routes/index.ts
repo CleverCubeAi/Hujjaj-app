@@ -2,6 +2,8 @@ import { Router } from 'express';
 import { authMiddleware } from '../middleware/auth';
 import { tenantGuard, requireAgencyOnMutate } from '../utils/tenant';
 import { rlsContextMiddleware } from '../middleware/rlsContext';
+import { requireRoles, denyRoles } from '../middleware/roles';
+import { requireFeature } from '../middleware/entitlements';
 
 import authRoutes from './auth.routes';
 import seasonsRoutes from './seasons.routes';
@@ -28,42 +30,59 @@ import uploadRoutes from './upload.routes';
 import bookingLocksRoutes from './bookingLocks.routes';
 import discountsRoutes from './discounts.routes';
 import messagesRoutes from './messages.routes';
+import platformRoutes from './platform.routes';
+import publicRoutes from './public.routes';
+import billingRoutes from './billing.routes';
+import llmRoutes from './llm.routes';
+import { cmiPayRedirect, cmiWebhook } from '../controllers/billing.controller';
 
 const router = Router();
 
-const protect = [authMiddleware, tenantGuard, rlsContextMiddleware, requireAgencyOnMutate];
+const authOnly = [authMiddleware, rlsContextMiddleware];
+const agencyProtect = [
+  authMiddleware,
+  denyRoles('super_admin'),
+  tenantGuard,
+  rlsContextMiddleware,
+  requireAgencyOnMutate,
+];
+const platformProtect = [authMiddleware, requireRoles('super_admin'), rlsContextMiddleware];
 
-// Public Routes
 router.use('/auth', authRoutes);
+router.use('/public', publicRoutes);
+router.post('/billing/webhooks/cmi', cmiWebhook);
+router.get('/billing/cmi/pay/:invoiceId', cmiPayRedirect);
 
-// Protected Routes
-router.use('/seasons', ...protect, seasonsRoutes);
-router.use('/flights', ...protect, flightsRoutes);
-router.use('/accommodations', ...protect, accommodationsRoutes);
-router.use('/pilgrims', ...protect, pilgrimsRoutes);
-router.use('/expenses', ...protect, expensesRoutes);
+router.use('/platform', ...platformProtect, platformRoutes);
+router.use('/settings', ...authOnly, settingsRoutes);
+router.use('/billing', ...agencyProtect, billingRoutes);
+router.use('/llm', ...agencyProtect, llmRoutes);
 
-// New booking workflow routes
-router.use('/clients', ...protect, clientsRoutes);
-router.use('/bookings', ...protect, bookingsRoutes);
-router.use('/services', ...protect, servicesRoutes);
-router.use('/payments', ...protect, paymentsRoutes);
-router.use('/rooms', ...protect, roomsRoutes);
-router.use('/reports', ...protect, reportsRoutes);
+router.use('/seasons', ...agencyProtect, seasonsRoutes);
+router.use('/flights', ...agencyProtect, flightsRoutes);
+router.use('/accommodations', ...agencyProtect, accommodationsRoutes);
+router.use('/pilgrims', ...agencyProtect, pilgrimsRoutes);
+router.use('/expenses', ...agencyProtect, expensesRoutes);
 
-// Settings and notifications routes
-router.use('/settings', ...protect, settingsRoutes);
-router.use('/users', ...protect, usersRoutes);
-router.use('/branches', ...protect, branchesRoutes);
-router.use('/notifications', ...protect, notificationsRoutes);
-router.use('/expense-categories', ...protect, expenseCategoriesRoutes);
-router.use('/hotel-inventory', ...protect, hotelInventoryRoutes);
-router.use('/flight-inventory', ...protect, flightInventoryRoutes);
-router.use('/handovers', ...protect, handoversRoutes);
-router.use('/dashboard', ...protect, dashboardRoutes);
-router.use('/upload', ...protect, uploadRoutes);
-router.use('/booking-locks', ...protect, bookingLocksRoutes);
-router.use('/discounts', ...protect, discountsRoutes);
-router.use('/messages', ...protect, messagesRoutes);
+router.use('/clients', ...agencyProtect, clientsRoutes);
+router.use('/bookings', ...agencyProtect, bookingsRoutes);
+router.use('/services', ...agencyProtect, servicesRoutes);
+router.use('/payments', ...agencyProtect, paymentsRoutes);
+router.use('/rooms', ...agencyProtect, roomsRoutes);
+router.use('/reports', ...agencyProtect, requireFeature('reports'), reportsRoutes);
+
+router.use('/users', ...agencyProtect, usersRoutes);
+router.use('/branches', ...agencyProtect, branchesRoutes);
+router.use('/notifications', ...agencyProtect, notificationsRoutes);
+router.use('/expense-categories', ...agencyProtect, expenseCategoriesRoutes);
+router.use('/hotel-inventory', ...agencyProtect, requireFeature('inventory'), hotelInventoryRoutes);
+router.use('/flight-inventory', ...agencyProtect, requireFeature('inventory'), flightInventoryRoutes);
+router.use('/handovers', ...agencyProtect, handoversRoutes);
+router.use('/dashboard', ...agencyProtect, dashboardRoutes);
+router.use('/upload', ...agencyProtect, uploadRoutes);
+router.use('/booking-locks', ...agencyProtect, bookingLocksRoutes);
+router.use('/discounts', ...agencyProtect, requireFeature('discounts'), discountsRoutes);
+router.use('/messages', ...agencyProtect, messagesRoutes);
 
 export default router;
+

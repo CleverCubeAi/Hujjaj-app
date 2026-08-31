@@ -659,4 +659,101 @@ export const api = {
     return request(`/expenses/prepayments${query.toString() ? `?${query}` : ''}`);
   },
   getExpenseAllocations: (expenseId: string) => request(`/expenses/${expenseId}/allocations`),
+
+  // Platform super admin
+  getPlatformDashboard: () => request('/platform/dashboard'),
+  getPlatformAgencies: (params?: { search?: string; status?: string; subscription_plan?: string }) => {
+    const query = new URLSearchParams();
+    if (params?.search) query.set('search', params.search);
+    if (params?.status) query.set('status', params.status);
+    if (params?.subscription_plan) query.set('subscription_plan', params.subscription_plan);
+    return request(`/platform/agencies${query.toString() ? `?${query}` : ''}`);
+  },
+  getPlatformAgency: (id: string) => request(`/platform/agencies/${id}`),
+  createPlatformAgency: (data: {
+    name: string;
+    country?: string | null;
+    package_id?: string;
+    status?: string;
+    admin_email: string;
+    admin_password: string;
+    admin_full_name: string;
+    send_invite?: boolean;
+  }) => request('/platform/agencies', { method: 'POST', body: JSON.stringify(data) }),
+  updatePlatformAgency: (id: string, data: any) =>
+    request(`/platform/agencies/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  getPlatformAgencyUsers: (agencyId: string) => request(`/platform/agencies/${agencyId}/users`),
+  createPlatformAgencyUser: (agencyId: string, data: any) =>
+    request(`/platform/agencies/${agencyId}/users`, { method: 'POST', body: JSON.stringify(data) }),
+  updatePlatformAgencyUser: (agencyId: string, userId: string, data: any) =>
+    request(`/platform/agencies/${agencyId}/users/${userId}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  deletePlatformAgencyUser: (agencyId: string, userId: string) =>
+    request(`/platform/agencies/${agencyId}/users/${userId}`, { method: 'DELETE' }),
+
+  getPublicBranding: () => request('/public/branding'),
+  getPublicPackages: () => request('/public/packages'),
+  getSessionBranding: () => request('/settings/branding'),
+  getSubscription: () => request('/settings/subscription'),
+
+  getPlatformBranding: () => request('/platform/settings/branding'),
+  updatePlatformBranding: (data: any) =>
+    request('/platform/settings/branding', { method: 'PATCH', body: JSON.stringify(data) }),
+  uploadPlatformBranding: (file: File, kind?: string) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const q = kind ? `?kind=${encodeURIComponent(kind)}` : '';
+    return requestMultipart(`/platform/upload/branding${q}`, formData);
+  },
+
+  getPlatformPackages: () => request('/platform/packages'),
+  createPlatformPackage: (data: any) =>
+    request('/platform/packages', { method: 'POST', body: JSON.stringify(data) }),
+  updatePlatformPackage: (id: string, data: any) =>
+    request(`/platform/packages/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  deletePlatformPackage: (id: string) => request(`/platform/packages/${id}`, { method: 'DELETE' }),
+  assignAgencySubscription: (agencyId: string, data: any) =>
+    request(`/platform/agencies/${agencyId}/subscription`, { method: 'POST', body: JSON.stringify(data) }),
+
+  getPlatformEmail: () => request('/platform/settings/email'),
+  updatePlatformEmail: (data: any) =>
+    request('/platform/settings/email', { method: 'PATCH', body: JSON.stringify(data) }),
+  testPlatformEmail: (to: string) =>
+    request('/platform/settings/email/test', { method: 'POST', body: JSON.stringify({ to }) }),
+
+  getPlatformLlm: () => request('/platform/settings/llm'),
+  updatePlatformLlm: (data: any) =>
+    request('/platform/settings/llm', { method: 'PATCH', body: JSON.stringify(data) }),
+  testPlatformLlm: () => request('/platform/settings/llm/test', { method: 'POST', body: '{}' }),
+  getPlatformLlmUsage: (params?: { from?: string; to?: string }) => {
+    const query = new URLSearchParams();
+    if (params?.from) query.set('from', params.from);
+    if (params?.to) query.set('to', params.to);
+    return request(`/platform/settings/llm/usage${query.toString() ? `?${query}` : ''}`);
+  },
+
+  getPlatformGateways: () => request('/platform/settings/payments'),
+  getPlatformGateway: (provider: string) => request(`/platform/settings/payments/${provider}`),
+  updatePlatformGateway: (provider: string, data: any) =>
+    request(`/platform/settings/payments/${provider}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  testPlatformGateway: (provider: string) =>
+    request(`/platform/settings/payments/${provider}/test`, { method: 'POST', body: '{}' }),
+
+  getPlatformInvoices: (params?: { agency_id?: string; status?: string }) => {
+    const query = new URLSearchParams();
+    if (params?.agency_id) query.set('agency_id', params.agency_id);
+    if (params?.status) query.set('status', params.status);
+    return request(`/platform/invoices${query.toString() ? `?${query}` : ''}`);
+  },
+  createPlatformInvoice: (data: any) =>
+    request('/platform/invoices', { method: 'POST', body: JSON.stringify(data) }),
+  markPlatformInvoicePaid: (id: string, note?: string) =>
+    request(`/platform/invoices/${id}/mark-paid`, { method: 'POST', body: JSON.stringify({ note }) }),
+  voidPlatformInvoice: (id: string) =>
+    request(`/platform/invoices/${id}/void`, { method: 'POST', body: '{}' }),
+  refundPlatformInvoice: (id: string) =>
+    request(`/platform/invoices/${id}/refund`, { method: 'POST', body: '{}' }),
+
+  checkoutSubscription: (package_id: string) =>
+    request('/billing/checkout', { method: 'POST', body: JSON.stringify({ package_id }) }),
+  getBillingInvoices: () => request('/billing/invoices'),
 };

@@ -4,6 +4,9 @@ import { verifyDeletionPassword } from './settings.controller';
 import { autoAllocateRooms } from '../services/roomAllocation';
 import PDFDocument from 'pdfkit';
 import path from 'path';
+import fs from 'fs';
+import { getAgencyEntitlements } from '../services/packages.service';
+import db from '../services/db';
 
 // Arabic text reshaper for proper rendering
 const arabicReshaper = require('arabic-reshaper');
@@ -11,6 +14,15 @@ const arabicReshaper = require('arabic-reshaper');
 // Path to Arabic fonts
 const AMIRI_REGULAR = path.join(__dirname, '../assets/fonts/Amiri-Regular.ttf');
 const AMIRI_BOLD = path.join(__dirname, '../assets/fonts/Amiri-Bold.ttf');
+
+function localUploadPath(url?: string | null) {
+  if (!url) return null;
+  const match = String(url).match(/\/uploads\/(.+?)(?:\?|$)/);
+  if (!match) return null;
+  const full = path.resolve(process.cwd(), 'uploads', match[1]);
+  if (!full.startsWith(path.resolve(process.cwd(), 'uploads'))) return null;
+  return fs.existsSync(full) ? full : null;
+}
 
 // Helper to check if text contains Arabic characters
 function containsArabic(text: string): boolean {
@@ -1477,9 +1489,14 @@ export const exportInvoicePDF = async (req: Request, res: Response) => {
     // Get agency info for header
     const { data: agency } = await supabase
       .from('agencies')
-      .select('name, name_ar, logo_url, phone, email, address')
+      .select('name, name_ar, logo_url, invoice_logo_url, phone, email, address, invoice_footer, hide_platform_mark, legal_name')
       .eq('id', agencyId)
       .single();
+
+    const entitlements = agencyId ? await getAgencyEntitlements(agencyId).catch(() => null) : null;
+    const branding = await db('platform_branding').where({ id: 1 }).first().catch(() => null);
+    const showPoweredBy = !entitlements?.features.white_label || !agency?.hide_platform_mark;
+    const platformName = branding?.app_name_fr || branding?.app_name || 'Hujjaj';
 
     // Calculate totals
     const totalAmount = booking.invoice_items?.reduce((sum: number, item: any) => 
@@ -1536,8 +1553,16 @@ export const exportInvoicePDF = async (req: Request, res: Response) => {
     };
 
     // ===== HEADER =====
-    const agencyName = agency?.name || 'Agence';
-    
+    const agencyName = agency?.legal_name || agency?.name || 'Agence';
+    const logoPath = localUploadPath(agency?.invoice_logo_url || agency?.logo_url);
+    if (logoPath) {
+      try {
+        doc.image(logoPath, 247, doc.y, { width: 100 });
+        doc.moveDown(4);
+      } catch {
+        /* ignore broken image */
+      }
+    }
     doc.fontSize(22).font('Helvetica-Bold').text(agencyName, { align: 'center' });
     doc.font('Helvetica');
     doc.moveDown(0.3);
@@ -1714,7 +1739,15 @@ export const exportInvoicePDF = async (req: Request, res: Response) => {
     // ===== FOOTER =====
     doc.moveDown(3);
     doc.fontSize(10).fillColor('#666666');
+    if (agency?.invoice_footer && entitlements?.features.white_label) {
+      doc.text(agency.invoice_footer, { align: 'center' });
+      doc.moveDown(0.4);
+    }
     doc.text('Merci pour votre confiance !', { align: 'center' });
+    if (showPoweredBy) {
+      doc.moveDown(0.3);
+      doc.fontSize(8).fillColor('#999999').text(`Powered by ${platformName}`, { align: 'center' });
+    }
     doc.moveDown(0.5);
     doc.fontSize(8).fillColor('#999999');
     doc.text(`Document généré le ${new Date().toLocaleDateString('fr-FR')} à ${new Date().toLocaleTimeString('fr-FR')}`, { align: 'center' });

@@ -10,10 +10,14 @@ import {
 } from '../utils/crypto';
 import { sendError } from '../utils/httpError';
 
-export const VALID_FOLDERS = ['agencies', 'avatars', 'airlines', 'hotels', 'rooms', 'pilgrims'];
+export const VALID_FOLDERS = ['agencies', 'avatars', 'airlines', 'hotels', 'rooms', 'pilgrims', 'platform'];
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
 const ALLOWED_EXT = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+const BRANDING_TYPES = [...ALLOWED_TYPES, 'image/svg+xml', 'image/x-icon', 'image/vnd.microsoft.icon'];
+const BRANDING_EXT = [...ALLOWED_EXT, 'svg', 'ico'];
+const BRANDING_MAX = 2 * 1024 * 1024;
+const FAVICON_MAX = 256 * 1024;
 const SAFE_SEGMENT_RE = /^[A-Za-z0-9_-]+$/;
 const SAFE_FILENAME_RE = /^[A-Za-z0-9_-]+\.[A-Za-z0-9]+$/;
 
@@ -170,6 +174,7 @@ export const serveUpload = async (req: Request, res: Response) => {
     if (!VALID_FOLDERS.includes(folder) || !agencyIdParam || !filename) {
       return res.status(400).json({ error: 'Invalid path' });
     }
+    const isPublicBranding = folder === 'platform' && agencyIdParam === 'branding';
     if (
       !SAFE_SEGMENT_RE.test(agencyIdParam) ||
       !SAFE_FILENAME_RE.test(filename) ||
@@ -193,7 +198,7 @@ export const serveUpload = async (req: Request, res: Response) => {
       if (!authedOk) {
         return res.status(401).json({ error: 'Unauthorized' });
       }
-    } else if (!signedOk && !authedOk) {
+    } else if (!isPublicBranding && !signedOk && !authedOk) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
@@ -207,3 +212,39 @@ export const serveUpload = async (req: Request, res: Response) => {
     return sendError(res, error);
   }
 };
+
+export const uploadPlatformBranding = async (req: Request, res: Response) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No file uploaded' });
+    }
+    const file = req.file;
+    const kind = String(req.query.kind || 'logo');
+    const max = kind === 'favicon' ? FAVICON_MAX : BRANDING_MAX;
+
+    if (!BRANDING_TYPES.includes(file.mimetype)) {
+      return res.status(400).json({ error: 'Invalid file type. Allowed: jpeg, png, webp, svg, ico' });
+    }
+    if (file.size > max) {
+      return res.status(400).json({
+        error: kind === 'favicon' ? 'Favicon must be 256 KB or smaller' : 'File too large. Maximum size: 2MB',
+      });
+    }
+
+    const rawExt = (file.originalname.split('.').pop() || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+    const fileExt = BRANDING_EXT.includes(rawExt) ? rawExt : 'png';
+    const relativePath = `branding/${randomUUID()}.${fileExt}`;
+    const destDir = path.join(uploadsRoot(), 'platform', 'branding');
+    fs.mkdirSync(destDir, { recursive: true });
+    fs.writeFileSync(path.join(uploadsRoot(), 'platform', relativePath), file.buffer);
+
+    res.json({
+      message: 'File uploaded successfully',
+      url: `${publicBaseUrl()}/uploads/platform/${relativePath}`,
+      path: relativePath,
+    });
+  } catch (error: any) {
+    return sendError(res, error);
+  }
+};
+

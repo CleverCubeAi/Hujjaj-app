@@ -21,11 +21,7 @@ export function RoleGuard({ children, allowed, fallback }: RoleGuardProps) {
   }
 
   if (!role || !allowed.includes(role)) {
-    return fallback ? <>{fallback}</> : (
-      <Center h="100%">
-        <Text c="red">You don't have permission to access this page.</Text>
-      </Center>
-    );
+    return fallback ? <>{fallback}</> : <Navigate to="/" replace />;
   }
 
   return <>{children}</>;

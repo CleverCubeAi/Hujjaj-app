@@ -1,0 +1,106 @@
+# Local stack — no Coolify / Traefik.
+# Usage: docker compose -f docker-compose.local.yml up -d --build
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-hujjaj}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-hujjaj}
+      POSTGRES_DB: ${POSTGRES_DB:-hujjaj}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres-data-local:/var/lib/postgresql/data
+    networks:
+      - hujjaj-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-hujjaj} -d ${POSTGRES_DB:-hujjaj}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+      - DATABASE_URL=${DATABASE_URL:-postgres://hujjaj:hujjaj@postgres:5432/hujjaj}
+      - JWT_SECRET=${JWT_SECRET:?Set JWT_SECRET in .env}
+      - JWT_EXPIRES_IN=${JWT_EXPIRES_IN:-7d}
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY:?Set ENCRYPTION_KEY in .env}
+      - CORS_ORIGIN=${CORS_ORIGIN:-http://localhost,http://127.0.0.1,http://localhost:80,http://localhost:5173}
+      - ALLOW_PUBLIC_REGISTER=${ALLOW_PUBLIC_REGISTER:-false}
+      - SUPER_ADMIN_EMAIL=${SUPER_ADMIN_EMAIL:-admin@hujjaj.app}
+      - SUPER_ADMIN_PASSWORD=${SUPER_ADMIN_PASSWORD:-Admin123!}
+      - SUPER_ADMIN_NAME=${SUPER_ADMIN_NAME:-Super Admin}
+      - SEED_DEMO=${SEED_DEMO:-true}
+      - ALLOW_DEMO_IN_PRODUCTION=${ALLOW_DEMO_IN_PRODUCTION:-true}
+      - DEMO_PASSWORD=${DEMO_PASSWORD:-Demo123!}
+      - EMAIL_HOST=${EMAIL_HOST:-}
+      - EMAIL_PORT=${EMAIL_PORT:-}
+      - EMAIL_USER=${EMAIL_USER:-}
+      - EMAIL_PASSWORD=${EMAIL_PASSWORD:-}
+      - TWILIO_ACCOUNT_SID=${TWILIO_ACCOUNT_SID:-}
+      - TWILIO_AUTH_TOKEN=${TWILIO_AUTH_TOKEN:-}
+      - TWILIO_PHONE_NUMBER=${TWILIO_PHONE_NUMBER:-}
+      - PUBLIC_URL=${PUBLIC_URL:-http://localhost}
+    volumes:
+      - backend-uploads-local:/app/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - hujjaj-network
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3001/health').then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+      args:
+        - VITE_API_URL=${VITE_API_URL:-/api}
+    restart: unless-stopped
+    environment:
+      - PORT=80
+      - BACKEND_UPSTREAM=http://backend:3001
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - hujjaj-network
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+networks:
+  hujjaj-network:
+    driver: bridge
+
+volumes:
+  postgres-data-local:
+    driver: local
+  backend-uploads-local:
+    driver: local

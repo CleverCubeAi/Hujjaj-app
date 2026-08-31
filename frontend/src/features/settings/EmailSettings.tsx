@@ -10,7 +10,8 @@ import {
   LoadingOverlay,
   Badge,
   Group,
-  Divider
+  Divider,
+  Alert
 } from '@mantine/core';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../lib/api';
@@ -52,6 +53,8 @@ export function EmailSettings() {
     from_name: ''
   });
   const [testEmail, setTestEmail] = useState('');
+  const [emailAllowed, setEmailAllowed] = useState(true);
+  const [packageName, setPackageName] = useState('');
 
   useEffect(() => {
     fetchSettings();
@@ -61,6 +64,10 @@ export function EmailSettings() {
     setLoading(true);
     try {
       const data = await api.getEmailSettings();
+      api.getSubscription().then((sub) => {
+        setEmailAllowed(sub?.features?.email !== false);
+        setPackageName(sub?.package?.name_fr || sub?.package?.name_ar || '');
+      }).catch(() => undefined);
       if (data) {
         setSettings(data);
         setForm({
@@ -180,6 +187,9 @@ export function EmailSettings() {
       </Group>
 
       <Stack gap="md" mt="md">
+        {!emailAllowed && (
+          <Alert color="yellow">{t('email_not_in_plan') || 'Outbound email is not included in {package}'.replace('{package}', packageName)}</Alert>
+        )}
         <Select
           label={t('provider') || 'المزود'}
           value={form.provider}
@@ -261,7 +271,7 @@ export function EmailSettings() {
         />
 
         <Group>
-          <Button onClick={handleTest} loading={testing} variant="outline">
+          <Button onClick={handleTest} loading={testing} variant="outline" disabled={!emailAllowed}>
             {t('test_connection') || 'اختبار الاتصال'}
           </Button>
           <Button onClick={handleSave} loading={saving}>

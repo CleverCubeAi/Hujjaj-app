@@ -139,7 +139,7 @@ export function SeasonsList() {
     switch (status) {
       case 'active': return 'green';
       case 'draft': return 'gray';
-      case 'completed': return 'blue';
+      case 'completed': return 'teal';
       default: return 'gray';
     }
   };

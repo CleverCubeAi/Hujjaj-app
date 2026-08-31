@@ -193,7 +193,7 @@ export function HotelInventoryPage() {
       <SimpleGrid cols={{ base: 2, sm: 4 }} mb="lg">
         <Card shadow="sm" padding="md" radius="md" withBorder>
           <Text size="xs" c="dimmed" tt="uppercase">{t('total_beds') || 'إجمالي الأسرة'}</Text>
-          <Text fw={700} size="xl" c="blue">{totalPurchased}</Text>
+          <Text fw={700} size="xl" c="teal">{totalPurchased}</Text>
         </Card>
         <Card shadow="sm" padding="md" radius="md" withBorder>
           <Text size="xs" c="dimmed" tt="uppercase">{t('beds_sold') || 'الأسرة المباعة'}</Text>
@@ -205,7 +205,7 @@ export function HotelInventoryPage() {
         </Card>
         <Card shadow="sm" padding="md" radius="md" withBorder>
           <Text size="xs" c="dimmed" tt="uppercase">{t('total_cost') || 'إجمالي التكلفة'}</Text>
-          <Text fw={700} size="xl" c="brown">{totalPurchaseCost.toLocaleString()} MAD</Text>
+          <Text fw={700} size="xl" c="#C99A3D">{totalPurchaseCost.toLocaleString()} MAD</Text>
         </Card>
       </SimpleGrid>
 
@@ -283,7 +283,7 @@ export function HotelInventoryPage() {
                     <Tooltip label={t('bed_map') || 'خريطة الأسرة'}>
                       <ActionIcon
                         variant="subtle"
-                        color="brown"
+                        color="teal"
                         onClick={() => navigate(`/inventory/hotel-rooms/${inv.id}/bed-map`)}
                       >
                         <LayoutGrid size={16} />
@@ -293,7 +293,7 @@ export function HotelInventoryPage() {
                       <>
                         <ActionIcon
                           variant="subtle"
-                          color="blue"
+                          color="teal"
                           onClick={() => {
                             setEditingInventory(inv);
                             setModalOpen(true);
