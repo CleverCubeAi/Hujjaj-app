@@ -68,6 +68,7 @@
   "status": "Statut",
   "actions": "Actions",
   "search": "Rechercher",
+  "search_trip_or_client": "Rechercher un voyage ou un client...",
   "no_data": "Aucune donnée",
   "confirm_delete": "Êtes-vous sûr de vouloir supprimer ?",
   "draft": "Brouillon",

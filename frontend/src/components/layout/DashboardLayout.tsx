@@ -96,7 +96,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
 
           <Box style={{ flex: 1, maxWidth: 420 }} visibleFrom="md" mx="md">
             <TextInput
-              placeholder={t('search_trip_or_client') || 'بحث عن رحلة أو عميل ...'}
+              placeholder={t('search_trip_or_client')}
               leftSection={!isRtl ? <Search size={16} color={brand.muted} /> : undefined}
               rightSection={isRtl ? <Search size={16} color={brand.muted} /> : undefined}
               radius="xl"

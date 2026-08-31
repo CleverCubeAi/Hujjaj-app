@@ -68,6 +68,7 @@
   "status": "الحالة",
   "actions": "إجراءات",
   "search": "بحث",
+  "search_trip_or_client": "بحث عن رحلة أو عميل...",
   "no_data": "لا توجد بيانات",
   "confirm_delete": "هل أنت متأكد من الحذف؟",
   "draft": "مسودة",
