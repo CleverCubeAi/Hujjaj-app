@@ -14,6 +14,7 @@ import { api } from '../../lib/api';
 import { useAuth } from '../../providers/AuthProvider';
 import { brand, cardStyle } from '../../theme/brand';
 import { formatLocalDate } from '../../lib/dates';
+import { countries } from '../../data/locations';
 import kaabaDay from '../../assets/img/kaaba-day.png';
 import welcomeBg from '../../assets/img/welcome-bg.png';
 import quoteBg from '../../assets/img/quote-bg.png';
@@ -39,10 +40,18 @@ interface DashboardData {
   hotelsCount?: number;
   clientsCount?: number;
   weeklyBookings?: Array<{ date: string; weekday: number; count: number }>;
+  monthlyBookings?: Array<{ date: string; count: number }>;
+  yearlyBookings?: Array<{ month: string; count: number }>;
   monthlyRevenue?: Array<{ month: string; amount: number }>;
   destinations?: Array<{ name: string; value: number }>;
   upcomingSeasons?: Array<{ id: string; name: string; type: string; start_date?: string; end_date?: string; status?: string }>;
   trends?: { bookings: number; revenue: number; clients: number };
+  performance?: {
+    week: { total: number; growth: number };
+    month: { total: number; growth: number };
+    year: { total: number; growth: number };
+  };
+  seasonRevenue?: { total: number; growth: number };
   inventory: {
     hotel: { totalBeds: number; soldBeds: number; availableBeds: number };
     flight: { totalSeats: number; soldSeats: number; availableSeats: number };
@@ -53,10 +62,27 @@ interface DashboardData {
 const PIE_COLORS = ['url(#pie-grad-0)', 'url(#pie-grad-1)', 'url(#pie-grad-2)', 'url(#pie-grad-3)', brand.navy];
 const PIE_LEGEND_COLORS = [brand.teal, brand.gold, brand.tealDeep, brand.goldLight, brand.navy];
 
+type PerformancePeriod = 'week' | 'month' | 'year';
+
 function compactNumber(value: number) {
   if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(2).replace(/\.00$/, '')}M`;
   if (value >= 1_000) return `${(value / 1_000).toFixed(1).replace(/\.0$/, '')}K`;
   return value.toLocaleString('en');
+}
+
+function destinationLabel(name: string, lang: string): string {
+  const needle = name.trim().toLowerCase();
+  for (const country of countries) {
+    const city = country.cities.find(
+      (c) => c.value === needle || c.label.toLowerCase() === needle,
+    );
+    if (city) {
+      if (lang.startsWith('ar')) return city.label_ar;
+      if (lang.startsWith('fr')) return city.label_fr;
+      return city.label;
+    }
+  }
+  return name;
 }
 
 function KpiCard({
@@ -113,6 +139,7 @@ export function DashboardStats() {
   const { role } = useAuth();
   const isRtl = i18n.language === 'ar';
   const [data, setData] = useState<DashboardData | null>(null);
+  const [period, setPeriod] = useState<PerformancePeriod>('week');
 
   useEffect(() => {
     api.getDashboardStats().then(setData).catch((error) => {
@@ -130,10 +157,18 @@ export function DashboardStats() {
     hotelsCount: 0,
     clientsCount: 0,
     weeklyBookings: [],
+    monthlyBookings: [],
+    yearlyBookings: [],
     monthlyRevenue: [],
     destinations: [],
     upcomingSeasons: [],
     trends: { bookings: 0, revenue: 0, clients: 0 },
+    performance: {
+      week: { total: 0, growth: 0 },
+      month: { total: 0, growth: 0 },
+      year: { total: 0, growth: 0 },
+    },
+    seasonRevenue: { total: 0, growth: 0 },
     inventory: { hotel: { totalBeds: 0, soldBeds: 0, availableBeds: 0 }, flight: { totalSeats: 0, soldSeats: 0, availableSeats: 0 } },
     isFiltered: false,
   };
@@ -161,8 +196,41 @@ export function DashboardStats() {
   const destTotal = (stats.destinations || []).reduce((s, d) => s + d.value, 0);
   const destData = (stats.destinations || []).map((d) => ({
     ...d,
-    name: d.name === 'other' ? (t('other_destinations') || 'أخرى') : d.name,
+    name: d.name === 'other' ? (t('other_destinations') || 'أخرى') : destinationLabel(d.name, i18n.language),
   }));
+
+  const performanceChart = useMemo(() => {
+    if (period === 'month') {
+      return (stats.monthlyBookings || []).map((d) => ({
+        ...d,
+        label: String(Number(d.date.slice(8))),
+      }));
+    }
+    if (period === 'year') {
+      return (stats.yearlyBookings || []).map((m) => {
+        const [y, mo] = m.month.split('-');
+        const date = new Date(Number(y), Number(mo) - 1, 1);
+        return {
+          ...m,
+          label: date.toLocaleDateString(isRtl ? 'ar' : 'fr', { month: 'short' }),
+        };
+      });
+    }
+    return weekData;
+  }, [period, stats.monthlyBookings, stats.yearlyBookings, weekData, isRtl]);
+
+  const performanceMeta = period === 'month'
+    ? stats.performance?.month
+    : period === 'year'
+      ? stats.performance?.year
+      : stats.performance?.week;
+  const performanceTotal = performanceMeta?.total ?? performanceChart.reduce((s, d) => s + (d.count || 0), 0);
+  const performanceGrowth = performanceMeta?.growth ?? 0;
+  const performanceTotalLabel = period === 'month'
+    ? (t('bookings_this_month') || 'حجز هذا الشهر')
+    : period === 'year'
+      ? (t('bookings_this_year') || 'حجز هذه السنة')
+      : (t('bookings_this_week') || 'حجز هذا الأسبوع');
 
   const seasonPct = stats.bookings.total > 0
     ? Math.round(((stats.bookings.confirmed + stats.bookings.paid) / stats.bookings.total) * 100)
@@ -256,11 +324,10 @@ export function DashboardStats() {
                 title={t('air_travels') || t('flights') || 'الرحلات الجوية'}
                 value={stats.flightsCount}
                 icon={<Plane size={22} />}
-                trend={stats.trends?.bookings}
               />
               <KpiCard
                 title={t('hotels') || 'الفنادق'}
-                value={stats.hotelsCount || stats.accommodations.length}
+                value={stats.hotelsCount ?? stats.accommodations.length}
                 icon={<Hotel size={22} />}
               />
               <KpiCard
@@ -347,23 +414,41 @@ export function DashboardStats() {
                 {t('booking_performance') || 'أداء الحجوزات'}
               </Text>
               <Group gap="xs">
-                <Badge variant="light" color="teal">أسبوعي</Badge>
-                <Badge variant="subtle" color="gray">شهري</Badge>
-                <Badge variant="subtle" color="gray">سنوي</Badge>
+                {([
+                  { id: 'week' as const, label: t('weekly') || 'أسبوعي' },
+                  { id: 'month' as const, label: t('monthly') || 'شهري' },
+                  { id: 'year' as const, label: t('yearly') || 'سنوي' },
+                ]).map((tab) => (
+                  <Badge
+                    key={tab.id}
+                    variant={period === tab.id ? 'light' : 'subtle'}
+                    color={period === tab.id ? 'teal' : 'gray'}
+                    style={{ cursor: 'pointer' }}
+                    onClick={() => setPeriod(tab.id)}
+                  >
+                    {tab.label}
+                  </Badge>
+                ))}
               </Group>
             </Group>
             
             <Box style={{ position: 'relative' }}>
               <Box h={220}>
                 <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={weekData} margin={{ top: 20, right: 8, left: 0, bottom: 0 }}>
+                  <AreaChart data={performanceChart} margin={{ top: 20, right: 8, left: 0, bottom: 0 }}>
                     <defs>
                       <linearGradient id="bookingsFill" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="0%" stopColor={brand.teal} stopOpacity={0.35} />
                         <stop offset="100%" stopColor={brand.teal} stopOpacity={0.02} />
                       </linearGradient>
                     </defs>
-                    <XAxis dataKey="label" tick={{ fill: brand.muted, fontSize: 12 }} axisLine={false} tickLine={false} />
+                    <XAxis
+                      dataKey="label"
+                      tick={{ fill: brand.muted, fontSize: 12 }}
+                      axisLine={false}
+                      tickLine={false}
+                      interval={period === 'month' ? 4 : 0}
+                    />
                     <YAxis hide />
                     <Tooltip
                       contentStyle={{
@@ -380,7 +465,7 @@ export function DashboardStats() {
                       stroke={brand.teal}
                       strokeWidth={3}
                       fill="url(#bookingsFill)"
-                      dot={{ r: 5, fill: brand.ivory, stroke: brand.teal, strokeWidth: 2 }}
+                      dot={period === 'month' ? false : { r: 5, fill: brand.ivory, stroke: brand.teal, strokeWidth: 2 }}
                       activeDot={{ r: 7, fill: brand.teal }}
                     />
                   </AreaChart>
@@ -388,14 +473,13 @@ export function DashboardStats() {
               </Box>
               
               <Box style={{ position: 'absolute', top: 0, right: 0, bottom: 0, width: '25%', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', background: 'linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.9) 30%, #fff 100%)' }}>
-                <Text size="lg" fw={700} c={brand.teal}>+22%</Text>
-                <Text size="xs" c={brand.muted} mb="sm">نمو الحجوزات</Text>
+                <Text size="lg" fw={700} c={performanceGrowth >= 0 ? brand.teal : brand.danger}>
+                  {performanceGrowth > 0 ? '+' : ''}{performanceGrowth}%
+                </Text>
+                <Text size="xs" c={brand.muted} mb="sm">{t('booking_growth') || 'نمو الحجوزات'}</Text>
                 
-                <Text size="xl" fw={800} c={brand.navy}>892</Text>
-                <Text size="xs" c={brand.muted} mb="sm">حجز هذا الأسبوع</Text>
-                
-                <Text size="sm" fw={700} c={brand.navy}>4.8/5</Text>
-                <Text size="xs" c={brand.muted}>معدل رضا العملاء</Text>
+                <Text size="xl" fw={800} c={brand.navy}>{performanceTotal.toLocaleString('en')}</Text>
+                <Text size="xs" c={brand.muted} mb="sm">{performanceTotalLabel}</Text>
               </Box>
             </Box>
           </Paper>
@@ -403,12 +487,12 @@ export function DashboardStats() {
 
         <Grid.Col span={{ base: 12, lg: 3 }}>
           <Paper p="lg" radius={20} style={{ ...cardStyle, height: '100%' }}>
-            <Text fw={700} size="md" c={brand.tealDeep} mb="xl">
+            <Text fw={700} size="md" c={brand.tealDeep} mb="md" ta="center">
               {t('popular_destinations') || 'الوجهات الأكثر طلباً'}
             </Text>
             {destTotal > 0 ? (
-              <Group wrap="nowrap" align="center" gap="lg">
-                <Box h={120} w={120} style={{ flexShrink: 0 }}>
+              <Stack align="center" gap="md">
+                <Box h={140} w={140} style={{ position: 'relative', flexShrink: 0 }}>
                   <svg style={{ position: 'absolute', width: 0, height: 0 }}>
                     <defs>
                       <linearGradient id="pie-grad-0" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -431,7 +515,7 @@ export function DashboardStats() {
                   </svg>
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
-                      <Pie data={destData} dataKey="value" nameKey="name" innerRadius={35} outerRadius={55} paddingAngle={4} stroke="none">
+                      <Pie data={destData} dataKey="value" nameKey="name" innerRadius={42} outerRadius={64} paddingAngle={4} stroke="none">
                         {destData.map((_, i) => (
                           <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
                         ))}
@@ -439,12 +523,12 @@ export function DashboardStats() {
                       <Tooltip />
                     </PieChart>
                   </ResponsiveContainer>
-                  <Box style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', width: 120 }}>
-                     <Text fw={700} size="sm" c={brand.navy}>{Math.round((destData[0]?.value / destTotal) * 100) || 0}%</Text>
+                  <Box style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Text fw={700} size="sm" c={brand.navy}>{Math.round((destData[0]?.value / destTotal) * 100) || 0}%</Text>
                   </Box>
                 </Box>
-                <Stack gap={10} style={{ flex: 1 }}>
-                  {destData.slice(0,3).map((d, i) => (
+                <Stack gap={8} w="100%">
+                  {destData.slice(0, 3).map((d, i) => (
                     <Group key={d.name} justify="space-between" wrap="nowrap">
                       <Group gap={8} wrap="nowrap">
                         <Box w={8} h={8} style={{ borderRadius: 99, background: PIE_LEGEND_COLORS[i % PIE_LEGEND_COLORS.length], flexShrink: 0 }} />
@@ -454,7 +538,7 @@ export function DashboardStats() {
                     </Group>
                   ))}
                 </Stack>
-              </Group>
+              </Stack>
             ) : (
               <Text size="sm" c="dimmed" ta="center" py="md">{t('no_data')}</Text>
             )}
@@ -563,9 +647,13 @@ export function DashboardStats() {
               <Text fw={700} size="md" c={brand.tealDeep}>
                 {t('season_revenue') || 'إيرادات الموسم'}
               </Text>
-              <Text size="xs" fw={700} c={brand.teal}>+18%</Text>
+              <Text size="xs" fw={700} c={(stats.seasonRevenue?.growth || 0) >= 0 ? brand.teal : brand.danger}>
+                {(stats.seasonRevenue?.growth || 0) > 0 ? '+' : ''}{stats.seasonRevenue?.growth || 0}%
+              </Text>
             </Group>
-            <Text size="lg" fw={800} c={brand.navy} mb="md">2.56M SAR</Text>
+            <Text size="lg" fw={800} c={brand.navy} mb="md">
+              {compactNumber(stats.seasonRevenue?.total ?? stats.financial.totalAgreed)} MAD
+            </Text>
             <Box h={140}>
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={monthData}>

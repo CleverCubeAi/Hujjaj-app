@@ -453,6 +453,7 @@ CREATE TABLE IF NOT EXISTS user_preferences (
   theme TEXT DEFAULT 'light',
   notifications_email BOOLEAN DEFAULT true,
   notifications_sms BOOLEAN DEFAULT false,
+  notifications_last_seen_at TIMESTAMPTZ,
   updated_at TIMESTAMPTZ DEFAULT now()
 );
 

@@ -21,6 +21,11 @@
   "current_season": "Saison en cours",
   "popular_destinations": "Destinations les plus demandées",
   "season_revenue": "Revenus par saison",
+  "booking_growth": "Croissance des réservations",
+  "bookings_this_week": "réservations cette semaine",
+  "bookings_this_month": "réservations ce mois",
+  "bookings_this_year": "réservations cette année",
+  "yearly": "Annuel",
   "quick_tasks": "Tâches rapides",
   "add_client": "Ajouter un client",
   "client_support": "Support client",
@@ -965,5 +970,12 @@
   "subscription_status": "Statut d'abonnement",
   "max_users": "Limite d'utilisateurs",
   "max_branches": "Limite d'agences",
-  "max_seasons": "Limite de saisons"
+  "max_seasons": "Limite de saisons",
+  "notifications": "Notifications",
+  "no_notifications": "Aucune notification",
+  "notif_new_booking": "Nouvelle réservation {{number}} — {{client}}",
+  "notif_new_payment": "Paiement de {{amount}} MAD sur {{number}}",
+  "notif_message_failed": "Échec d'envoi du message à {{name}}",
+  "notif_hold_expiring": "La réservation {{number}} expire bientôt",
+  "notif_subscription_past_due": "Abonnement en retard de paiement"
 }

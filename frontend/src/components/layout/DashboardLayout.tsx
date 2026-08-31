@@ -1,14 +1,18 @@
-import { useEffect, useState } from 'react';
-import { AppShell, Burger, Group, ActionIcon, Box, TextInput, Avatar, Text } from '@mantine/core';
+import { useEffect, useState, type FormEvent } from 'react';
+import { AppShell, Burger, Group, ActionIcon, Box, TextInput, Text, Button, Indicator } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../providers/AuthProvider';
 import { Sidebar } from './Sidebar';
 import { BrandLogo } from '../brand/BrandLogo';
+import { HeaderNotifications } from './HeaderNotifications';
+import { HeaderUserMenu } from './HeaderUserMenu';
 import { useTranslation } from 'react-i18next';
-import { Bell, Search, MessageSquare, LogOut } from 'lucide-react';
+import { MessageSquare, Plus, Search } from 'lucide-react';
 import { api } from '../../lib/api';
 import { brand } from '../../theme/brand';
 import { useBranding } from '../../providers/BrandingProvider';
+import { useInbox } from '../../hooks/useInbox';
 
 interface AgencyInfo {
   name: string;
@@ -27,10 +31,14 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [opened, { toggle }] = useDisclosure();
   const { user, role, signOut } = useAuth();
   const { t, i18n } = useTranslation();
+  const navigate = useNavigate();
   const branding = useBranding();
   const [agency, setAgency] = useState<AgencyInfo | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
   const isPlatformSuperAdmin = role === 'super_admin';
+  const isAgencyStaff = role === 'agency_admin' || role === 'manager' || role === 'agent';
+  const inbox = useInbox(isAgencyStaff);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -58,6 +66,16 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
     if (userRole === 'manager') return t('manager') || 'مدير';
     return t('agent') || 'وكيل';
   };
+
+  const submitSearch = (event?: FormEvent) => {
+    event?.preventDefault();
+    const q = searchQuery.trim();
+    if (!q || !isAgencyStaff) return;
+    navigate(`/bookings?q=${encodeURIComponent(q)}`);
+  };
+
+  const displayName = profile?.full_name || user?.email || '';
+  const initial = displayName?.[0]?.toUpperCase() || 'أ';
 
   return (
     <AppShell
@@ -94,47 +112,90 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
             <BrandLogo variant="horizontal" height={48} alt={platformName} />
           </Group>
 
-          <Box style={{ flex: 1, maxWidth: 420 }} visibleFrom="md" mx="md">
-            <TextInput
-              placeholder={t('search_trip_or_client')}
-              leftSection={!isRtl ? <Search size={16} color={brand.muted} /> : undefined}
-              rightSection={isRtl ? <Search size={16} color={brand.muted} /> : undefined}
-              radius="xl"
-              size="md"
-              styles={{
-                input: {
-                  backgroundColor: '#F3F4F6',
-                  border: 'none',
-                  textAlign: isRtl ? 'right' : 'left',
-                },
-              }}
-            />
-          </Box>
+          {isAgencyStaff && (
+            <Box style={{ flex: 1, maxWidth: 420 }} visibleFrom="md" mx="md">
+              <form onSubmit={submitSearch}>
+                <TextInput
+                  placeholder={t('search_trip_or_client')}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.currentTarget.value)}
+                  leftSection={!isRtl ? <Search size={16} color={brand.muted} /> : undefined}
+                  rightSection={isRtl ? <Search size={16} color={brand.muted} /> : undefined}
+                  radius="xl"
+                  size="md"
+                  styles={{
+                    input: {
+                      backgroundColor: '#F3F4F6',
+                      border: 'none',
+                      textAlign: isRtl ? 'right' : 'left',
+                    },
+                  }}
+                />
+              </form>
+            </Box>
+          )}
 
           <Group gap="sm" wrap="nowrap">
-            <ActionIcon variant="subtle" color="gray" size="lg" radius="xl" style={{ backgroundColor: '#F3F4F6' }}>
-              <MessageSquare size={20} color={brand.navy} />
-            </ActionIcon>
+            {isAgencyStaff && (
+              <>
+                <Button
+                  component={Link}
+                  to="/bookings/new"
+                  leftSection={<Plus size={16} />}
+                  visibleFrom="sm"
+                  size="sm"
+                >
+                  {t('new_booking')}
+                </Button>
+                <ActionIcon
+                  component={Link}
+                  to="/bookings/new"
+                  hiddenFrom="sm"
+                  variant="filled"
+                  size="lg"
+                  radius="xl"
+                  title={t('new_booking')}
+                >
+                  <Plus size={18} />
+                </ActionIcon>
 
-            <ActionIcon variant="subtle" color="gray" size="lg" radius="xl" style={{ backgroundColor: '#F3F4F6' }}>
-              <Bell size={20} color={brand.navy} />
-            </ActionIcon>
+                <Indicator
+                  inline
+                  size={18}
+                  offset={4}
+                  color="teal"
+                  disabled={inbox.failed_messages_count === 0}
+                  label={inbox.failed_messages_count > 9 ? '9+' : inbox.failed_messages_count}
+                >
+                  <ActionIcon
+                    component={Link}
+                    to="/messages"
+                    variant="subtle"
+                    color="gray"
+                    size="lg"
+                    radius="xl"
+                    style={{ backgroundColor: '#F3F4F6' }}
+                    title={t('messages')}
+                  >
+                    <MessageSquare size={20} color={brand.navy} />
+                  </ActionIcon>
+                </Indicator>
 
-            <Group gap="sm" wrap="nowrap">
-              <Avatar src={profile?.avatar_url} color="teal" radius="xl" size="md">
-                {profile?.full_name?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || 'أ'}
-              </Avatar>
-              <Box visibleFrom="sm">
-                <Text size="sm" fw={700} c={brand.navy} lh={1.2}>
-                  {profile?.full_name || user?.email || 'أحمد بن علي'}
-                </Text>
-                <Text size="xs" c={brand.muted}>{getRoleLabel()}</Text>
-              </Box>
-            </Group>
+                <HeaderNotifications
+                  items={inbox.items}
+                  unreadCount={inbox.unread_count}
+                  onOpen={inbox.markSeen}
+                />
+              </>
+            )}
 
-            <ActionIcon onClick={() => signOut()} title={t('logout')} variant="subtle" color="red" size="lg" radius="xl">
-              <LogOut size={20} />
-            </ActionIcon>
+            <HeaderUserMenu
+              name={displayName}
+              roleLabel={getRoleLabel()}
+              avatarUrl={profile?.avatar_url}
+              initial={initial}
+              onLogout={() => signOut()}
+            />
           </Group>
         </Group>
       </AppShell.Header>

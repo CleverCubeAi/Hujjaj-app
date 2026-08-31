@@ -21,7 +21,7 @@ import {
   Tooltip
 } from '@mantine/core';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { api } from '../../lib/api';
 import { brand, cardStyle } from '../../theme/brand';
 import { useAuth } from '../../providers/AuthProvider';
@@ -133,10 +133,11 @@ function HoldCountdownBadge({ holdExpiresAt }: { holdExpiresAt?: string }) {
 export function BookingsPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { role } = useAuth();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState(searchParams.get('q') || '');
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
   const [seasons, setSeasons] = useState<any[]>([]);
   const [seasonFilter, setSeasonFilter] = useState<string | null>(null);
@@ -181,6 +182,11 @@ export function BookingsPage() {
   useEffect(() => {
     fetchSeasons();
   }, []);
+
+  useEffect(() => {
+    const q = searchParams.get('q') || '';
+    setSearch(q);
+  }, [searchParams]);
 
   useEffect(() => {
     const debounce = setTimeout(fetchBookings, 300);

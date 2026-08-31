@@ -21,6 +21,11 @@
   "current_season": "الموسم الحالي",
   "popular_destinations": "الوجهات الأكثر طلباً",
   "season_revenue": "إيرادات المواسم",
+  "booking_growth": "نمو الحجوزات",
+  "bookings_this_week": "حجز هذا الأسبوع",
+  "bookings_this_month": "حجز هذا الشهر",
+  "bookings_this_year": "حجز هذه السنة",
+  "yearly": "سنوي",
   "quick_tasks": "مهام سريعة",
   "add_client": "إضافة عميل",
   "client_support": "دعم العملاء",
@@ -965,5 +970,12 @@
   "subscription_status": "حالة الاشتراك",
   "max_users": "حد المستخدمين",
   "max_branches": "حد الفروع",
-  "max_seasons": "حد المواسم"
+  "max_seasons": "حد المواسم",
+  "notifications": "الإشعارات",
+  "no_notifications": "لا توجد إشعارات",
+  "notif_new_booking": "حجز جديد {{number}} — {{client}}",
+  "notif_new_payment": "دفعة {{amount}} درهم على الحجز {{number}}",
+  "notif_message_failed": "فشل إرسال رسالة إلى {{name}}",
+  "notif_hold_expiring": "الحجز {{number}} على وشك انتهاء الحجز المؤقت",
+  "notif_subscription_past_due": "الاشتراك متأخر عن الدفع"
 }

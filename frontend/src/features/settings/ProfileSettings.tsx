@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   Paper,
   Stack,
@@ -7,12 +7,14 @@ import {
   Button,
   Title,
   Divider,
-  LoadingOverlay
+  LoadingOverlay,
+  Box
 } from '@mantine/core';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../lib/api';
 import { notifications } from '@mantine/notifications';
 import { useAuth } from '../../providers/AuthProvider';
+import { useSearchParams } from 'react-router-dom';
 
 interface Profile {
   id: string;
@@ -24,6 +26,8 @@ interface Profile {
 export function ProfileSettings() {
   const { t } = useTranslation();
   const { user: _user } = useAuth();
+  const [params] = useSearchParams();
+  const passwordRef = useRef<HTMLDivElement>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [changingPassword, setChangingPassword] = useState(false);
@@ -41,6 +45,12 @@ export function ProfileSettings() {
   useEffect(() => {
     fetchProfile();
   }, []);
+
+  useEffect(() => {
+    if (!loading && params.get('section') === 'password' && passwordRef.current) {
+      passwordRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [loading, params]);
 
   const fetchProfile = async () => {
     setLoading(true);
@@ -172,6 +182,7 @@ export function ProfileSettings() {
 
       <Divider my="xl" />
 
+      <Box ref={passwordRef} id="change-password-section">
       <Title order={4} mb="md">
         {t('change_password') || 'تغيير كلمة المرور'}
       </Title>
@@ -202,6 +213,7 @@ export function ProfileSettings() {
           {t('change_password') || 'تغيير كلمة المرور'}
         </Button>
       </Stack>
+      </Box>
     </Paper>
   );
 }

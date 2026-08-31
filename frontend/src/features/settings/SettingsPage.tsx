@@ -22,12 +22,21 @@ import { MessagesPage } from '../messages/MessagesPage';
 export function SettingsPage() {
   const { role } = useAuth();
   const { t } = useTranslation();
-  const [params] = useSearchParams();
+  const [params, setParams] = useSearchParams();
   const isAgencyAdmin = role === 'agency_admin';
   const isSuperAdmin = role === 'super_admin';
   const isAgencyStaff = role === 'agency_admin' || role === 'manager' || role === 'agent';
   const canSecurity = isAgencyAdmin;
-  const defaultTab = params.get('tab') || 'profile';
+  const tab = params.get('tab') || 'profile';
+
+  const setTab = (value: string | null) => {
+    setParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.set('tab', value || 'profile');
+      if (value !== 'profile') next.delete('section');
+      return next;
+    }, { replace: true });
+  };
 
   return (
     <Container size="xl" py="xl">
@@ -35,7 +44,7 @@ export function SettingsPage() {
         {t('settings') || 'الإعدادات'}
       </Title>
 
-      <Tabs defaultValue={defaultTab}>
+      <Tabs value={tab} onChange={setTab}>
         <Tabs.List>
           <Tabs.Tab value="profile">{t('profile') || 'الملف الشخصي'}</Tabs.Tab>
           {canSecurity && <Tabs.Tab value="security">{t('security') || 'الأمان'}</Tabs.Tab>}
