@@ -109,7 +109,13 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
         <Group h="100%" px="xl" justify="space-between" wrap="nowrap">
           <Group gap="md" wrap="nowrap">
             <Burger opened={opened} onClick={toggle} hiddenFrom="sm" size="sm" color={brand.navy} />
-            <BrandLogo variant="horizontal" height={48} alt={platformName} />
+            <Link
+              to="/"
+              title={platformName}
+              style={{ display: 'block', textDecoration: 'none', lineHeight: 0 }}
+            >
+              <BrandLogo variant="horizontal" height={48} alt={platformName} />
+            </Link>
           </Group>
 
           {isAgencyStaff && (
