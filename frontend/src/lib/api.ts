@@ -438,6 +438,8 @@ export const api = {
   getSMSSettings: () => request('/notifications/sms'),
   updateSMSSettings: (data: any) => request('/notifications/sms', { method: 'PUT', body: JSON.stringify(data) }),
   testSMS: (data: any) => request('/notifications/sms/test', { method: 'POST', body: JSON.stringify(data) }),
+  getNotificationInbox: () => request('/notifications/inbox'),
+  markNotificationsSeen: () => request('/notifications/inbox/seen', { method: 'POST' }),
 
   // ============================================
   // Financial Handovers

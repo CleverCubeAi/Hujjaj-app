@@ -49,7 +49,7 @@ interface MessageTemplate {
 
 const PLACEHOLDER_HINT = '{{client_name}}, {{booking_number}}, {{total}}, {{remaining}}, {{paid}}, {{pilgrim_name}}';
 
-export function MessagesPage() {
+export function MessagesPage({ hideTitle = false }: { hideTitle?: boolean }) {
   const { t } = useTranslation();
   const [sent, setSent] = useState<SentMessage[]>([]);
   const [templates, setTemplates] = useState<MessageTemplate[]>([]);
@@ -208,7 +208,7 @@ export function MessagesPage() {
 
   return (
     <Stack gap="lg">
-      <Title order={2}>{t('messages') || 'الرسائل'}</Title>
+      {!hideTitle && <Title order={2}>{t('messages') || 'الرسائل'}</Title>}
 
       <Tabs defaultValue="sent">
         <Tabs.List>

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   Title, Stack, Paper, Card, Group, Text, Select,
   Button, Table, Badge, SimpleGrid, Tabs, LoadingOverlay,
@@ -160,6 +161,8 @@ interface FinancialStatusData {
   };
 }
 
+const REPORT_TABS = ['financial', 'financial-status', 'bookings', 'pilgrims', 'operations'];
+
 export function ReportsPage() {
   const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
@@ -170,7 +173,11 @@ export function ReportsPage() {
   const [dateFrom, setDateFrom] = useState<string | null>(null);
   const [dateTo, setDateTo] = useState<string | null>(null);
   const [seasons, setSeasons] = useState<Array<{ id: string; name: string }>>([]);
-  const [activeTab, setActiveTab] = useState<string | null>('financial');
+  const [searchParams] = useSearchParams();
+  const tabFromUrl = searchParams.get('tab');
+  const [activeTab, setActiveTab] = useState<string | null>(
+    tabFromUrl && REPORT_TABS.includes(tabFromUrl) ? tabFromUrl : 'financial',
+  );
 
   // Handover state
   const [handoverFormOpened, setHandoverFormOpened] = useState(false);
@@ -244,9 +251,15 @@ export function ReportsPage() {
     }
   };
 
-  useEffect(() => {
+    useEffect(() => {
     fetchSeasons();
   }, []);
+
+  useEffect(() => {
+    if (tabFromUrl && REPORT_TABS.includes(tabFromUrl)) {
+      setActiveTab(tabFromUrl);
+    }
+  }, [tabFromUrl]);
 
   useEffect(() => {
     fetchReports();

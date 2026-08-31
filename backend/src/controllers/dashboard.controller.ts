@@ -1,7 +1,6 @@
 import { Request, Response } from 'express';
 import { supabaseAdmin as supabase } from '../services/supabase';
 
-// Helper function to get user IDs in a branch
 async function getBranchUserIds(branchId: string): Promise<string[]> {
   const { data } = await supabase
     .from('users')
@@ -10,7 +9,114 @@ async function getBranchUserIds(branchId: string): Promise<string[]> {
   return data?.map((u: any) => u.id) || [];
 }
 
-// Get dashboard statistics with role-based filtering
+const num = (v: unknown) => {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : 0;
+};
+
+const EXCLUDED_REVENUE = new Set(['cancelled', 'expired', 'draft']);
+const EXCLUDED_VOLUME = new Set(['cancelled', 'expired']);
+
+function utcDay(d = new Date()): Date {
+  return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
+}
+
+function dateKey(d: Date): string {
+  return d.toISOString().slice(0, 10);
+}
+
+function toDate(value: unknown): Date | null {
+  if (!value) return null;
+  if (value instanceof Date) return Number.isNaN(value.getTime()) ? null : value;
+  const d = new Date(value as string);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
+function createdDateKey(createdAt: unknown): string {
+  const d = toDate(createdAt);
+  return d ? d.toISOString().slice(0, 10) : '';
+}
+
+function createdMonthKey(createdAt: unknown): string {
+  return createdDateKey(createdAt).slice(0, 7);
+}
+
+function relatedCity(rel: any): string | null {
+  if (!rel) return null;
+  const row = Array.isArray(rel) ? rel[0] : rel;
+  return canonicalCity(row?.city);
+}
+
+function trendPct(curr: number, prev: number): number | null {
+  if (prev <= 0) return null;
+  return Math.round(((curr - prev) / prev) * 100);
+}
+
+const emptyFinancial = {
+  totalAgreed: 0,
+  totalPaid: 0,
+  totalRemaining: 0,
+  paymentPercentage: 0,
+  totalExpenses: 0,
+  totalBedsCost: 0,
+  totalFlightsCost: 0,
+  totalCosts: 0,
+  netPosition: 0,
+  inventoryProfit: 0,
+  unpaidCount: 0,
+};
+
+function canonicalCity(raw: string | null | undefined): string | null {
+  const city = (raw || '').trim();
+  if (!city) return null;
+  const lower = city.toLowerCase();
+  if (['makkah', 'mecca', 'makka', 'مكة', 'مكة المكرمة'].includes(lower)) return 'Makkah';
+  if (['madinah', 'medina', 'madina', 'المدينة', 'المدينة المنورة'].includes(lower)) return 'Madinah';
+  if (['jeddah', 'jidda', 'جدة'].includes(lower)) return 'Jeddah';
+  return city;
+}
+
+function emptyStats(role: string | undefined, isFiltered: boolean) {
+  return {
+    pilgrims: { total: 0, male: 0, female: 0 },
+    bookings: { total: 0, draft: 0, confirmed: 0, paid: 0, cancelled: 0 },
+    financial: { ...emptyFinancial },
+    recentBookings: [],
+    accommodations: [],
+    flightsCount: 0,
+    hotelsCount: 0,
+    clientsCount: 0,
+    weeklyBookings: [],
+    monthlyBookings: [],
+    yearlyBookings: [],
+    monthlyRevenue: [],
+    destinations: [],
+    upcomingSeasons: [],
+    trends: { bookings: 0, revenue: 0, clients: 0 },
+    performance: {
+      week: { total: 0, growth: 0 },
+      month: { total: 0, growth: 0 },
+      year: { total: 0, growth: 0 },
+    },
+    seasonRevenue: { total: 0, growth: 0 },
+    inventory: { hotel: { totalBeds: 0, soldBeds: 0, availableBeds: 0 }, flight: { totalSeats: 0, soldSeats: 0, availableSeats: 0 } },
+    userRole: role,
+    isFiltered,
+  };
+}
+
+function countInRange(
+  rows: Array<{ created_at: unknown }>,
+  startKey: string,
+  endKey: string,
+  by: 'day' | 'month' = 'day',
+): number {
+  return rows.filter((row) => {
+    const key = by === 'month' ? createdMonthKey(row.created_at) : createdDateKey(row.created_at);
+    return key >= startKey && key <= endKey;
+  }).length;
+}
+
 export const getDashboardStats = async (req: Request, res: Response) => {
   try {
     const agencyId = req.user?.agency_id;
@@ -19,23 +125,17 @@ export const getDashboardStats = async (req: Request, res: Response) => {
     const userBranchId = req.user?.branch_id;
 
     if (!agencyId && req.user?.role !== 'super_admin') {
-    return res.status(403).json({ error: 'Agency ID not found' });
-  }
+      return res.status(403).json({ error: 'Agency ID not found' });
+    }
 
-    // Determine user IDs for filtering based on role
     let userIdsFilter: string[] | null = null;
-    const isAdmin = role === 'agency_admin' || role === 'super_admin';
-    
+
     if (role === 'agent') {
-      // Agent sees only their own data
       userIdsFilter = userId ? [userId] : [];
     } else if (role === 'manager' && userBranchId) {
-      // Manager sees branch data
       userIdsFilter = await getBranchUserIds(userBranchId);
     }
-    // Admin sees all (userIdsFilter stays null)
 
-    // 1. Get bookings with role-based filtering
     let bookingsQuery = supabase
       .from('bookings')
       .select(`
@@ -46,9 +146,14 @@ export const getDashboardStats = async (req: Request, res: Response) => {
         status,
         created_at,
         created_by,
+        client_id,
+        season_id,
+        accommodation_id,
+        hotel_inventory_ids,
         clients (full_name, full_name_ar),
         pilgrims (id, gender),
-        seasons (name, type)
+        seasons (name, type),
+        accommodations (city)
       `)
       .forAgency(agencyId)
       .is('deleted_at', null);
@@ -57,37 +162,22 @@ export const getDashboardStats = async (req: Request, res: Response) => {
       if (userIdsFilter.length > 0) {
         bookingsQuery = bookingsQuery.in('created_by', userIdsFilter);
       } else {
-        // No matching users, return empty stats
-        return res.json({
-          pilgrims: { total: 0, male: 0, female: 0 },
-          bookings: { total: 0, draft: 0, confirmed: 0, paid: 0, cancelled: 0 },
-          financial: { totalAgreed: 0, totalPaid: 0, totalRemaining: 0, paymentPercentage: 0 },
-          recentBookings: [],
-          accommodations: [],
-          flightsCount: 0,
-          hotelsCount: 0,
-          clientsCount: 0,
-          weeklyBookings: [],
-          monthlyRevenue: [],
-          destinations: [],
-          upcomingSeasons: [],
-          trends: { bookings: 0, revenue: 0, clients: 0 },
-          inventory: { hotel: { totalBeds: 0, soldBeds: 0, availableBeds: 0 }, flight: { totalSeats: 0, soldSeats: 0, availableSeats: 0 } },
-          userRole: role,
-          isFiltered: true,
-        });
+        return res.json(emptyStats(role, true));
       }
     }
 
     const { data: bookings, error: bookingsError } = await bookingsQuery;
     if (bookingsError) throw bookingsError;
 
-    // Calculate pilgrim stats from bookings
+    const allBookings = bookings || [];
+    const volumeBookings = allBookings.filter((b: any) => !EXCLUDED_VOLUME.has(b.status));
+    const revenueBookings = allBookings.filter((b: any) => !EXCLUDED_REVENUE.has(b.status));
+
     let totalPilgrims = 0;
     let malePilgrims = 0;
     let femalePilgrims = 0;
 
-    bookings?.forEach((booking: any) => {
+    volumeBookings.forEach((booking: any) => {
       if (booking.pilgrims) {
         totalPilgrims += booking.pilgrims.length;
         booking.pilgrims.forEach((p: any) => {
@@ -97,27 +187,20 @@ export const getDashboardStats = async (req: Request, res: Response) => {
       }
     });
 
-    // Calculate booking stats
     const bookingStats = {
-      total: bookings?.length || 0,
-      draft: bookings?.filter((b: any) => b.status === 'draft').length || 0,
-      confirmed: bookings?.filter((b: any) => b.status === 'confirmed').length || 0,
-      paid: bookings?.filter((b: any) => b.status === 'paid').length || 0,
-      cancelled: bookings?.filter((b: any) => b.status === 'cancelled').length || 0
+      total: allBookings.length,
+      draft: allBookings.filter((b: any) => b.status === 'draft').length,
+      confirmed: allBookings.filter((b: any) => b.status === 'confirmed').length,
+      paid: allBookings.filter((b: any) => b.status === 'paid').length,
+      cancelled: allBookings.filter((b: any) => b.status === 'cancelled').length,
     };
 
-    // Calculate financial stats (pg returns NUMERIC as strings — coerce before summing)
-    const num = (v: unknown) => {
-      const n = Number(v);
-      return Number.isFinite(n) ? n : 0;
-    };
-    const totalAgreed = bookings?.reduce((sum: number, b: any) => sum + num(b.total_amount), 0) || 0;
-    const totalPaid = bookings?.reduce((sum: number, b: any) => sum + num(b.paid_amount), 0) || 0;
+    const totalAgreed = revenueBookings.reduce((sum: number, b: any) => sum + num(b.total_amount), 0);
+    const totalPaid = revenueBookings.reduce((sum: number, b: any) => sum + num(b.paid_amount), 0);
     const totalRemaining = totalAgreed - totalPaid;
 
-    // Get recent bookings (last 8)
-    const recentBookings = bookings
-      ?.sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+    const recentBookings = [...allBookings]
+      .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
       .slice(0, 8)
       .map((b: any) => ({
         id: b.id,
@@ -130,94 +213,133 @@ export const getDashboardStats = async (req: Request, res: Response) => {
         created_at: b.created_at,
         season_name: b.seasons?.name || null,
         season_type: b.seasons?.type || null,
-      })) || [];
+      }));
 
-    const weekdayKey = (d: Date) => {
-      const y = d.getFullYear();
-      const m = String(d.getMonth() + 1).padStart(2, '0');
-      const day = String(d.getDate()).padStart(2, '0');
-      return `${y}-${m}-${day}`;
-    };
+    const today = utcDay();
+
     const weeklyBookings = Array.from({ length: 7 }, (_, i) => {
-      const d = new Date();
-      d.setHours(0, 0, 0, 0);
-      d.setDate(d.getDate() - (6 - i));
-      const key = weekdayKey(d);
-      const count = bookings?.filter((b: any) => String(b.created_at).slice(0, 10) === key).length || 0;
-      return { date: key, weekday: d.getDay(), count };
+      const d = new Date(today);
+      d.setUTCDate(d.getUTCDate() - (6 - i));
+      const key = dateKey(d);
+      const count = volumeBookings.filter((b: any) => createdDateKey(b.created_at) === key).length;
+      return { date: key, weekday: d.getUTCDay(), count };
     });
 
+    const weekStart = weeklyBookings[0].date;
+    const weekEnd = weeklyBookings[6].date;
+    const prevWeekStartDate = new Date(today);
+    prevWeekStartDate.setUTCDate(prevWeekStartDate.getUTCDate() - 13);
+    const prevWeekEndDate = new Date(today);
+    prevWeekEndDate.setUTCDate(prevWeekEndDate.getUTCDate() - 7);
+    const weekTotal = weeklyBookings.reduce((s, d) => s + d.count, 0);
+    const lastWeekTotal = countInRange(volumeBookings, dateKey(prevWeekStartDate), dateKey(prevWeekEndDate));
+
+    const monthlyBookings = Array.from({ length: 30 }, (_, i) => {
+      const d = new Date(today);
+      d.setUTCDate(d.getUTCDate() - (29 - i));
+      const key = dateKey(d);
+      const count = volumeBookings.filter((b: any) => createdDateKey(b.created_at) === key).length;
+      return { date: key, count };
+    });
+    const monthStart = monthlyBookings[0].date;
+    const monthEnd = monthlyBookings[29].date;
+    const prevMonthStartDate = new Date(today);
+    prevMonthStartDate.setUTCDate(prevMonthStartDate.getUTCDate() - 59);
+    const prevMonthEndDate = new Date(today);
+    prevMonthEndDate.setUTCDate(prevMonthEndDate.getUTCDate() - 30);
+    const monthTotal = monthlyBookings.reduce((s, d) => s + d.count, 0);
+    const lastMonthPeriodTotal = countInRange(volumeBookings, dateKey(prevMonthStartDate), dateKey(prevMonthEndDate));
+
+    const yearlyBookings = Array.from({ length: 12 }, (_, i) => {
+      const d = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth() - (11 - i), 1));
+      const ym = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`;
+      const count = volumeBookings.filter((b: any) => createdMonthKey(b.created_at) === ym).length;
+      return { month: ym, count };
+    });
+    const yearStart = yearlyBookings[0].month;
+    const yearEnd = yearlyBookings[11].month;
+    const prevYearStartDate = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth() - 23, 1));
+    const prevYearEndDate = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth() - 12, 1));
+    const prevYearStart = `${prevYearStartDate.getUTCFullYear()}-${String(prevYearStartDate.getUTCMonth() + 1).padStart(2, '0')}`;
+    const prevYearEnd = `${prevYearEndDate.getUTCFullYear()}-${String(prevYearEndDate.getUTCMonth() + 1).padStart(2, '0')}`;
+    const yearTotal = yearlyBookings.reduce((s, d) => s + d.count, 0);
+    const lastYearTotal = countInRange(volumeBookings, prevYearStart, prevYearEnd, 'month');
+
     const monthlyRevenue = Array.from({ length: 6 }, (_, i) => {
-      const d = new Date();
-      d.setDate(1);
-      d.setMonth(d.getMonth() - (5 - i));
-      const ym = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-      const amount = bookings
-        ?.filter((b: any) => String(b.created_at).slice(0, 7) === ym)
-        .reduce((sum: number, b: any) => sum + num(b.total_amount), 0) || 0;
+      const d = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth() - (5 - i), 1));
+      const ym = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`;
+      const amount = revenueBookings
+        .filter((b: any) => createdMonthKey(b.created_at) === ym)
+        .reduce((sum: number, b: any) => sum + num(b.total_amount), 0);
       return { month: ym, amount };
     });
 
-    const now = new Date();
-    const thisMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-    const lastMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-    const lastMonthKey = `${lastMonthDate.getFullYear()}-${String(lastMonthDate.getMonth() + 1).padStart(2, '0')}`;
-    const thisMonthCount = bookings?.filter((b: any) => String(b.created_at).slice(0, 7) === thisMonthKey).length || 0;
-    const lastMonthCount = bookings?.filter((b: any) => String(b.created_at).slice(0, 7) === lastMonthKey).length || 0;
-    const thisMonthRevenue = bookings?.filter((b: any) => String(b.created_at).slice(0, 7) === thisMonthKey).reduce((s: number, b: any) => s + num(b.total_amount), 0) || 0;
-    const lastMonthRevenue = bookings?.filter((b: any) => String(b.created_at).slice(0, 7) === lastMonthKey).reduce((s: number, b: any) => s + num(b.total_amount), 0) || 0;
-    const trendPct = (curr: number, prev: number) => {
-      if (prev <= 0) return curr > 0 ? 100 : 0;
-      return Math.round(((curr - prev) / prev) * 100);
-    };
+    const thisMonthKey = `${today.getUTCFullYear()}-${String(today.getUTCMonth() + 1).padStart(2, '0')}`;
+    const lastMonthDate = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth() - 1, 1));
+    const lastMonthKey = `${lastMonthDate.getUTCFullYear()}-${String(lastMonthDate.getUTCMonth() + 1).padStart(2, '0')}`;
+    const thisMonthCount = volumeBookings.filter((b: any) => createdMonthKey(b.created_at) === thisMonthKey).length;
+    const lastMonthCount = volumeBookings.filter((b: any) => createdMonthKey(b.created_at) === lastMonthKey).length;
+    const thisMonthRevenue = revenueBookings
+      .filter((b: any) => createdMonthKey(b.created_at) === thisMonthKey)
+      .reduce((s: number, b: any) => s + num(b.total_amount), 0);
+    const lastMonthRevenue = revenueBookings
+      .filter((b: any) => createdMonthKey(b.created_at) === lastMonthKey)
+      .reduce((s: number, b: any) => s + num(b.total_amount), 0);
 
-    // 2. Get accommodations (agency-wide - all users can see)
-    const { data: accommodations } = await supabase
+    const { data: accommodations, count: hotelsCount } = await supabase
       .from('accommodations')
-      .select(`
-        id,
-        name,
-        name_ar,
-        city,
-        room_types (id, type, total_beds, total_rooms)
-      `)
-      .forAgency(agencyId)
-      .limit(10);
-
-    // 3. Get flights count (agency-wide)
-    const { data: flights } = await supabase
-      .from('flights')
-      .select('id')
+      .select('id, city', { count: 'exact' })
       .forAgency(agencyId);
 
-    // 4. Get inventory stats (agency-wide)
+    const { count: flightsCount } = await supabase
+      .from('flights')
+      .select('id', { count: 'exact', head: true })
+      .forAgency(agencyId);
+
     const { data: hotelInventory } = await supabase
       .from('hotel_bed_inventory')
-      .select('beds_purchased, beds_sold, beds_available')
+      .select('id, accommodation_id, beds_purchased, beds_sold, beds_available, total_purchase_cost, purchase_price_per_bed, sell_price_per_bed, accommodations (city)')
       .forAgency(agencyId);
 
     const { data: flightInventory } = await supabase
       .from('flight_seat_inventory')
-      .select('seats_purchased, seats_sold, seats_available')
+      .select('seats_purchased, seats_sold, seats_available, total_purchase_cost, purchase_price_per_seat, sell_price_per_seat')
+      .forAgency(agencyId);
+
+    const { data: expenseRows } = await supabase
+      .from('expenses')
+      .select('amount')
       .forAgency(agencyId);
 
     const inventoryStats = {
       hotel: {
         totalBeds: hotelInventory?.reduce((sum: number, i: any) => sum + num(i.beds_purchased), 0) || 0,
         soldBeds: hotelInventory?.reduce((sum: number, i: any) => sum + num(i.beds_sold), 0) || 0,
-        availableBeds: hotelInventory?.reduce((sum: number, i: any) => sum + num(i.beds_available), 0) || 0
+        availableBeds: hotelInventory?.reduce((sum: number, i: any) => sum + num(i.beds_available), 0) || 0,
       },
       flight: {
         totalSeats: flightInventory?.reduce((sum: number, i: any) => sum + num(i.seats_purchased), 0) || 0,
         soldSeats: flightInventory?.reduce((sum: number, i: any) => sum + num(i.seats_sold), 0) || 0,
-        availableSeats: flightInventory?.reduce((sum: number, i: any) => sum + num(i.seats_available), 0) || 0
-      }
+        availableSeats: flightInventory?.reduce((sum: number, i: any) => sum + num(i.seats_available), 0) || 0,
+      },
     };
 
-    const { count: clientsCount } = await supabase
+    const totalBedsCost = hotelInventory?.reduce((sum: number, i: any) => sum + num(i.total_purchase_cost), 0) || 0;
+    const totalFlightsCost = flightInventory?.reduce((sum: number, i: any) => sum + num(i.total_purchase_cost), 0) || 0;
+    const totalExpenses = (expenseRows || []).reduce((sum: number, e: any) => sum + num(e.amount), 0);
+    const bedsSoldRevenue = hotelInventory?.reduce((sum: number, i: any) => sum + num(i.beds_sold) * num(i.sell_price_per_bed), 0) || 0;
+    const flightsSoldRevenue = flightInventory?.reduce((sum: number, i: any) => sum + num(i.seats_sold) * num(i.sell_price_per_seat), 0) || 0;
+    const inventoryProfit = (bedsSoldRevenue - totalBedsCost) + (flightsSoldRevenue - totalFlightsCost);
+    const totalCosts = totalExpenses + totalBedsCost + totalFlightsCost;
+    const unpaidCount = revenueBookings.filter((b: any) => num(b.total_amount) - num(b.paid_amount) > 0.009).length;
+
+    const { data: clientRows, count: clientsCount } = await supabase
       .from('clients')
-      .select('id', { count: 'exact', head: true })
+      .select('created_at', { count: 'exact' })
       .forAgency(agencyId);
+
+    const thisMonthClients = (clientRows || []).filter((c: any) => createdMonthKey(c.created_at) === thisMonthKey).length;
+    const lastMonthClients = (clientRows || []).filter((c: any) => createdMonthKey(c.created_at) === lastMonthKey).length;
 
     const { data: seasons } = await supabase
       .from('seasons')
@@ -226,51 +348,110 @@ export const getDashboardStats = async (req: Request, res: Response) => {
       .order('start_date', { ascending: true })
       .limit(12);
 
-    const today = weekdayKey(new Date());
+    const todayKey = dateKey(today);
     const upcomingSeasons = (seasons || [])
-      .filter((s: any) => !s.end_date || String(s.end_date).slice(0, 10) >= today)
+      .filter((s: any) => {
+        const end = createdDateKey(s.end_date);
+        return !end || end >= todayKey;
+      })
       .slice(0, 4);
 
-    const cityCounts: Record<string, number> = {};
-    (accommodations || []).forEach((a: any) => {
-      const city = (a.city || '').trim() || 'other';
-      cityCounts[city] = (cityCounts[city] || 0) + 1;
+    const invCity = new Map<string, string>();
+    (hotelInventory || []).forEach((inv: any) => {
+      const city = relatedCity(inv.accommodations);
+      if (inv.id && city) invCity.set(String(inv.id), city);
     });
-    const destinations = Object.entries(cityCounts)
+
+    const cityCounts: Record<string, number> = {};
+    volumeBookings.forEach((booking: any) => {
+      const cities = new Set<string>();
+      const ids = Array.isArray(booking.hotel_inventory_ids)
+        ? booking.hotel_inventory_ids
+        : typeof booking.hotel_inventory_ids === 'string'
+          ? String(booking.hotel_inventory_ids).replace(/[{}]/g, '').split(',').map((s: string) => s.trim()).filter(Boolean)
+          : [];
+      ids.forEach((id: string) => {
+        const city = invCity.get(String(id));
+        if (city) cities.add(city);
+      });
+      if (cities.size === 0) {
+        const city = relatedCity(booking.accommodations);
+        if (city) cities.add(city);
+      }
+      cities.forEach((city) => {
+        cityCounts[city] = (cityCounts[city] || 0) + 1;
+      });
+    });
+
+    let destinations = Object.entries(cityCounts)
       .map(([name, value]) => ({ name, value }))
       .sort((a, b) => b.value - a.value)
       .slice(0, 5);
+
+    if (destinations.length === 0) {
+      const catalogCounts: Record<string, number> = {};
+      (accommodations || []).forEach((a: any) => {
+        const city = canonicalCity(a.city) || 'other';
+        catalogCounts[city] = (catalogCounts[city] || 0) + 1;
+      });
+      destinations = Object.entries(catalogCounts)
+        .map(([name, value]) => ({ name, value }))
+        .sort((a, b) => b.value - a.value)
+        .slice(0, 5);
+    }
+
+    const seasonRevenueTotal = monthlyRevenue.reduce((s, m) => s + m.amount, 0);
+    const lastMonthBar = monthlyRevenue[monthlyRevenue.length - 1]?.amount || 0;
+    const prevMonthBar = monthlyRevenue[monthlyRevenue.length - 2]?.amount || 0;
 
     res.json({
       pilgrims: {
         total: totalPilgrims,
         male: malePilgrims,
-        female: femalePilgrims
+        female: femalePilgrims,
       },
       bookings: bookingStats,
       financial: {
         totalAgreed,
         totalPaid,
         totalRemaining,
-        paymentPercentage: totalAgreed > 0 ? Math.round((totalPaid / totalAgreed) * 100) : 0
+        paymentPercentage: totalAgreed > 0 ? Math.round((totalPaid / totalAgreed) * 100) : 0,
+        totalExpenses,
+        totalBedsCost,
+        totalFlightsCost,
+        totalCosts,
+        netPosition: totalPaid - totalCosts,
+        inventoryProfit,
+        unpaidCount,
       },
       recentBookings,
       accommodations: accommodations || [],
-      flightsCount: flights?.length || 0,
-      hotelsCount: accommodations?.length || 0,
+      flightsCount: flightsCount || 0,
+      hotelsCount: hotelsCount || 0,
       clientsCount: clientsCount || 0,
       inventory: inventoryStats,
       weeklyBookings,
+      monthlyBookings,
+      yearlyBookings,
       monthlyRevenue,
       destinations,
       upcomingSeasons,
       trends: {
         bookings: trendPct(thisMonthCount, lastMonthCount),
         revenue: trendPct(thisMonthRevenue, lastMonthRevenue),
-        clients: trendPct(thisMonthCount, lastMonthCount),
+        clients: trendPct(thisMonthClients, lastMonthClients),
+      },
+      performance: {
+        week: { total: weekTotal, growth: trendPct(weekTotal, lastWeekTotal), from: weekStart, to: weekEnd },
+        month: { total: monthTotal, growth: trendPct(monthTotal, lastMonthPeriodTotal), from: monthStart, to: monthEnd },
+        year: { total: yearTotal, growth: trendPct(yearTotal, lastYearTotal), from: yearStart, to: yearEnd },
+      },
+      seasonRevenue: {
+        total: seasonRevenueTotal,
+        growth: trendPct(lastMonthBar, prevMonthBar),
       },
       userRole: role,
-      isFiltered: userIdsFilter !== null
+      isFiltered: userIdsFilter !== null,
     });
   } catch (error: any) {
     console.error('Error fetching dashboard stats:', error);

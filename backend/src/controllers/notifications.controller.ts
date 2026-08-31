@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { supabaseAdmin as supabase } from '../services/supabase';
+import db from '../services/db';
 import {
   EmailConfig,
   encryptPassword,
@@ -450,6 +451,233 @@ export const testSMS = async (req: Request, res: Response) => {
       }
     }
 
+    res.status(500).json({ error: error.message });
+  }
+};
+
+type InboxItem = {
+  id: string;
+  type: 'booking' | 'payment' | 'message_failed' | 'hold_expiring' | 'subscription';
+  created_at: string;
+  link: string;
+  unread: boolean;
+  meta: Record<string, string | number | null>;
+};
+
+function toIso(value: unknown): string {
+  if (!value) return new Date().toISOString();
+  if (value instanceof Date) return value.toISOString();
+  return new Date(String(value)).toISOString();
+}
+
+function clientLabel(row: { client_name?: string | null; client_name_ar?: string | null }) {
+  return row.client_name_ar || row.client_name || null;
+}
+
+export const getInbox = async (req: Request, res: Response) => {
+  try {
+    const agencyId = req.user?.agency_id;
+    const userId = req.user?.id;
+    if (!agencyId || !userId) {
+      return res.status(403).json({ error: 'Agency ID not found' });
+    }
+
+    const prefs = await db('user_preferences').where({ user_id: userId }).first();
+    const lastSeen = prefs?.notifications_last_seen_at
+      ? new Date(prefs.notifications_last_seen_at)
+      : null;
+    const isUnread = (createdAt: unknown) => {
+      if (!lastSeen) return true;
+      return new Date(toIso(createdAt)).getTime() > lastSeen.getTime();
+    };
+
+    const items: InboxItem[] = [];
+
+    try {
+      const bookings = await db('bookings')
+        .leftJoin('clients', 'bookings.client_id', 'clients.id')
+        .where('bookings.agency_id', agencyId)
+        .whereNull('bookings.deleted_at')
+        .select(
+          'bookings.id',
+          'bookings.booking_number',
+          'bookings.created_at',
+          'clients.full_name as client_name',
+          'clients.full_name_ar as client_name_ar'
+        )
+        .orderBy('bookings.created_at', 'desc')
+        .limit(12);
+
+      for (const row of bookings) {
+        items.push({
+          id: `booking:${row.id}`,
+          type: 'booking',
+          created_at: toIso(row.created_at),
+          link: `/bookings/${row.id}`,
+          unread: isUnread(row.created_at),
+          meta: {
+            booking_number: row.booking_number,
+            client_name: clientLabel(row),
+          },
+        });
+      }
+    } catch (err) {
+      console.error('Inbox bookings:', err);
+    }
+
+    try {
+      const payments = await db('payments as p')
+        .join('bookings as b', 'p.booking_id', 'b.id')
+        .leftJoin('clients as c', 'b.client_id', 'c.id')
+        .where('b.agency_id', agencyId)
+        .whereNull('b.deleted_at')
+        .select(
+          'p.id',
+          'p.amount',
+          'p.created_at',
+          'b.id as booking_id',
+          'b.booking_number',
+          'c.full_name as client_name',
+          'c.full_name_ar as client_name_ar'
+        )
+        .orderBy('p.created_at', 'desc')
+        .limit(12);
+
+      for (const row of payments) {
+        items.push({
+          id: `payment:${row.id}`,
+          type: 'payment',
+          created_at: toIso(row.created_at),
+          link: `/bookings/${row.booking_id}/payment`,
+          unread: isUnread(row.created_at),
+          meta: {
+            booking_number: row.booking_number,
+            client_name: clientLabel(row),
+            amount: Number(row.amount) || 0,
+          },
+        });
+      }
+    } catch (err) {
+      console.error('Inbox payments:', err);
+    }
+
+    try {
+      const failed = await db('sent_messages')
+        .where({ agency_id: agencyId, status: 'failed' })
+        .select('id', 'recipient_name', 'recipient_phone', 'created_at', 'booking_id')
+        .orderBy('created_at', 'desc')
+        .limit(8);
+
+      for (const row of failed) {
+        items.push({
+          id: `message:${row.id}`,
+          type: 'message_failed',
+          created_at: toIso(row.created_at),
+          link: '/messages',
+          unread: isUnread(row.created_at),
+          meta: {
+            client_name: row.recipient_name || row.recipient_phone,
+          },
+        });
+      }
+    } catch (err) {
+      console.error('Inbox messages:', err);
+    }
+
+    try {
+      const holds = await db('bookings')
+        .leftJoin('clients', 'bookings.client_id', 'clients.id')
+        .where('bookings.agency_id', agencyId)
+        .whereNull('bookings.deleted_at')
+        .where('bookings.status', 'draft')
+        .whereNotNull('bookings.hold_expires_at')
+        .where('bookings.hold_expires_at', '>', db.fn.now())
+        .where('bookings.hold_expires_at', '<', db.raw("NOW() + INTERVAL '24 hours'"))
+        .select(
+          'bookings.id',
+          'bookings.booking_number',
+          'bookings.created_at',
+          'bookings.hold_expires_at',
+          'clients.full_name as client_name',
+          'clients.full_name_ar as client_name_ar'
+        )
+        .orderBy('bookings.hold_expires_at', 'asc')
+        .limit(8);
+
+      for (const row of holds) {
+        items.push({
+          id: `hold:${row.id}`,
+          type: 'hold_expiring',
+          created_at: toIso(row.created_at),
+          link: `/bookings/${row.id}`,
+          unread: !lastSeen,
+          meta: {
+            booking_number: row.booking_number,
+            client_name: clientLabel(row),
+          },
+        });
+      }
+    } catch (err) {
+      console.error('Inbox holds:', err);
+    }
+
+    try {
+      const agency = await db('agencies')
+        .where({ id: agencyId })
+        .select('subscription_status')
+        .first();
+      if (agency?.subscription_status === 'past_due') {
+        items.push({
+          id: 'subscription:past_due',
+          type: 'subscription',
+          created_at: new Date().toISOString(),
+          link: '/settings?tab=subscription',
+          unread: !lastSeen,
+          meta: {},
+        });
+      }
+    } catch (err) {
+      console.error('Inbox subscription:', err);
+    }
+
+    items.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    const trimmed = items.slice(0, 20);
+    const unreadCount = trimmed.filter((item) => item.unread).length;
+    const failedMessagesCount = trimmed.filter((item) => item.type === 'message_failed' && item.unread).length;
+
+    res.json({
+      items: trimmed,
+      unread_count: unreadCount,
+      failed_messages_count: failedMessagesCount,
+    });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+export const markInboxSeen = async (req: Request, res: Response) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(403).json({ error: 'User ID not found' });
+    }
+
+    const now = new Date();
+    const existing = await db('user_preferences').where({ user_id: userId }).first();
+    if (existing) {
+      await db('user_preferences')
+        .where({ user_id: userId })
+        .update({ notifications_last_seen_at: now, updated_at: now });
+    } else {
+      await db('user_preferences').insert({
+        user_id: userId,
+        notifications_last_seen_at: now,
+        updated_at: now,
+      });
+    }
+
+    res.json({ ok: true, notifications_last_seen_at: now.toISOString() });
+  } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
 };

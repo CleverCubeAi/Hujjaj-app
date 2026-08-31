@@ -17,15 +17,26 @@ import { PaymentGatewaySettings } from '../platform/PaymentGatewaySettings';
 import { RoleGuard } from '../../components/common/RoleGuard';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
+import { MessagesPage } from '../messages/MessagesPage';
 
 export function SettingsPage() {
   const { role } = useAuth();
   const { t } = useTranslation();
-  const [params] = useSearchParams();
+  const [params, setParams] = useSearchParams();
   const isAgencyAdmin = role === 'agency_admin';
   const isSuperAdmin = role === 'super_admin';
+  const isAgencyStaff = role === 'agency_admin' || role === 'manager' || role === 'agent';
   const canSecurity = isAgencyAdmin;
-  const defaultTab = params.get('tab') || 'profile';
+  const tab = params.get('tab') || 'profile';
+
+  const setTab = (value: string | null) => {
+    setParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.set('tab', value || 'profile');
+      if (value !== 'profile') next.delete('section');
+      return next;
+    }, { replace: true });
+  };
 
   return (
     <Container size="xl" py="xl">
@@ -33,7 +44,7 @@ export function SettingsPage() {
         {t('settings') || 'الإعدادات'}
       </Title>
 
-      <Tabs defaultValue={defaultTab}>
+      <Tabs value={tab} onChange={setTab}>
         <Tabs.List>
           <Tabs.Tab value="profile">{t('profile') || 'الملف الشخصي'}</Tabs.Tab>
           {canSecurity && <Tabs.Tab value="security">{t('security') || 'الأمان'}</Tabs.Tab>}
@@ -45,6 +56,7 @@ export function SettingsPage() {
           <Tabs.Tab value="preferences">{t('preferences') || 'التفضيلات'}</Tabs.Tab>
           {isAgencyAdmin && <Tabs.Tab value="email">{t('email') || 'البريد الإلكتروني'}</Tabs.Tab>}
           {isAgencyAdmin && <Tabs.Tab value="sms">{t('sms') || 'الرسائل النصية'}</Tabs.Tab>}
+          {isAgencyStaff && <Tabs.Tab value="messages">{t('messages') || 'الرسائل'}</Tabs.Tab>}
           {isSuperAdmin && <Tabs.Tab value="branding">{t('platform_branding') || 'العلامة'}</Tabs.Tab>}
           {isSuperAdmin && <Tabs.Tab value="platform_email">{t('platform_email') || 'بريد المنصة'}</Tabs.Tab>}
           {isSuperAdmin && <Tabs.Tab value="llm">{t('llm_settings') || 'LLM'}</Tabs.Tab>}
@@ -65,6 +77,11 @@ export function SettingsPage() {
         <Tabs.Panel value="preferences" pt="xl"><PreferencesSettings /></Tabs.Panel>
         {isAgencyAdmin && <Tabs.Panel value="email" pt="xl"><EmailSettings /></Tabs.Panel>}
         {isAgencyAdmin && <Tabs.Panel value="sms" pt="xl"><SMSSettings /></Tabs.Panel>}
+        {isAgencyStaff && (
+          <Tabs.Panel value="messages" pt="xl">
+            <MessagesPage hideTitle />
+          </Tabs.Panel>
+        )}
         {isSuperAdmin && <Tabs.Panel value="branding" pt="xl"><BrandingSettings /></Tabs.Panel>}
         {isSuperAdmin && <Tabs.Panel value="platform_email" pt="xl"><PlatformEmailSettings /></Tabs.Panel>}
         {isSuperAdmin && <Tabs.Panel value="llm" pt="xl"><LlmSettings /></Tabs.Panel>}
