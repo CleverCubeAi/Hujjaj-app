@@ -42,6 +42,16 @@ function processArabicText(text: string): string {
   }
 }
 
+function money(value: unknown): number {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : 0;
+}
+
+function lineAmount(item: { total_price?: unknown; quantity?: unknown; unit_price?: unknown }): number {
+  if (item.total_price != null && item.total_price !== '') return money(item.total_price);
+  return money(item.quantity) * money(item.unit_price);
+}
+
 // Recalculate and persist total_amount for a booking (remaining_balance is a generated column)
 async function recalcBookingTotals(bookingId: string): Promise<void> {
   const { data: items } = await supabase
@@ -49,8 +59,7 @@ async function recalcBookingTotals(bookingId: string): Promise<void> {
     .select('total_price, quantity, unit_price')
     .eq('booking_id', bookingId);
 
-  const total = (items || []).reduce((sum: number, i: any) =>
-    sum + (i.total_price != null ? i.total_price : i.quantity * i.unit_price), 0);
+  const total = Math.round((items || []).reduce((sum: number, i: any) => sum + lineAmount(i), 0) * 100) / 100;
 
   await supabase
     .from('bookings')
@@ -134,10 +143,11 @@ export const getBookings = async (req: Request, res: Response) => {
     let result = data;
     if (search && typeof search === 'string') {
       const searchLower = search.toLowerCase();
-      result = data?.filter((b: any) => 
+      result = data?.filter((b: any) =>
         b.booking_number?.toLowerCase().includes(searchLower) ||
         b.clients?.full_name?.toLowerCase().includes(searchLower) ||
-        b.clients?.full_name_ar?.includes(search)
+        b.clients?.full_name_ar?.includes(search) ||
+        b.clients?.phone?.toLowerCase().includes(searchLower)
       );
     }
 
@@ -325,7 +335,7 @@ export const createBooking = async (req: Request, res: Response) => {
   try {
     const agencyId = req.user?.agency_id;
     const userId = req.user?.id;
-    const {
+    let {
       client_id,
       season_id,
       flight_id,
@@ -336,23 +346,117 @@ export const createBooking = async (req: Request, res: Response) => {
       same_selection_for_all = true,
       notes,
       pilgrims,
-      extra_services
+      extra_services,
+      travel_package_id
     } = req.body;
+
+    let appliedPackage: {
+      id: string;
+      sellingPrice: number;
+      serviceIds: string[];
+      servicePrices: Record<string, number>;
+    } | null = null;
+
+    if (travel_package_id) {
+      const pkg = await db('packages')
+        .where({ id: travel_package_id, agency_id: agencyId, status: 'published' })
+        .first();
+      if (!pkg) {
+        return res.status(400).json({ error: 'الباقة غير منشورة أو غير موجودة' });
+      }
+      const comps = await db('package_components').where({ package_id: pkg.id }).orderBy('sort_order', 'asc');
+      const flightComp = comps.find((c: any) => c.component_type === 'flight');
+      const hotelComps = comps.filter((c: any) => c.component_type === 'hotel');
+      const serviceComps = comps.filter((c: any) => c.component_type === 'service');
+      if (!flightComp?.flight_seat_inventory_id || hotelComps.length === 0) {
+        return res.status(400).json({ error: 'الباقة غير مكتملة' });
+      }
+
+      const { data: flightInv, error: flightInvErr } = await supabase
+        .from('flight_seat_inventory')
+        .select('id, flight_id, season_id, sell_price_per_seat, seats_available')
+        .eq('id', flightComp.flight_seat_inventory_id)
+        .eq('season_id', pkg.season_id)
+        .forAgency(agencyId)
+        .single();
+      if (flightInvErr || !flightInv) {
+        return res.status(400).json({ error: 'مخزون رحلة الباقة غير متاح' });
+      }
+
+      const hotelIds = hotelComps.map((c: any) => c.hotel_bed_inventory_id).filter(Boolean);
+      const { data: hotelInvs, error: hotelInvErr } = await supabase
+        .from('hotel_bed_inventory')
+        .select('id, accommodation_id, room_type_id, season_id, sell_price_per_bed, beds_available')
+        .in('id', hotelIds)
+        .eq('season_id', pkg.season_id)
+        .forAgency(agencyId);
+      if (hotelInvErr || !hotelInvs || hotelInvs.length !== hotelIds.length) {
+        return res.status(400).json({ error: 'مخزون فنادق الباقة غير متاح' });
+      }
+
+      const pilgrimsCountForStock = pilgrims?.length || 0;
+      if (pilgrimsCountForStock > 0 && Number(flightInv.seats_available) < pilgrimsCountForStock) {
+        return res.status(400).json({
+          error: `لا توجد مقاعد كافية في الباقة. المتاح ${flightInv.seats_available} والمطلوب ${pilgrimsCountForStock}.`,
+        });
+      }
+      for (const hotel of hotelInvs) {
+        if (pilgrimsCountForStock > 0 && Number(hotel.beds_available) < pilgrimsCountForStock) {
+          return res.status(400).json({
+            error: `لا توجد أسرة كافية في الباقة. المتاح ${hotel.beds_available} والمطلوب ${pilgrimsCountForStock}.`,
+          });
+        }
+      }
+
+      const servicePrices: Record<string, number> = {};
+      const serviceIds = serviceComps.map((c: any) => c.extra_service_id).filter(Boolean);
+      if (serviceIds.length > 0) {
+        const { data: serviceRows } = await supabase
+          .from('extra_services')
+          .select('id, price')
+          .in('id', serviceIds)
+          .forAgency(agencyId);
+        for (const row of serviceRows || []) servicePrices[row.id] = Number(row.price || 0);
+        if (Object.keys(servicePrices).length !== serviceIds.length) {
+          return res.status(400).json({ error: 'إحدى خدمات الباقة غير موجودة' });
+        }
+      }
+
+      season_id = pkg.season_id;
+      flight_id = flightInv.flight_id;
+      flight_seat_inventory_id = flightInv.id;
+      hotel_inventory_ids = hotelIds;
+      accommodation_id = hotelInvs[0].accommodation_id;
+      room_type_id = hotelInvs[0].room_type_id;
+      same_selection_for_all = true;
+      appliedPackage = {
+        id: pkg.id,
+        sellingPrice: Number(pkg.selling_price || 0),
+        serviceIds,
+        servicePrices,
+      };
+
+      const incoming = Array.isArray(extra_services) ? extra_services : [];
+      const present = new Set(incoming.map((s: any) => s.service_id));
+      extra_services = [
+        ...incoming.map((s: any) => (
+          serviceIds.includes(s.service_id)
+            ? { ...s, quantity: 1, pilgrim_ids: [] }
+            : s
+        )),
+        ...serviceIds.filter((sid: string) => !present.has(sid)).map((sid: string) => ({
+          service_id: sid,
+          quantity: 1,
+          pilgrim_ids: [],
+        })),
+      ];
+    }
 
     if (!client_id) {
       return res.status(400).json({ error: 'Client is required' });
     }
 
     const pilgrimsCount = pilgrims?.length || 0;
-    if (pilgrimsCount > 0) {
-      const missingPassport = pilgrims.find((p: any) => !(p.passport_number || '').toString().trim());
-      if (missingPassport) {
-        return res.status(400).json({
-          error: 'رقم الجواز إلزامي لجميع المعتمرين',
-          error_en: 'Passport number is required for all pilgrims'
-        });
-      }
-    }
 
     // Validate room type(s) have INVENTORY
     // Skip validation if hotel_inventory_ids are explicitly provided — those ARE the inventory
@@ -593,6 +697,7 @@ export const createBooking = async (req: Request, res: Response) => {
               room_type_id: pilgrimRoomType || primaryRoomType,
               flight_seat_inventory_id: pilgrimFlightInv || null,
               hotel_inventory_ids: pilgrimHotelInvIds,
+              package_id: appliedPackage?.id || null,
               relationship_type: p.relationship_type || 'family',
               is_mahram: p.is_mahram || false,
               status: 'pending'
@@ -628,6 +733,7 @@ export const createBooking = async (req: Request, res: Response) => {
             room_type_id: pilgrimRoomType || primaryRoomType,
             flight_seat_inventory_id: pilgrimFlightInv || null,
             hotel_inventory_ids: pilgrimHotelInvIds,
+            package_id: appliedPackage?.id || null,
             full_name: p.full_name,
             full_name_ar: p.full_name_ar,
             gender: p.gender,
@@ -656,6 +762,8 @@ export const createBooking = async (req: Request, res: Response) => {
       }
       
       const insertedPilgrims = allPilgrims;
+      const invMap = new Map<string, any>();
+      let flightSellPrice = 0;
 
       // Create invoice items for each pilgrim
       if (insertedPilgrims && insertedPilgrims.length > 0) {
@@ -671,7 +779,6 @@ export const createBooking = async (req: Request, res: Response) => {
         }
 
         // Fetch all inventory records once
-        const invMap = new Map<string, any>();
         if (allInvIds.size > 0) {
           const { data: invRecords, error: invError } = await supabase
             .from('hotel_bed_inventory')
@@ -687,7 +794,6 @@ export const createBooking = async (req: Request, res: Response) => {
         }
 
         // Fetch flight inventory sell price if applicable
-        let flightSellPrice = 0;
         let flightCode = '';
         if (primaryFlightInv) {
           const { data: flightInvData, error: flightInvError } = await supabase
@@ -817,6 +923,66 @@ export const createBooking = async (req: Request, res: Response) => {
 
         if (serviceItems.length > 0) {
           await supabase.from('invoice_items').insert(serviceItems);
+        }
+      }
+
+      if (appliedPackage && insertedPilgrims && insertedPilgrims.length > 0) {
+        const hotelSum = (hotel_inventory_ids || []).reduce((sum: number, invId: string) => {
+          return sum + Number(invMap.get(invId)?.sell_price_per_bed || 0);
+        }, 0);
+        const serviceSum = appliedPackage.serviceIds.reduce((sum, sid) => sum + Number(appliedPackage!.servicePrices[sid] || 0), 0);
+        const live = Number(flightSellPrice || 0) + hotelSum + serviceSum;
+        const charged = Math.min(appliedPackage.sellingPrice, live);
+        const saving = Math.round(Math.max(0, live - charged) * 100) / 100;
+        const packageServiceIds = new Set(appliedPackage.serviceIds);
+
+        const extraByPilgrim = new Map<string, number>();
+        for (const service of extra_services || []) {
+          if (packageServiceIds.has(service.service_id)) continue;
+          const { data: serviceData } = await supabase
+            .from('extra_services')
+            .select('id, price')
+            .eq('id', service.service_id)
+            .single();
+          if (!serviceData) continue;
+          let targets: any[] = insertedPilgrims;
+          if (Array.isArray(service.pilgrim_ids) && service.pilgrim_ids.length > 0) {
+            const uuidRe = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+            const resolved = new Set<string>();
+            for (const ref of service.pilgrim_ids) {
+              const key = String(ref);
+              if (uuidRe.test(key)) resolved.add(key);
+              else if (/^\d+$/.test(key)) {
+                const idx = parseInt(key, 10);
+                if (insertedPilgrims[idx]?.id) resolved.add(insertedPilgrims[idx].id);
+              }
+            }
+            const filtered = insertedPilgrims.filter((p: any) => resolved.has(p.id));
+            if (filtered.length > 0) targets = filtered;
+          }
+          const line = Number(serviceData.price || 0) * (service.quantity || 1);
+          for (const pilgrim of targets) {
+            extraByPilgrim.set(pilgrim.id, (extraByPilgrim.get(pilgrim.id) || 0) + line);
+          }
+        }
+
+        if (saving > 0) {
+          await supabase.from('invoice_items').insert(insertedPilgrims.map((p: any) => ({
+            booking_id: booking.id,
+            pilgrim_id: p.id,
+            item_type: 'discount',
+            description: 'خصم الباقة',
+            quantity: 1,
+            unit_price: -saving,
+          })));
+        }
+
+        for (const pilgrim of insertedPilgrims) {
+          const agreed = Math.round((charged + (extraByPilgrim.get(pilgrim.id) || 0)) * 100) / 100;
+          await supabase.from('pilgrims').update({
+            package_id: appliedPackage.id,
+            agreed_price: agreed,
+          }).eq('id', pilgrim.id);
         }
       }
 
@@ -1437,9 +1603,8 @@ export const getBookingInvoice = async (req: Request, res: Response) => {
     }
 
     // Calculate totals
-    const totalAmount = data.invoice_items?.reduce((sum: number, item: any) => 
-      sum + (item.total_price || item.quantity * item.unit_price), 0) || 0;
-    const paidAmount = data.payments?.reduce((sum: number, p: any) => sum + p.amount, 0) || 0;
+    const totalAmount = Math.round((data.invoice_items || []).reduce((sum: number, item: any) => sum + lineAmount(item), 0) * 100) / 100;
+    const paidAmount = Math.round((data.payments || []).reduce((sum: number, p: any) => sum + money(p.amount), 0) * 100) / 100;
 
     res.json({
       ...data,
@@ -1499,9 +1664,8 @@ export const exportInvoicePDF = async (req: Request, res: Response) => {
     const platformName = branding?.app_name_fr || branding?.app_name || 'Hujjaj';
 
     // Calculate totals
-    const totalAmount = booking.invoice_items?.reduce((sum: number, item: any) => 
-      sum + (item.total_price || item.quantity * item.unit_price), 0) || 0;
-    const paidAmount = booking.payments?.reduce((sum: number, p: any) => sum + p.amount, 0) || 0;
+    const totalAmount = Math.round((booking.invoice_items || []).reduce((sum: number, item: any) => sum + lineAmount(item), 0) * 100) / 100;
+    const paidAmount = Math.round((booking.payments || []).reduce((sum: number, p: any) => sum + money(p.amount), 0) * 100) / 100;
     const remainingAmount = totalAmount - paidAmount;
 
     // Create PDF document
@@ -1654,7 +1818,7 @@ export const exportInvoicePDF = async (req: Request, res: Response) => {
         currentY = 50;
       }
 
-      const itemTotal = item.total_price || (item.quantity * item.unit_price);
+      const itemTotal = lineAmount(item);
       
       // Alternate row background
       if (index % 2 === 0) {

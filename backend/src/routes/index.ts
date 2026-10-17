@@ -34,6 +34,7 @@ import platformRoutes from './platform.routes';
 import publicRoutes from './public.routes';
 import billingRoutes from './billing.routes';
 import llmRoutes from './llm.routes';
+import travelPackagesRoutes from './travelPackages.routes';
 import { cmiPayRedirect, cmiWebhook } from '../controllers/billing.controller';
 
 const router = Router();
@@ -67,6 +68,7 @@ router.use('/expenses', ...agencyProtect, expensesRoutes);
 router.use('/clients', ...agencyProtect, clientsRoutes);
 router.use('/bookings', ...agencyProtect, bookingsRoutes);
 router.use('/services', ...agencyProtect, servicesRoutes);
+router.use('/travel-packages', ...agencyProtect, travelPackagesRoutes);
 router.use('/payments', ...agencyProtect, paymentsRoutes);
 router.use('/rooms', ...agencyProtect, roomsRoutes);
 router.use('/reports', ...agencyProtect, requireFeature('reports'), reportsRoutes);

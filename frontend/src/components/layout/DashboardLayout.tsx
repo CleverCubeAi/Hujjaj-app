@@ -8,7 +8,7 @@ import { BrandLogo } from '../brand/BrandLogo';
 import { HeaderNotifications } from './HeaderNotifications';
 import { HeaderUserMenu } from './HeaderUserMenu';
 import { useTranslation } from 'react-i18next';
-import { MessageSquare, Plus, Search } from 'lucide-react';
+import { MessageSquare, Package, Plus, Search } from 'lucide-react';
 import { api } from '../../lib/api';
 import { brand } from '../../theme/brand';
 import { useBranding } from '../../providers/BrandingProvider';
@@ -150,8 +150,18 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                   leftSection={<Plus size={16} />}
                   visibleFrom="sm"
                   size="sm"
+                  variant="default"
                 >
-                  {t('new_booking')}
+                  {t('normal_booking') || 'حجز عادي'}
+                </Button>
+                <Button
+                  component={Link}
+                  to="/bookings/package"
+                  leftSection={<Package size={16} />}
+                  visibleFrom="sm"
+                  size="sm"
+                >
+                  {t('package_booking') || 'حجز باقة'}
                 </Button>
                 <ActionIcon
                   component={Link}

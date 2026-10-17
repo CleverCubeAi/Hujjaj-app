@@ -243,17 +243,17 @@ export function BookingInvoicePage() {
             <Stack gap="xs">
               <Group justify="space-between">
                 <Text>{t('subtotal') || 'المجموع الفرعي'}:</Text>
-                <Text fw={500}>{booking.total_amount?.toLocaleString('en')} MAD</Text>
+                <Text fw={500}>{Number(booking.total_amount || 0).toLocaleString('en')} MAD</Text>
               </Group>
               <Group justify="space-between">
                 <Text c="green">{t('paid') || 'المدفوع'}:</Text>
-                <Text fw={500} c="green">{booking.paid_amount?.toLocaleString('en')} MAD</Text>
+                <Text fw={500} c="green">{Number(booking.paid_amount || 0).toLocaleString('en')} MAD</Text>
               </Group>
               <Divider />
               <Group justify="space-between">
                 <Text fw={700} size="lg">{t('remaining') || 'المتبقي'}:</Text>
                 <Text fw={700} size="lg" c={booking.remaining_balance > 0 ? 'red' : 'green'}>
-                  {booking.remaining_balance?.toLocaleString('en')} MAD
+                  {Number(booking.remaining_balance || 0).toLocaleString('en')} MAD
                 </Text>
               </Group>
             </Stack>

@@ -47,7 +47,8 @@ import {
   AlertCircle,
   Search,
   Clock,
-  Lock
+  Lock,
+  Package,
 } from 'lucide-react';
 
 // Booking lock interface
@@ -113,10 +114,17 @@ interface ServiceSelection {
   pilgrim_ids: string[];
 }
 
-export function BookingWizard() {
+type StepId = 'package' | 'client' | 'pilgrims' | 'flight' | 'hotel' | 'trip' | 'services' | 'invoice' | 'payment' | 'rooms';
+
+const NORMAL_STEPS: StepId[] = ['client', 'pilgrims', 'flight', 'hotel', 'services', 'invoice', 'payment', 'rooms'];
+const PACKAGE_STEPS: StepId[] = ['package', 'client', 'pilgrims', 'trip', 'services', 'invoice', 'payment', 'rooms'];
+
+export function BookingWizard({ mode = 'normal' }: { mode?: 'normal' | 'package' }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const steps = mode === 'package' ? PACKAGE_STEPS : NORMAL_STEPS;
   const [active, setActive] = useState(0);
+  const step = steps[active];
   const [loading, setLoading] = useState(false);
 
   // Step 1: Client
@@ -161,6 +169,8 @@ export function BookingWizard() {
   // Step 5: Services
   const [availableServices, setAvailableServices] = useState<any[]>([]);
   const [selectedServices, setSelectedServices] = useState<ServiceSelection[]>([]);
+  const [publishedPackages, setPublishedPackages] = useState<any[]>([]);
+  const [selectedTravelPackage, setSelectedTravelPackage] = useState<any | null>(null);
 
   // Step 6: Invoice
   const [notes, setNotes] = useState('');
@@ -218,24 +228,31 @@ export function BookingWizard() {
       loadFlights(selectedSeason);
       loadAccommodations(selectedSeason);
       loadAvailableFlightInventory(selectedSeason);
+      if (mode === 'package') {
+        api.getTravelPackages({ season_id: selectedSeason, status: 'published' })
+          .then((rows: any) => setPublishedPackages(rows || []))
+          .catch(() => setPublishedPackages([]));
+      }
+    } else {
+      setPublishedPackages([]);
     }
-  }, [selectedSeason]);
+  }, [selectedSeason, mode]);
 
   // Refetch flight inventory when navigating to Flight step - ensures fresh seat counts after bookings
   useEffect(() => {
-    if (active === 2 && selectedSeason) {
+    if (step === 'flight' && selectedSeason) {
       loadAvailableFlightInventory(selectedSeason);
     }
-  }, [active, selectedSeason]);
+  }, [step, selectedSeason]);
 
   // Load all season inventory - this is the single source for hotel+room options (no top dropdown)
   useEffect(() => {
-    if (active === 3 && selectedSeason) {
+    if (step === 'hotel' && selectedSeason) {
       api.getHotelInventory({ season_id: selectedSeason })
         .then((data: any) => setAllSeasonInventory(data || []))
         .catch(() => setAllSeasonInventory([]));
     }
-  }, [active, selectedSeason]);
+  }, [step, selectedSeason]);
 
   // ============================================
   // Booking Locks Functions
@@ -353,10 +370,10 @@ export function BookingWizard() {
 
   // Periodic refetch of inventory when on Flight or Accommodation steps - keeps seat/bed counts fresh after bookings
   useEffect(() => {
-    if (active !== 2 && active !== 3) return;
+    if (step !== 'flight' && step !== 'hotel') return;
     const refetch = () => {
-      if (active === 2 && selectedSeason) loadAvailableFlightInventory(selectedSeason);
-      if (active === 3 && selectedSeason) {
+      if (step === 'flight' && selectedSeason) loadAvailableFlightInventory(selectedSeason);
+      if (step === 'hotel' && selectedSeason) {
         api.getHotelInventory({ season_id: selectedSeason })
           .then((data: any) => setAllSeasonInventory(data || []))
           .catch(() => {});
@@ -364,7 +381,7 @@ export function BookingWizard() {
     };
     const interval = setInterval(refetch, 15000); // Refetch every 15 seconds
     return () => clearInterval(interval);
-  }, [active, selectedSeason]);
+  }, [step, selectedSeason]);
 
   // Effect: Extend locks periodically (every 5 minutes)
   useEffect(() => {
@@ -472,7 +489,7 @@ export function BookingWizard() {
       return;
     }
 
-    const preDiscountSubtotal = calculatePackageTotal() + calculateServicesTotal();
+    const preDiscountSubtotal = Math.max(0, calculatePackageTotal() + calculateServicesTotal() - getBundleSavingTotal());
     const newBreakdown: Record<string, { name: string; base: number; multiplier: number; type: 'percent' | 'fixed' }> = {};
     const accepted: string[] = [];
 
@@ -596,26 +613,28 @@ export function BookingWizard() {
   };
 
   // Get step description based on current selections
-  const getStepDescription = (step: number): string => {
-    switch (step) {
-      case 0:
+  const getStepDescription = (id: StepId): string => {
+    switch (id) {
+      case 'package':
+        return selectedTravelPackage?.name_ar || selectedTravelPackage?.name || '';
+      case 'client':
         if (selectedClient) {
           return selectedClient.full_name_ar || selectedClient.full_name;
         } else if (isNewClient && newClient.full_name) {
           return `${newClient.full_name_ar || newClient.full_name} (جديد)`;
         }
         return '';
-      case 1:
+      case 'pilgrims':
         return pilgrims.length > 0 ? `${pilgrims.length} معتمر` : '';
-      case 2:
+      case 'flight':
+      case 'trip':
+        if (selectedTravelPackage) return selectedTravelPackage.name_ar || selectedTravelPackage.name || '';
         if (selectedSeason && selectedFlight) {
           const season = seasons.find(s => s.id === selectedSeason);
-          const _flight = flights.find(f => f.id === selectedFlight);
-          void _flight;
           return season?.name || '';
         }
         return '';
-      case 3:
+      case 'hotel':
         if (sameSelectionForAll && selectedAccommodationId && selectedRoomType) {
           const combo = hotelRoomCombos.find(c => c.accommodationId === selectedAccommodationId && c.roomTypeId === selectedRoomType);
           const acc = combo?.accommodation || accommodations.find(a => a.id === selectedAccommodationId);
@@ -626,9 +645,9 @@ export function BookingWizard() {
           return `${pilgrims.filter((_, i) => pilgrimRoomSelections[i]?.roomTypeId).length} ${t('pilgrims') || 'معتمر'}`;
         }
         return '';
-      case 4:
+      case 'services':
         return selectedServices.length > 0 ? `${selectedServices.length} خدمة` : '';
-      case 5:
+      case 'invoice':
         return calculateTotal() > 0 ? `${calculateTotal().toLocaleString('en')} د.م` : '';
       default:
         return '';
@@ -668,8 +687,10 @@ export function BookingWizard() {
 
   // Service management
   const toggleService = (service: any) => {
+    const included = (selectedTravelPackage?.services || []).some((s: any) => s.extra_service_id === service.id);
     const existing = selectedServices.find(s => s.service_id === service.id);
     if (existing) {
+      if (included) return;
       setSelectedServices(selectedServices.filter(s => s.service_id !== service.id));
     } else {
       setSelectedServices([...selectedServices, {
@@ -707,7 +728,10 @@ export function BookingWizard() {
     if (sameSelectionForAll) {
       if (selectedFlightInventory) {
         const inventory = availableFlightInventory.find(inv => inv.id === selectedFlightInventory);
-        if (inventory?.sell_price) return pilgrims.length * Number(inventory.sell_price);
+        if (inventory?.sell_price != null) return pilgrims.length * Number(inventory.sell_price);
+        if (selectedTravelPackage?.flight && selectedFlightInventory === selectedTravelPackage.flight.flight_seat_inventory_id) {
+          return pilgrims.length * Number(selectedTravelPackage.flight.sell_price_per_seat || 0);
+        }
       }
       return 0;
     }
@@ -724,6 +748,17 @@ export function BookingWizard() {
 
   const calculatePackageTotal = () => {
     return getRoomPrice() + getFlightPrice();
+  };
+
+  const getBundleSavingTotal = () => {
+    if (mode !== 'package' || !selectedTravelPackage || pilgrims.length === 0) return 0;
+    const included = new Set((selectedTravelPackage.services || []).map((s: any) => s.extra_service_id));
+    const servicesPerPerson = selectedServices
+      .filter((s) => included.has(s.service_id))
+      .reduce((sum, s) => sum + Number(s.price) * (s.quantity || 1), 0);
+    const live = (getFlightPrice() + getRoomPrice()) / pilgrims.length + servicesPerPerson;
+    const charged = Math.min(Number(selectedTravelPackage.selling_price || 0), live);
+    return Math.round(Math.max(0, live - charged) * pilgrims.length * 100) / 100;
   };
 
   const calculateServicesTotal = () => {
@@ -744,7 +779,7 @@ export function BookingWizard() {
   };
 
   const calculateTotal = () => {
-    return calculatePackageTotal() + calculateServicesTotal() - discount;
+    return calculatePackageTotal() + calculateServicesTotal() - getBundleSavingTotal() - discount;
   };
 
   // Season period coverage for accommodation
@@ -973,7 +1008,8 @@ export function BookingWizard() {
           service_id: s.service_id,
           quantity: s.quantity,
           pilgrim_ids: s.pilgrim_ids
-        }))
+        })),
+        travel_package_id: mode === 'package' ? selectedTravelPackage?.id : undefined,
       };
 
       const booking = await api.createBooking(bookingData);
@@ -1003,7 +1039,7 @@ export function BookingWizard() {
         }
       }
 
-      setActive(6); // Move to payment step
+      setActive(steps.indexOf('payment'));
     } catch (error: any) {
       alert(error.message);
     } finally {
@@ -1030,7 +1066,7 @@ export function BookingWizard() {
         });
       }
 
-      setActive(7); // Move to room allocation
+      setActive(steps.indexOf('rooms'));
     } catch (error: any) {
       alert(error.message);
     } finally {
@@ -1055,10 +1091,43 @@ export function BookingWizard() {
     }
   };
 
+  const applyTravelPackage = (pkg: any) => {
+    const hotels = pkg.hotels || [];
+    setSelectedTravelPackage(pkg);
+    setSameSelectionForAll(true);
+    setSelectedSeason(pkg.season_id);
+    setSelectedFlight(pkg.flight?.flight_id || null);
+    setSelectedFlightInventory(pkg.flight?.flight_seat_inventory_id || pkg.flight_seat_inventory_id || null);
+    setSelectedRoomInventories(hotels.map((h: any) => ({
+      id: h.hotel_bed_inventory_id,
+      sell_price_per_bed: Number(h.sell_price_per_bed || 0),
+      sell_price: Number(h.sell_price_per_bed || 0),
+      accommodation_id: h.accommodation_id,
+      room_type_id: h.room_type_id,
+      accommodations: h.accommodations,
+      room_types: h.room_types,
+      check_in_date: h.check_in_date,
+      check_out_date: h.check_out_date,
+      nights: h.nights,
+      beds_available: h.beds_available,
+    })));
+    setSelectedAccommodationId(hotels[0]?.accommodation_id || null);
+    setSelectedRoomType(hotels[0]?.room_type_id || null);
+    const included = (pkg.services || []).map((s: any) => ({
+      service_id: s.extra_service_id,
+      name: s.name_ar || s.name,
+      price: Number(s.price || 0),
+      quantity: 1,
+      pilgrim_ids: [] as string[],
+    }));
+    const includedIds = new Set(included.map((s: ServiceSelection) => s.service_id));
+    setSelectedServices((prev) => [...included, ...prev.filter((s) => !includedIds.has(s.service_id))]);
+  };
+
   const nextStep = () => {
     // When moving from Step 0 (Client) to Step 1 (Pilgrims)
     // Auto-add the new client as a pilgrim if the option is checked
-    if (active === 0 && isNewClient && addNewClientAsPilgrim && newClient.full_name) {
+    if (step === 'client' && isNewClient && addNewClientAsPilgrim && newClient.full_name) {
       // Check if client is not already added as a pilgrim
       const alreadyAdded = pilgrims.some(p => 
         p.full_name === newClient.full_name && p.phone === newClient.phone
@@ -1084,15 +1153,20 @@ export function BookingWizard() {
       }
     }
     
-    setActive((current) => (current < 7 ? current + 1 : current));
+    setActive((current) => (current < steps.length - 1 ? current + 1 : current));
   };
   const prevStep = () => setActive((current) => (current > 0 ? current - 1 : current));
 
+  const packagePlacesShort = mode === 'package'
+    && selectedTravelPackage?.places_left != null
+    && pilgrims.length > Number(selectedTravelPackage.places_left);
+
   const canProceed = () => {
-    switch (active) {
-      case 0: return selectedClient || (isNewClient && newClient.full_name && newClient.phone);
-      case 1: return pilgrims.length > 0 && pilgrims.every(p => p.full_name && p.gender && (p.passport_number || '').trim());
-      case 2: {
+    switch (step) {
+      case 'package': return !!selectedTravelPackage;
+      case 'client': return selectedClient || (isNewClient && newClient.full_name && newClient.phone);
+      case 'pilgrims': return pilgrims.length > 0 && pilgrims.every(p => p.full_name && p.gender && (p.passport_number || '').trim()) && !packagePlacesShort;
+      case 'flight': {
         if (!selectedSeason || !selectedFlight) return false;
         const hasAvailableSeats = availableFlightInventory.some(
           inv => inv.flight_id === selectedFlight && inv.available_seats > 0
@@ -1101,7 +1175,7 @@ export function BookingWizard() {
         if (sameSelectionForAll) return !!selectedFlightInventory;
         return pilgrims.every((_, i) => !!pilgrimFlightSelections[i]);
       }
-      case 3: {
+      case 'hotel': {
         if (!seasonStart || !seasonEnd) return false;
         if (sameSelectionForAll) {
           if (!selectedAccommodationId || !selectedRoomType) return false;
@@ -1116,9 +1190,10 @@ export function BookingWizard() {
           return cov.inventories.length > 0;
         });
       }
-      case 4: return true; // Services are optional
-      case 5: return true; // Ready to create booking
-      case 6: return true; // Ready to confirm
+      case 'trip': return !!selectedTravelPackage && getSameForAllInventories().length > 0;
+      case 'services': return true;
+      case 'invoice': return true;
+      case 'payment': return true;
       default: return true;
     }
   };
@@ -1126,7 +1201,7 @@ export function BookingWizard() {
   return (
     <Stack gap="lg">
       <Group justify="space-between">
-        <Title order={2}>{t('new_booking') || 'حجز جديد'}</Title>
+        <Title order={2}>{mode === 'package' ? (t('package_booking') || 'حجز باقة') : (t('normal_booking') || 'حجز عادي')}</Title>
         <Button variant="subtle" onClick={() => navigate('/bookings')}>
           {t('cancel')}
         </Button>
@@ -1136,42 +1211,96 @@ export function BookingWizard() {
         <LoadingOverlay visible={loading} />
         
         <Stepper active={active} onStepClick={setActive} allowNextStepsSelect={false} size="sm" mb="xl">
-          <Stepper.Step
-            label={t('client') || 'العميل'}
-            icon={<User size={18} />}
-            description={getStepDescription(0)}
-          />
-          <Stepper.Step
-            label={t('pilgrims') || 'المعتمرين'}
-            icon={<Users size={18} />}
-            description={getStepDescription(1)}
-          />
-          <Stepper.Step
-            label={t('flight') || 'الرحلة'}
-            icon={<Plane size={18} />}
-            description={getStepDescription(2)}
-          />
-          <Stepper.Step
-            label={t('accommodation') || 'السكن'}
-            icon={<Building2 size={18} />}
-            description={getStepDescription(3)}
-          />
-          <Stepper.Step
-            label={t('extra_services') || 'الخدمات'}
-            icon={<Plus size={18} />}
-            description={getStepDescription(4)}
-          />
-          <Stepper.Step
-            label={t('invoice') || 'الفاتورة'}
-            icon={<CreditCard size={18} />}
-            description={getStepDescription(5)}
-          />
-          <Stepper.Step label={t('payment') || 'الدفع'} icon={<CreditCard size={18} />} />
-          <Stepper.Step label={t('rooms') || 'الغرف'} icon={<BedDouble size={18} />} />
+          {steps.map((id) => (
+            <Stepper.Step
+              key={id}
+              label={
+                id === 'package' ? (t('travel_package') || 'الباقة')
+                : id === 'client' ? (t('client') || 'العميل')
+                : id === 'pilgrims' ? (t('pilgrims') || 'المعتمرين')
+                : id === 'flight' ? (t('flight') || 'الرحلة')
+                : id === 'hotel' ? (t('accommodation') || 'السكن')
+                : id === 'trip' ? (t('package_summary') || 'ملخص الباقة')
+                : id === 'services' ? (t('extra_services') || 'الخدمات')
+                : id === 'invoice' ? (t('invoice') || 'الفاتورة')
+                : id === 'payment' ? (t('payment') || 'الدفع')
+                : (t('rooms') || 'الغرف')
+              }
+              icon={
+                id === 'package' ? <Package size={18} />
+                : id === 'client' ? <User size={18} />
+                : id === 'pilgrims' ? <Users size={18} />
+                : id === 'flight' || id === 'trip' ? <Plane size={18} />
+                : id === 'hotel' ? <Building2 size={18} />
+                : id === 'services' ? <Plus size={18} />
+                : id === 'rooms' ? <BedDouble size={18} />
+                : <CreditCard size={18} />
+              }
+              description={getStepDescription(id)}
+            />
+          ))}
         </Stepper>
 
+        {step === 'package' && (
+          <Stack>
+            <Select
+              label={t('season') || 'الموسم'}
+              placeholder={t('select_season') || 'اختر الموسم'}
+              data={seasons.map(s => ({ value: String(s.id || ''), label: `${s.name || ''} (${s.type || ''})` }))}
+              value={selectedSeason || ''}
+              onChange={(value) => {
+                setSelectedSeason(value || null);
+                setSelectedTravelPackage(null);
+                setSelectedFlight(null);
+                setSelectedFlightInventory(null);
+                setSelectedRoomInventories([]);
+                setSelectedAccommodationId(null);
+                setSelectedRoomType(null);
+              }}
+              required
+            />
+            {selectedSeason && publishedPackages.length === 0 && (
+              <Text size="sm" c="dimmed">{t('no_travel_packages') || 'لا توجد باقات لهذا الموسم'}</Text>
+            )}
+            <SimpleGrid cols={{ base: 1, sm: 2 }}>
+              {publishedPackages.map((pkg) => {
+                const soldOut = pkg.places_left != null && Number(pkg.places_left) < 1;
+                const selected = selectedTravelPackage?.id === pkg.id;
+                return (
+                  <Card
+                    key={pkg.id}
+                    withBorder
+                    padding="md"
+                    radius="md"
+                    style={{
+                      cursor: soldOut ? 'not-allowed' : 'pointer',
+                      opacity: soldOut ? 0.55 : 1,
+                      borderColor: selected ? '#0C7774' : undefined,
+                      backgroundColor: selected ? '#E7F3F2' : undefined,
+                    }}
+                    onClick={() => { if (!soldOut) applyTravelPackage(pkg); }}
+                  >
+                    <Stack gap={4}>
+                      <Text fw={700}>{pkg.name_ar || pkg.name}</Text>
+                      <Text size="sm">{pkg.flight?.code} · {pkg.flight?.departure_city} → {pkg.flight?.arrival_city}</Text>
+                      <Text size="xs" c="dimmed">
+                        {(pkg.hotels || []).map((h: any) => h.accommodations?.name_ar || h.accommodations?.name).filter(Boolean).join(' · ')}
+                      </Text>
+                      <Group justify="space-between">
+                        <Text fw={700} c="#C99A3D">{Number(pkg.selling_price || 0).toLocaleString('en')} د.م</Text>
+                        <Text size="xs" c="teal">-{Number(pkg.saving || 0).toLocaleString('en')}</Text>
+                      </Group>
+                      <Text size="xs" c="dimmed">{t('places_left') || 'الأماكن'}: {pkg.places_left ?? '—'}</Text>
+                    </Stack>
+                  </Card>
+                );
+              })}
+            </SimpleGrid>
+          </Stack>
+        )}
+
         {/* Step 1: Client Selection */}
-        {active === 0 && (
+        {step === 'client' && (
           <Stack>
             <Radio.Group
               value={isNewClient ? 'new' : 'existing'}
@@ -1328,8 +1457,13 @@ export function BookingWizard() {
         )}
 
         {/* Step 2: Pilgrims */}
-        {active === 1 && (
+        {step === 'pilgrims' && (
           <Stack>
+            {packagePlacesShort && (
+              <Alert color="orange" variant="light">
+                {t('package_not_enough_places') || 'الأماكن المتبقية في الباقة أقل من عدد المعتمرين'} ({selectedTravelPackage?.places_left})
+              </Alert>
+            )}
             <Group justify="space-between">
               <Text fw={500}>{t('pilgrims') || 'المعتمرين'} ({pilgrims.length})</Text>
               <Group>
@@ -1580,8 +1714,7 @@ export function BookingWizard() {
           </Stack>
         )}
 
-        {/* Step 3: Flight Selection */}
-        {active === 2 && (
+        {step === 'flight' && (
           <Stack>
             <Select
               label={t('season') || 'الموسم'}
@@ -1724,8 +1857,29 @@ export function BookingWizard() {
           </Stack>
         )}
 
+        {step === 'trip' && selectedTravelPackage && (
+          <Stack>
+            <Text fw={600}>{t('package_summary') || 'ملخص الباقة'}</Text>
+            <Card withBorder padding="md" radius="md">
+              <Text fw={700}>{selectedTravelPackage.name_ar || selectedTravelPackage.name}</Text>
+              <Text size="sm">{selectedTravelPackage.flight?.code} · {selectedTravelPackage.flight?.departure_city} → {selectedTravelPackage.flight?.arrival_city}</Text>
+            </Card>
+            {(selectedTravelPackage.hotels || []).map((h: any) => (
+              <Card key={h.hotel_bed_inventory_id} withBorder padding="sm" radius="md">
+                <Group justify="space-between">
+                  <div>
+                    <Text fw={600}>{h.accommodations?.name_ar || h.accommodations?.name}</Text>
+                    <Text size="xs" c="dimmed">{h.room_types?.type} · {h.accommodations?.city}</Text>
+                  </div>
+                  <Text fw={600} c="#C99A3D">{Number(h.sell_price_per_bed || 0).toLocaleString('en')} د.م</Text>
+                </Group>
+              </Card>
+            ))}
+          </Stack>
+        )}
+
         {/* Step 4: Accommodation Selection - Hotel → Room Type → Beds per pilgrim (no top dropdown) */}
-        {active === 3 && (
+        {step === 'hotel' && (
           <Stack>
             {hotelRoomCombos.length > 0 && (
               <Stack>
@@ -2075,13 +2229,14 @@ export function BookingWizard() {
         )}
 
         {/* Step 5: Extra Services */}
-        {active === 4 && (
+        {step === 'services' && (
           <Stack>
             <Text fw={500}>{t('extra_services_optional') || 'الخدمات الإضافية (اختياري)'}</Text>
             <SimpleGrid cols={2}>
               {availableServices.map((service) => {
                 const selected = selectedServices.find(s => s.service_id === service.id);
                 const isSelected = !!selected;
+                const included = (selectedTravelPackage?.services || []).some((s: any) => s.extra_service_id === service.id);
                 const applyCount = (selected?.pilgrim_ids?.length || 0) > 0 ? selected!.pilgrim_ids.length : pilgrims.length;
                 const lineTotal = isSelected ? (selected!.price * (selected!.quantity || 1) * applyCount) : 0;
                 return (
@@ -2103,13 +2258,14 @@ export function BookingWizard() {
                       <div>
                         <Text fw={500}>{service.name_ar || service.name}</Text>
                         <Badge size="sm" variant="light">{service.category}</Badge>
+                        {included && <Badge size="sm" color="teal" variant="light">{t('included_in_package') || 'ضمن الباقة'}</Badge>}
                       </div>
                       <div style={{ textAlign: 'left' }}>
                         <Text fw={600} c="#C99A3D">{service.price?.toLocaleString('en')} {t('mad') || 'د.م'}</Text>
                         <Checkbox checked={isSelected} readOnly />
                       </div>
                     </Group>
-                    {isSelected && (
+                    {isSelected && !included && (
                       <Stack gap="xs" mt="sm" pl="sm" style={{ borderLeft: '2px solid #D4C5B0' }}>
                         <Group>
                           <NumberInput
@@ -2146,7 +2302,7 @@ export function BookingWizard() {
         )}
 
         {/* Step 6: Invoice Review */}
-        {active === 5 && (
+        {step === 'invoice' && (
           <Stack>
             <Title order={4}>{t('invoice_summary') || 'ملخص الفاتورة'}</Title>
 
@@ -2245,6 +2401,13 @@ export function BookingWizard() {
               </Table>
             </Card>
 
+            {getBundleSavingTotal() > 0 && (
+              <Group justify="space-between">
+                <Text fw={600}>{t('package_discount') || 'خصم الباقة'}</Text>
+                <Text fw={700} c="teal">-{getBundleSavingTotal().toLocaleString('en')} {t('mad') || 'د.م'}</Text>
+              </Group>
+            )}
+
             <Group>
               {availableDiscounts.length > 0 ? (
                 <MultiSelect
@@ -2267,7 +2430,7 @@ export function BookingWizard() {
                   value={discount}
                   onChange={(v) => setDiscount(Number(v) || 0)}
                   min={0}
-                  max={calculatePackageTotal() + calculateServicesTotal()}
+                  max={Math.max(0, calculatePackageTotal() + calculateServicesTotal() - getBundleSavingTotal())}
                   w={200}
                 />
               )}
@@ -2325,7 +2488,7 @@ export function BookingWizard() {
         )}
 
         {/* Step 7: Payment */}
-        {active === 6 && (
+        {step === 'payment' && (
           <Stack>
             {createdBooking ? (
               <>
@@ -2409,7 +2572,7 @@ export function BookingWizard() {
         )}
 
         {/* Step 8: Room Allocation */}
-        {active === 7 && (
+        {step === 'rooms' && (
           <Stack>
             <Alert color="teal" icon={<BedDouble size={18} />} mb="md">
               <Text fw={500} mb="xs">{t('room_allocation_rules') || 'قواعد توزيع الغرف:'}</Text>
@@ -2532,19 +2695,19 @@ export function BookingWizard() {
             {t('previous') || 'السابق'}
           </Button>
           
-          {active < 5 && (
+          {step !== 'invoice' && step !== 'payment' && step !== 'rooms' && (
             <Button onClick={nextStep} disabled={!canProceed()}>
               {t('next') || 'التالي'}
             </Button>
           )}
           
-          {active === 5 && (
+          {step === 'invoice' && (
             <Button onClick={handleCreateBooking} disabled={!canProceed()}>
               {t('create_booking_btn') || 'إنشاء الحجز'}
             </Button>
           )}
 
-          {active === 6 && createdBooking && (
+          {step === 'payment' && createdBooking && (
             <Button onClick={handleConfirmAndPay}>
               {t('confirm_save_payment') || 'تأكيد وحفظ الدفعة'}
             </Button>
