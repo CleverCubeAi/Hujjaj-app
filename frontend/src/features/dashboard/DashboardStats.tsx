@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import {
   CreditCard, TrendingUp, TrendingDown, Info, Plus, UserPlus, MessageSquare, FileText, ChevronLeft, ChevronRight,
-  Wallet, AlertCircle, Scale,
+  Wallet, AlertCircle, Scale, Package,
 } from 'lucide-react';
 import {
   ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, PieChart, Pie, Cell, BarChart, Bar,
@@ -794,7 +794,8 @@ export function DashboardStats() {
               </Text>
               <SimpleGrid cols={2} spacing="sm">
                 {[
-                  { label: t('new_booking') || 'حجز جديد', icon: Plus, to: '/bookings/new' },
+                  { label: t('normal_booking') || 'حجز عادي', icon: Plus, to: '/bookings/new' },
+                  { label: t('package_booking') || 'حجز باقة', icon: Package, to: '/bookings/package' },
                   { label: t('add_client') || 'إضافة عميل', icon: UserPlus, to: '/clients' },
                   { label: t('client_support') || 'دعم العملاء', icon: MessageSquare, to: '/messages' },
                   { label: t('bookings_report') || 'تقرير الحجوزات', icon: FileText, to: '/reports' },

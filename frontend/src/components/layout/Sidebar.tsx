@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import {
   LayoutDashboard, Sun, Plane, Hotel, Users, CreditCard, Settings,
   FileText, MessageSquare, UserCircle, CalendarCheck, PackagePlus,
-  ChevronDown, ChevronLeft, ChevronRight, BedDouble, Building2, Boxes, Wallet, Shield
+  ChevronDown, ChevronLeft, ChevronRight, BedDouble, Building2, Boxes, Wallet, Shield, Package
 } from 'lucide-react';
 import { useAuth } from '../../providers/AuthProvider';
 import sidebarBg from '../../assets/img/sidebar-bg.png';
@@ -125,7 +125,7 @@ export function Sidebar({ closeMobile }: { closeMobile: () => void }) {
   const isSuperAdmin = role === 'super_admin';
 
   const [bookingsExpanded, setBookingsExpanded] = useState(() => path.startsWith('/bookings') || path.startsWith('/clients') || path.startsWith('/pilgrims'));
-  const [configExpanded, setConfigExpanded] = useState(() => path.startsWith('/services') || path.startsWith('/flights') || path.startsWith('/accommodations') || path.startsWith('/seasons'));
+  const [configExpanded, setConfigExpanded] = useState(() => path.startsWith('/services') || path.startsWith('/flights') || path.startsWith('/accommodations') || path.startsWith('/seasons') || path.startsWith('/travel-packages'));
   const [inventoryExpanded, setInventoryExpanded] = useState(() => path.startsWith('/inventory'));
   const [adminExpanded, setAdminExpanded] = useState(() => path.startsWith('/reports') || path.startsWith('/messages'));
 
@@ -140,6 +140,7 @@ export function Sidebar({ closeMobile }: { closeMobile: () => void }) {
     { label: t('flights') || 'الرحلات', icon: Plane, link: '/flights' },
     { label: t('accommodations') || 'السكن', icon: Hotel, link: '/accommodations' },
     { label: t('seasons') || 'المواسم', icon: Sun, link: '/seasons' },
+    { label: t('travel_packages') || 'باقات الرحلات', icon: Package, link: '/travel-packages' },
   ];
 
   const adminGroupLinks = [
@@ -148,7 +149,7 @@ export function Sidebar({ closeMobile }: { closeMobile: () => void }) {
   ];
 
   const isBookingGroupActive = path.startsWith('/bookings') || path.startsWith('/clients') || path.startsWith('/pilgrims');
-  const isConfigGroupActive = path.startsWith('/services') || path.startsWith('/flights') || path.startsWith('/accommodations') || path.startsWith('/seasons');
+  const isConfigGroupActive = path.startsWith('/services') || path.startsWith('/flights') || path.startsWith('/accommodations') || path.startsWith('/seasons') || path.startsWith('/travel-packages');
   const isAdminGroupActive = path.startsWith('/reports') || path.startsWith('/messages');
   
   const divider = <Divider my="sm" color="rgba(229, 196, 106, 0.08)" />;

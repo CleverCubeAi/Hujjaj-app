@@ -122,7 +122,7 @@ export const createBookingPayment = async (req: Request, res: Response) => {
       .select('amount')
       .eq('booking_id', bookingId);
 
-    const newPaidAmount = (allPayments || []).reduce((sum: number, p: any) => sum + (p.amount || 0), 0);
+    const newPaidAmount = Math.round((allPayments || []).reduce((sum: number, p: any) => sum + Number(p.amount || 0), 0) * 100) / 100;
 
     const { data: currentBooking } = await supabase
       .from('bookings')
@@ -130,7 +130,7 @@ export const createBookingPayment = async (req: Request, res: Response) => {
       .eq('id', bookingId)
       .single();
 
-    const totalAmount = (currentBooking as any)?.total_amount || 0;
+    const totalAmount = Number((currentBooking as any)?.total_amount || 0);
     const newRemaining = totalAmount - newPaidAmount;
 
     await supabase
@@ -223,7 +223,7 @@ export const deletePayment = async (req: Request, res: Response) => {
       .select('amount')
       .eq('booking_id', payment.booking_id);
 
-    const newPaidAmount = (allPayments || []).reduce((sum: number, p: any) => sum + (p.amount || 0), 0);
+    const newPaidAmount = Math.round((allPayments || []).reduce((sum: number, p: any) => sum + Number(p.amount || 0), 0) * 100) / 100;
 
     const { data: currentBooking } = await supabase
       .from('bookings')
@@ -231,7 +231,7 @@ export const deletePayment = async (req: Request, res: Response) => {
       .eq('id', payment.booking_id)
       .single();
 
-    const totalAmount = (currentBooking as any)?.total_amount || 0;
+    const totalAmount = Number((currentBooking as any)?.total_amount || 0);
     const newRemaining = totalAmount - newPaidAmount;
 
     await supabase
@@ -272,9 +272,9 @@ export const getPaymentSummary = async (req: Request, res: Response) => {
     if (error) throw error;
 
     const summary = {
-      total_receivable: data?.reduce((sum: number, b: any) => sum + (b.total_amount || 0), 0) || 0,
-      total_received: data?.reduce((sum: number, b: any) => sum + (b.paid_amount || 0), 0) || 0,
-      total_pending: data?.reduce((sum: number, b: any) => sum + (b.remaining_balance || 0), 0) || 0,
+      total_receivable: data?.reduce((sum: number, b: any) => sum + Number(b.total_amount || 0), 0) || 0,
+      total_received: data?.reduce((sum: number, b: any) => sum + Number(b.paid_amount || 0), 0) || 0,
+      total_pending: data?.reduce((sum: number, b: any) => sum + Number(b.remaining_balance || 0), 0) || 0,
       bookings: data
     };
 

@@ -32,6 +32,8 @@ import { BedMapPage } from './features/inventory/BedMapPage';
 import { SeatMapPage } from './features/inventory/SeatMapPage';
 import FlightInventoryPage from './features/inventory/FlightInventoryPage';
 import { RoleGuard } from './components/common/RoleGuard';
+import { TravelPackagesPage } from './features/travelPackages/TravelPackagesPage';
+import { PackageBuilder } from './features/travelPackages/PackageBuilder';
 
 const AGENCY_STAFF = ['agency_admin', 'manager', 'agent'];
 
@@ -168,7 +170,12 @@ function App() {
       } />
       <Route path="/bookings/new" element={
         <AgencyRoute>
-          <BookingWizard />
+          <BookingWizard mode="normal" />
+        </AgencyRoute>
+      } />
+      <Route path="/bookings/package" element={
+        <AgencyRoute>
+          <BookingWizard mode="package" />
         </AgencyRoute>
       } />
       <Route path="/bookings/:id" element={
@@ -194,6 +201,21 @@ function App() {
       <Route path="/services" element={
         <AgencyRoute>
           <ServicesPage />
+        </AgencyRoute>
+      } />
+      <Route path="/travel-packages" element={
+        <AgencyRoute>
+          <TravelPackagesPage />
+        </AgencyRoute>
+      } />
+      <Route path="/travel-packages/new" element={
+        <AgencyRoute>
+          <PackageBuilder />
+        </AgencyRoute>
+      } />
+      <Route path="/travel-packages/:id" element={
+        <AgencyRoute>
+          <PackageBuilder />
         </AgencyRoute>
       } />
       <Route path="/reports" element={

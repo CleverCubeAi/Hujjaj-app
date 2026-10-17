@@ -39,7 +39,8 @@ import {
   Trash2,
   Archive,
   AlertTriangle,
-  Clock
+  Clock,
+  Package
 } from 'lucide-react';
 
 interface Booking {
@@ -247,9 +248,14 @@ export function BookingsPage() {
     <Stack gap="lg">
       <Group justify="space-between">
         <Title order={2}>{t('bookings') || 'الحجوزات'}</Title>
-        <Button leftSection={<Plus size={18} />} onClick={() => navigate('/bookings/new')}>
-          {t('new_booking') || 'حجز جديد'}
-        </Button>
+        <Group>
+          <Button variant="default" leftSection={<Plus size={18} />} onClick={() => navigate('/bookings/new')}>
+            {t('normal_booking') || 'حجز عادي'}
+          </Button>
+          <Button leftSection={<Package size={18} />} onClick={() => navigate('/bookings/package')}>
+            {t('package_booking') || 'حجز باقة'}
+          </Button>
+        </Group>
       </Group>
 
       <Paper p="md" radius="lg" style={cardStyle}>

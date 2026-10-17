@@ -268,6 +268,19 @@ export const api = {
   // ============================================
   // NEW: Extra Services
   // ============================================
+  getTravelPackages: (params?: { season_id?: string; status?: string }) => {
+    const query = new URLSearchParams();
+    if (params?.season_id) query.set('season_id', params.season_id);
+    if (params?.status) query.set('status', params.status);
+    return request(`/travel-packages${query.toString() ? `?${query}` : ''}`);
+  },
+  getTravelPackage: (id: string) => request(`/travel-packages/${id}`),
+  getTravelPackageCatalog: (seasonId: string) => request(`/travel-packages/catalog?season_id=${encodeURIComponent(seasonId)}`),
+  createTravelPackage: (data: any) => request('/travel-packages', { method: 'POST', body: JSON.stringify(data) }),
+  updateTravelPackage: (id: string, data: any) => request(`/travel-packages/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  publishTravelPackage: (id: string) => request(`/travel-packages/${id}/publish`, { method: 'POST' }),
+  archiveTravelPackage: (id: string) => request(`/travel-packages/${id}/archive`, { method: 'POST' }),
+
   getServices: (params?: { category?: string; active_only?: boolean }) => {
     const query = new URLSearchParams();
     if (params?.category) query.set('category', params.category);

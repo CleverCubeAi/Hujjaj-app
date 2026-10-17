@@ -249,6 +249,7 @@ CREATE TABLE IF NOT EXISTS packages (
   agency_id UUID REFERENCES agencies(id) ON DELETE CASCADE,
   season_id UUID REFERENCES seasons(id) ON DELETE CASCADE,
   name TEXT NOT NULL,
+  name_ar TEXT,
   accommodation_id UUID REFERENCES accommodations(id),
   room_type TEXT,
   includes_visa BOOLEAN DEFAULT true,
@@ -256,7 +257,13 @@ CREATE TABLE IF NOT EXISTS packages (
   price NUMERIC(10,2),
   booking_id UUID REFERENCES bookings(id),
   is_template BOOLEAN DEFAULT true,
-  created_at TIMESTAMPTZ DEFAULT now()
+  status TEXT DEFAULT 'draft' CHECK (status IN ('draft', 'published', 'archived')),
+  flight_seat_inventory_id UUID REFERENCES flight_seat_inventory(id) ON DELETE SET NULL,
+  calculated_price NUMERIC(12,2),
+  selling_price NUMERIC(12,2),
+  published_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
 );
 
 CREATE TABLE IF NOT EXISTS pilgrims (
@@ -304,6 +311,24 @@ CREATE TABLE IF NOT EXISTS extra_services (
   category TEXT CHECK (category IN ('transport','guide','meals','tours','insurance','other')),
   is_active BOOLEAN DEFAULT true,
   created_at TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS package_components (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  package_id UUID NOT NULL REFERENCES packages(id) ON DELETE CASCADE,
+  component_type TEXT NOT NULL CHECK (component_type IN ('flight', 'hotel', 'service')),
+  flight_seat_inventory_id UUID REFERENCES flight_seat_inventory(id) ON DELETE RESTRICT,
+  hotel_bed_inventory_id UUID REFERENCES hotel_bed_inventory(id) ON DELETE RESTRICT,
+  extra_service_id UUID REFERENCES extra_services(id) ON DELETE RESTRICT,
+  snapshot_sell_price NUMERIC(12,2) NOT NULL DEFAULT 0,
+  snapshot_cost NUMERIC(12,2) NOT NULL DEFAULT 0,
+  sort_order INTEGER NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  CHECK (
+    (component_type = 'flight' AND flight_seat_inventory_id IS NOT NULL AND hotel_bed_inventory_id IS NULL AND extra_service_id IS NULL)
+    OR (component_type = 'hotel' AND hotel_bed_inventory_id IS NOT NULL AND flight_seat_inventory_id IS NULL AND extra_service_id IS NULL)
+    OR (component_type = 'service' AND extra_service_id IS NOT NULL AND flight_seat_inventory_id IS NULL AND hotel_bed_inventory_id IS NULL)
+  )
 );
 
 CREATE TABLE IF NOT EXISTS invoice_items (
@@ -642,6 +667,17 @@ CREATE INDEX IF NOT EXISTS idx_bookings_branch_id ON bookings(branch_id);
 CREATE INDEX IF NOT EXISTS idx_bookings_hold_expires ON bookings(hold_expires_at)
   WHERE hold_expires_at IS NOT NULL AND status = 'draft';
 CREATE INDEX IF NOT EXISTS idx_bookings_flight_inventory ON bookings(flight_seat_inventory_id);
+
+CREATE INDEX IF NOT EXISTS idx_packages_agency ON packages(agency_id);
+CREATE INDEX IF NOT EXISTS idx_packages_season ON packages(season_id);
+CREATE INDEX IF NOT EXISTS idx_packages_status ON packages(status);
+CREATE INDEX IF NOT EXISTS idx_package_components_package ON package_components(package_id);
+CREATE UNIQUE INDEX IF NOT EXISTS package_components_one_flight
+  ON package_components(package_id) WHERE component_type = 'flight';
+CREATE UNIQUE INDEX IF NOT EXISTS package_components_hotel_once
+  ON package_components(package_id, hotel_bed_inventory_id) WHERE hotel_bed_inventory_id IS NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS package_components_service_once
+  ON package_components(package_id, extra_service_id) WHERE extra_service_id IS NOT NULL;
 
 CREATE INDEX IF NOT EXISTS idx_extra_services_agency ON extra_services(agency_id);
 CREATE INDEX IF NOT EXISTS idx_extra_services_category ON extra_services(category);
@@ -1800,6 +1836,9 @@ COMMENT ON COLUMN pilgrims.flight_seat_inventory_id IS 'Specific flight inventor
 COMMENT ON COLUMN pilgrims.hotel_inventory_ids IS 'Array of hotel_bed_inventory IDs for this pilgrim';
 COMMENT ON COLUMN pilgrims.photo_url IS 'Profile photo URL for display in inventory maps';
 COMMENT ON COLUMN pilgrims.passport_scan_url IS 'Optional URL of uploaded passport scan';
+COMMENT ON COLUMN packages.calculated_price IS 'Sum of component standalone sell prices, snapshotted on save';
+COMMENT ON COLUMN packages.selling_price IS 'Admin bundle price, at or below calculated_price';
+COMMENT ON TABLE package_components IS 'Flight lot, hotel lots, and services that make up a travel package';
 COMMENT ON TABLE sent_messages IS 'Log of SMS (and future channels) sent to clients/pilgrims';
 COMMENT ON TABLE message_templates IS 'Templates with placeholders: {{client_name}}, {{booking_number}}, {{total}}, {{remaining}}, {{paid}}, {{pilgrim_name}}';
 COMMENT ON FUNCTION expire_booking_holds() IS 'Expires draft bookings whose hold has passed';

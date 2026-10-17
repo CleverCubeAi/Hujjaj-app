@@ -193,16 +193,16 @@ export function BookingPaymentPage() {
         <Group grow>
           <Card p="md" style={{ backgroundColor: '#f5f5f5' }}>
             <Text size="sm" c="dimmed">{t('total') || 'المجموع'}</Text>
-            <Text size="xl" fw={700}>{booking.total_amount?.toLocaleString('en')} MAD</Text>
+            <Text size="xl" fw={700}>{Number(booking.total_amount || 0).toLocaleString('en')} MAD</Text>
           </Card>
           <Card p="md" style={{ backgroundColor: '#e8f5e9' }}>
             <Text size="sm" c="dimmed">{t('paid') || 'المدفوع'}</Text>
-            <Text size="xl" fw={700} c="green">{booking.paid_amount?.toLocaleString('en')} MAD</Text>
+            <Text size="xl" fw={700} c="green">{Number(booking.paid_amount || 0).toLocaleString('en')} MAD</Text>
           </Card>
           <Card p="md" style={{ backgroundColor: booking.remaining_balance > 0 ? '#ffebee' : '#e8f5e9' }}>
             <Text size="sm" c="dimmed">{t('remaining') || 'المتبقي'}</Text>
             <Text size="xl" fw={700} c={booking.remaining_balance > 0 ? 'red' : 'green'}>
-              {booking.remaining_balance?.toLocaleString('en')} MAD
+              {Number(booking.remaining_balance || 0).toLocaleString('en')} MAD
             </Text>
           </Card>
         </Group>
